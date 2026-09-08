@@ -379,8 +379,12 @@ export default function WalletPage() {
                     líquidos
                   </small>
                 </div>
-                <span className="wallet-menu-chevron" aria-hidden="true">
-                  ⌄
+                <span className="wallet-menu-action" aria-hidden="true">
+                  <span className="wallet-menu-action-closed">
+                    Ver detalhes
+                  </span>
+                  <span className="wallet-menu-action-open">Ocultar</span>
+                  <i>⌄</i>
                 </span>
               </summary>
               <div className="wallet-menu-content">
@@ -503,8 +507,10 @@ export default function WalletPage() {
                     filtros atuais
                   </small>
                 </div>
-                <span className="wallet-menu-chevron" aria-hidden="true">
-                  ⌄
+                <span className="wallet-menu-action" aria-hidden="true">
+                  <span className="wallet-menu-action-closed">Ver extrato</span>
+                  <span className="wallet-menu-action-open">Ocultar</span>
+                  <i>⌄</i>
                 </span>
               </summary>
               <div className="wallet-menu-content">

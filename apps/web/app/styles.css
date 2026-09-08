@@ -3691,26 +3691,57 @@ a {
 .wallet-history-menu > summary:hover {
   background: #151923;
 }
+.wallet-history-menu > summary:focus-visible {
+  outline: 2px solid #9b72ff;
+  outline-offset: -3px;
+}
 .wallet-history-menu > summary h2 {
   margin: 4px 0 3px;
 }
 .wallet-history-menu > summary small {
   color: var(--muted);
 }
-.wallet-menu-chevron {
-  display: grid;
-  width: 36px;
-  height: 36px;
+.wallet-menu-action {
+  display: flex;
+  min-width: 122px;
+  min-height: 40px;
   flex: none;
-  place-items: center;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   border: 1px solid #303748;
   border-radius: 10px;
-  color: #ae91ef;
-  font-size: 18px;
+  background: #151923;
+  color: #cbb8fb;
+  padding: 0 13px;
+  font-size: 11px;
+  font-weight: 700;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease;
+}
+.wallet-menu-action i {
+  font-size: 17px;
+  font-style: normal;
   transition: transform 0.18s ease;
 }
-.wallet-history-menu[open] .wallet-menu-chevron {
+.wallet-menu-action-open {
+  display: none;
+}
+.wallet-history-menu > summary:hover .wallet-menu-action {
+  border-color: #7455bd;
+  background: #211a31;
+  color: #fff;
+}
+.wallet-history-menu[open] .wallet-menu-action i {
   transform: rotate(180deg);
+}
+.wallet-history-menu[open] .wallet-menu-action-closed {
+  display: none;
+}
+.wallet-history-menu[open] .wallet-menu-action-open {
+  display: inline;
 }
 .wallet-menu-content {
   padding: 0 24px 22px;
@@ -3985,6 +4016,13 @@ a {
   .wallet-history-menu > summary {
     min-height: 92px;
     padding: 18px;
+  }
+  .wallet-menu-action {
+    min-width: 42px;
+    padding: 0 10px;
+  }
+  .wallet-menu-action > span {
+    display: none !important;
   }
   .wallet-menu-content {
     padding: 0 18px 18px;
