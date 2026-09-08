@@ -383,8 +383,12 @@ export default function WalletPage() {
                   <span className="wallet-menu-action-closed">
                     Ver detalhes
                   </span>
-                  <span className="wallet-menu-action-open">Ocultar</span>
-                  <i>⌄</i>
+                  <span className="wallet-menu-action-open">Recolher</span>
+                  <i className="wallet-menu-chevron">
+                    <svg viewBox="0 0 16 16" focusable="false">
+                      <path d="m4 6 4 4 4-4" />
+                    </svg>
+                  </i>
                 </span>
               </summary>
               <div className="wallet-menu-content">
@@ -509,8 +513,12 @@ export default function WalletPage() {
                 </div>
                 <span className="wallet-menu-action" aria-hidden="true">
                   <span className="wallet-menu-action-closed">Ver extrato</span>
-                  <span className="wallet-menu-action-open">Ocultar</span>
-                  <i>⌄</i>
+                  <span className="wallet-menu-action-open">Recolher</span>
+                  <i className="wallet-menu-chevron">
+                    <svg viewBox="0 0 16 16" focusable="false">
+                      <path d="m4 6 4 4 4-4" />
+                    </svg>
+                  </i>
                 </span>
               </summary>
               <div className="wallet-menu-content">

@@ -3684,6 +3684,7 @@ a {
   padding: 22px 24px;
   cursor: pointer;
   list-style: none;
+  transition: background 0.18s ease;
 }
 .wallet-history-menu > summary::-webkit-details-marker {
   display: none;
@@ -3703,39 +3704,57 @@ a {
 }
 .wallet-menu-action {
   display: flex;
-  min-width: 122px;
-  min-height: 40px;
+  min-height: 44px;
   flex: none;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  border: 1px solid #303748;
-  border-radius: 10px;
-  background: #151923;
-  color: #cbb8fb;
-  padding: 0 13px;
-  font-size: 11px;
+  gap: 12px;
+  color: #bda7f5;
+  padding-left: 12px;
+  font-size: 12px;
   font-weight: 700;
+  letter-spacing: 0.01em;
+  transition: color 0.18s ease;
+}
+.wallet-menu-chevron {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid #353c4d;
+  border-radius: 50%;
+  background: #181d27;
+  font-style: normal;
   transition:
+    transform 0.18s ease,
     border-color 0.18s ease,
     background 0.18s ease,
-    color 0.18s ease;
+    box-shadow 0.18s ease;
 }
-.wallet-menu-action i {
-  font-size: 17px;
-  font-style: normal;
-  transition: transform 0.18s ease;
+.wallet-menu-chevron svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .wallet-menu-action-open {
   display: none;
 }
 .wallet-history-menu > summary:hover .wallet-menu-action {
-  border-color: #7455bd;
-  background: #211a31;
   color: #fff;
 }
-.wallet-history-menu[open] .wallet-menu-action i {
+.wallet-history-menu > summary:hover .wallet-menu-chevron {
+  border-color: #7655c4;
+  background: #251b3b;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+.wallet-history-menu[open] .wallet-menu-chevron {
   transform: rotate(180deg);
+  border-color: #6f52b5;
+  background: #211a31;
 }
 .wallet-history-menu[open] .wallet-menu-action-closed {
   display: none;
@@ -4018,8 +4037,8 @@ a {
     padding: 18px;
   }
   .wallet-menu-action {
-    min-width: 42px;
-    padding: 0 10px;
+    min-width: 44px;
+    padding-left: 8px;
   }
   .wallet-menu-action > span {
     display: none !important;
