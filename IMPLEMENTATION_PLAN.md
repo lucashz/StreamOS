@@ -149,7 +149,7 @@ As contribuições confirmadas não possuem fluxo comum de reembolso. SongPix e 
 
 ### Próxima sequência de execução
 
-1. Registrar a base inicial no Git, excluindo ambientes, backups, uploads, caches e perfis locais do OBS.
+1. [Concluído] Base inicial registrada no Git, com ambientes, backups, uploads, caches e perfis locais do OBS excluídos.
 2. Confirmar saída sonora, pausa e reinício no mixer de uma instalação real do OBS (Ciclo 15).
 3. Concluir staging (Ciclo 12): infraestrutura, domínio, segredos, deploy, observabilidade, backup agendado e restauração comprovada.
 4. Homologar o parceiro financeiro (Ciclo 13), incluindo contrato, tarifas, sandbox e conciliação.
@@ -172,7 +172,7 @@ Verificado em 8 de setembro de 2026:
 - `corepack pnpm test`: 100 testes aprovados.
 - `corepack pnpm lint` e `corepack pnpm typecheck`: aprovados.
 - Código dos ciclos 0 a 9 e scripts de CI/CD, deploy e backup disponíveis localmente.
-- Git sem commits na revisão inicial; primeiro versionamento preparado nesta etapa.
+- Base inicial registrada no Git no commit `c480214`, sem ambientes, backups, uploads, caches ou perfis locais do OBS.
 
 Pendente:
 
@@ -578,11 +578,10 @@ Uma tarefa só está concluída quando:
 
 Concluir a preparação do Ciclo 12:
 
-1. Registrar a base inicial com código, migrations, testes e documentação; manter `.env`, `.runtime`, uploads, backups e perfis locais do OBS fora do Git.
-2. Confirmar a decisão de PostgreSQL/Redis em containers ou gerenciados e registrar os recursos do staging.
-3. Configurar os quatro domínios, segredos e destino de deploy a partir de `.env.staging.example`.
-4. Executar `preflight:staging`, deploy e smoke test no ambiente escolhido.
-5. Conectar observabilidade, agendar backup e registrar um ensaio de restauração bem-sucedido.
-6. Repetir E2E e cenários de carga/resiliência em staging; registrar separadamente a validação física do áudio no OBS.
+1. Confirmar a decisão de PostgreSQL/Redis em containers ou gerenciados e registrar os recursos do staging.
+2. Configurar os quatro domínios, segredos e destino de deploy a partir de `.env.staging.example`.
+3. Executar `preflight:staging`, deploy e smoke test no ambiente escolhido.
+4. Conectar observabilidade, agendar backup e registrar um ensaio de restauração bem-sucedido.
+5. Repetir E2E e cenários de carga/resiliência em staging; registrar separadamente a validação física do áudio no OBS.
 
 A homologação financeira e o piloto dependem das pendências dos ciclos 13 e 14. O adaptador existente e os testes simulados não comprovam operação com dinheiro real.
