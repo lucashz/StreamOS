@@ -448,6 +448,11 @@ test('detalhes da contribuição abrem como modal central responsivo', async ({
   });
   await expect(dialog).toBeVisible();
   await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
+  await expect(page.locator('.detail-backdrop')).toHaveCSS(
+    'background-color',
+    'rgba(0, 0, 0, 0.72)',
+  );
+  await expect(page).toHaveURL(/\/contribuicoes$/);
   const bounds = await dialog.boundingBox();
   const viewport = page.viewportSize();
   expect(bounds).not.toBeNull();

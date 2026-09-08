@@ -220,10 +220,9 @@ export default function ContributionsPage() {
         </section>
         {selected ? (
           <>
-            <button
-              type="button"
+            <div
               className="detail-backdrop"
-              aria-label="Fechar detalhes"
+              aria-hidden="true"
               onClick={() => setSelected(undefined)}
             />
             <section

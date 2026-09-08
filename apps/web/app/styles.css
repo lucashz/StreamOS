@@ -6886,8 +6886,8 @@ a {
   position: fixed;
   inset: 0;
   z-index: 60;
-  border: 0;
-  background: #0009;
+  background: rgb(0 0 0 / 72%);
+  cursor: default;
 }
 .contribution-detail-modal {
   position: fixed;
