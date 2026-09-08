@@ -389,3 +389,80 @@ test('template pronto aplica o preset completo e persiste após recarregar', asy
   await expect(font).toHaveValue('DM Sans');
   await expect(size).toHaveValue('30');
 });
+
+test('detalhes da contribuição abrem como modal central responsivo', async ({
+  page,
+}) => {
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const registration = await page.request.post(`${api}/auth/register`, {
+    data: {
+      email: `contribution-modal-${suffix}@streamos.local`,
+      password: 'StreamOS-Modal-123!',
+      displayName: 'Modal E2E',
+      acceptTerms: true,
+    },
+  });
+  expect(registration.ok()).toBeTruthy();
+  const account = (await registration.json()) as {
+    memberships: Array<{
+      organization: { creatorProfile: { slug: string } };
+    }>;
+  };
+  const slug = account.memberships[0]?.organization.creatorProfile.slug;
+  expect(slug).toBeTruthy();
+  const onboarding = await page.request.put(`${api}/dashboard/onboarding`, {
+    data: {
+      displayName: 'Modal E2E',
+      slug,
+      bio: 'Conta para validar o modal de contribuições',
+      minimumContributionInCents: 100,
+      isPublished: true,
+    },
+  });
+  expect(onboarding.ok()).toBeTruthy();
+  const intent = await page.request.post(
+    `${api}/public/creators/${slug}/payment-intents`,
+    {
+      data: {
+        amountInCents: 2_000,
+        supporterName: 'Apoiador do modal',
+        message: 'Verificando rastreamento',
+      },
+    },
+  );
+  expect(intent.ok()).toBeTruthy();
+  const paymentIntent = (await intent.json()) as { id: string };
+  const confirmation = await page.request.post(
+    `${api}/mock/payment-intents/${paymentIntent.id}/confirm`,
+  );
+  expect(confirmation.ok()).toBeTruthy();
+
+  await page.goto('/contribuicoes');
+  const trigger = page.getByRole('button', {
+    name: 'Abrir contribuição de Apoiador do modal',
+  });
+  await expect(trigger).toBeVisible();
+  await trigger.click();
+  const dialog = page.getByRole('dialog', {
+    name: 'Apoiador do modal',
+  });
+  await expect(dialog).toBeVisible();
+  await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
+  const bounds = await dialog.boundingBox();
+  const viewport = page.viewportSize();
+  expect(bounds).not.toBeNull();
+  expect(viewport).not.toBeNull();
+  expect(
+    Math.abs(bounds!.x + bounds!.width / 2 - viewport!.width / 2),
+  ).toBeLessThan(2);
+  expect(
+    Math.abs(bounds!.y + bounds!.height / 2 - viewport!.height / 2),
+  ).toBeLessThan(2);
+  expect(bounds!.x).toBeGreaterThanOrEqual(0);
+  expect(bounds!.y).toBeGreaterThanOrEqual(0);
+
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator('body')).not.toHaveCSS('overflow', 'hidden');
+  await expect(trigger).toBeFocused();
+});

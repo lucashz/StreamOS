@@ -6889,26 +6889,30 @@ a {
   border: 0;
   background: #0009;
 }
-.contribution-detail-drawer {
+.contribution-detail-modal {
   position: fixed;
-  inset: 0 0 0 auto;
+  top: 50%;
+  left: 50%;
   z-index: 61;
-  width: min(460px, 92vw);
+  width: min(680px, calc(100vw - 48px));
+  max-height: min(760px, calc(100vh - 48px));
   overflow-y: auto;
-  border-left: 1px solid #30283f;
+  border: 1px solid #30283f;
+  border-radius: 18px;
   background: #0d1016;
-  padding: 24px;
-  box-shadow: -24px 0 80px #000a;
+  padding: 28px;
+  box-shadow: 0 28px 100px #000d;
+  transform: translate(-50%, -50%);
 }
-.contribution-detail-drawer header {
+.contribution-detail-modal header {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-.contribution-detail-drawer header h2 {
+.contribution-detail-modal header h2 {
   margin: 5px 0;
 }
-.contribution-detail-drawer header button {
+.contribution-detail-modal header button {
   width: 34px;
   height: 34px;
   border: 0;
@@ -6917,22 +6921,22 @@ a {
   color: #eee;
   font-size: 20px;
 }
-.contribution-detail-drawer dl {
+.contribution-detail-modal dl {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
   margin: 22px 0;
 }
-.contribution-detail-drawer dl div {
+.contribution-detail-modal dl div {
   border: 1px solid #292e38;
   border-radius: 10px;
   padding: 12px;
 }
-.contribution-detail-drawer dt {
+.contribution-detail-modal dt {
   color: #818997;
   font-size: 10px;
 }
-.contribution-detail-drawer dd {
+.contribution-detail-modal dd {
   margin: 4px 0 0;
   font-weight: 700;
 }
@@ -6974,6 +6978,14 @@ a {
 .trace-timeline span {
   color: #7e8693;
   font-size: 10px;
+}
+@media (max-width: 560px) {
+  .contribution-detail-modal {
+    width: calc(100vw - 24px);
+    max-height: calc(100vh - 24px);
+    border-radius: 14px;
+    padding: 20px;
+  }
 }
 .dashboard-empty {
   display: grid;
