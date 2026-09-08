@@ -17,6 +17,24 @@ const payoutLabels: Record<string, string> = {
   CANCELED: 'Cancelado',
   CANCELLED: 'Cancelado',
 };
+const entryLabels: Record<string, string> = {
+  payment_confirmed: 'Contribuição confirmada',
+  funds_available: 'Saldo disponibilizado',
+  payout_completed: 'Saque concluído',
+};
+const accountLabels: Record<string, string> = {
+  creator_pending: 'Saldo pendente',
+  creator_available: 'Saldo disponível',
+  creator_payout: 'Saldo em saque',
+  platform_revenue: 'Receita StreamOS',
+  provider_fee: 'Taxa de processamento',
+  clearing: 'Compensação',
+};
+const receivableLabels: Record<string, string> = {
+  AVAILABLE: 'Disponível',
+  PENDING: 'Pendente',
+  BLOCKED: 'Bloqueado',
+};
 
 type Posting = {
   account: string;
@@ -339,112 +357,238 @@ export default function WalletPage() {
               </section>
             </div>
 
-            <section className="feature-card" id="recebiveis">
-              <h2>Agenda de recebíveis</h2>
-              <div className="data-list">
-                {receivables.length ? (
-                  receivables.map((item) => (
-                    <article key={item.id}>
-                      <div>
-                        <strong>{item.supporterName ?? 'Apoiador'}</strong>
-                        <small>
-                          {item.status === 'AVAILABLE'
-                            ? 'Disponibilizado'
-                            : `Previsto para ${new Date(item.expectedAvailabilityAt).toLocaleDateString('pt-BR')}`}
-                        </small>
-                      </div>
-                      <div className="posting-summary">
-                        <span>Bruto {money(item.grossInCents)}</span>
-                        <span>
-                          StreamOS (5%) − {money(item.platformFeeInCents)}
-                        </span>
-                        <span>
-                          Processamento Pix − {money(item.providerFeeInCents)}
-                        </span>
-                        <strong>Líquido {money(item.netInCents)}</strong>
-                      </div>
-                    </article>
-                  ))
-                ) : (
-                  <p>Nenhum recebível encontrado.</p>
-                )}
+            <details
+              className="feature-card wallet-history-menu"
+              id="recebiveis"
+              name="wallet-history"
+              open
+            >
+              <summary>
+                <div>
+                  <span className="section-kicker">Próximos créditos</span>
+                  <h2>Agenda de recebíveis</h2>
+                  <small>
+                    {receivables.length}{' '}
+                    {receivables.length === 1 ? 'recebível' : 'recebíveis'} ·{' '}
+                    {money(
+                      receivables.reduce(
+                        (total, item) => total + item.netInCents,
+                        0,
+                      ),
+                    )}{' '}
+                    líquidos
+                  </small>
+                </div>
+                <span className="wallet-menu-chevron" aria-hidden="true">
+                  ⌄
+                </span>
+              </summary>
+              <div className="wallet-menu-content">
+                <div className="wallet-list-heading" aria-hidden="true">
+                  <span>Apoiador</span>
+                  <span>Disponibilidade</span>
+                  <span>Valores</span>
+                </div>
+                <div className="data-list wallet-history-list">
+                  {receivables.length ? (
+                    receivables.map((item) => (
+                      <article key={item.id}>
+                        <div className="wallet-history-identity">
+                          <strong>{item.supporterName ?? 'Apoiador'}</strong>
+                          <small>
+                            Confirmado em{' '}
+                            {new Date(item.confirmedAt).toLocaleDateString(
+                              'pt-BR',
+                            )}
+                          </small>
+                        </div>
+                        <div className="wallet-history-status">
+                          <span
+                            className={`status-pill${item.status === 'AVAILABLE' ? ' success' : ''}`}
+                          >
+                            {receivableLabels[item.status] ?? item.status}
+                          </span>
+                          <small>
+                            {item.status === 'AVAILABLE'
+                              ? 'Disponibilizado para saque'
+                              : `Previsto para ${new Date(item.expectedAvailabilityAt).toLocaleDateString('pt-BR')}`}
+                          </small>
+                        </div>
+                        <div className="wallet-value-breakdown">
+                          <strong>{money(item.netInCents)}</strong>
+                          <small>
+                            Bruto {money(item.grossInCents)} · Taxas −{' '}
+                            {money(item.totalFeeInCents)}
+                          </small>
+                        </div>
+                      </article>
+                    ))
+                  ) : (
+                    <div className="wallet-history-empty">
+                      <strong>Nenhum recebível agendado</strong>
+                      <span>
+                        As contribuições confirmadas aparecerão aqui com a data
+                        de disponibilidade.
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </section>
+            </details>
 
-            <section className="feature-card" id="historico">
-              <h2>Histórico de saques</h2>
-              <div className="data-list">
+            <section
+              className="feature-card wallet-payout-history"
+              id="historico"
+            >
+              <div className="wallet-section-heading">
+                <div>
+                  <span className="section-kicker">Transferências</span>
+                  <h2>Histórico de saques</h2>
+                </div>
+                <span>
+                  {wallet.payouts.length}{' '}
+                  {wallet.payouts.length === 1 ? 'saque' : 'saques'}
+                </span>
+              </div>
+              <div className="data-list wallet-payout-list">
                 {wallet.payouts.length ? (
                   wallet.payouts.map((payout) => (
                     <article key={payout.id}>
-                      <div>
-                        <strong>{money(payout.amountInCents)}</strong>
+                      <div className="wallet-history-identity">
+                        <strong>Solicitação de saque</strong>
                         <small>
-                          {new Date(payout.requestedAt).toLocaleString('pt-BR')}{' '}
-                          ·{' '}
-                          {payout.destinationMasked ?? 'Destino não informado'}
+                          {new Date(payout.requestedAt).toLocaleString('pt-BR')}
                         </small>
                       </div>
-                      <span className="status-pill">
-                        {payoutLabels[payout.status] ?? payout.status}
-                      </span>
+                      <div className="wallet-payout-destination">
+                        <small>Destino</small>
+                        <strong>
+                          {payout.destinationMasked ?? 'Destino não informado'}
+                        </strong>
+                      </div>
+                      <div className="wallet-payout-value">
+                        <strong>{money(payout.amountInCents)}</strong>
+                        <span
+                          className={`status-pill${payout.status === 'COMPLETED' ? ' success' : payout.status === 'FAILED' ? ' danger' : ''}`}
+                        >
+                          {payoutLabels[payout.status] ?? payout.status}
+                        </span>
+                      </div>
                     </article>
                   ))
                 ) : (
-                  <p>Nenhum saque realizado.</p>
+                  <div className="wallet-history-empty">
+                    <strong>Nenhum saque realizado</strong>
+                    <span>
+                      Suas solicitações aparecerão aqui com o destino e o
+                      estado.
+                    </span>
+                  </div>
                 )}
               </div>
             </section>
 
-            <section className="feature-card">
-              <div className="section-heading-row">
-                <h2>Extrato</h2>
-                <a className="secondary-button" href={exportUrl}>
-                  Exportar CSV
-                </a>
-              </div>
-              <div className="statement-filters">
-                <select
-                  value={entryType}
-                  onChange={(event) => setEntryType(event.target.value)}
-                >
-                  <option value="">Todos os tipos</option>
-                  <option value="payment_confirmed">Contribuições</option>
-                  <option value="funds_available">Disponibilizações</option>
-                  <option value="payout_completed">Saques</option>
-                </select>
-                <input
-                  type="date"
-                  value={from}
-                  onChange={(event) => setFrom(event.target.value)}
-                />
-                <input
-                  type="date"
-                  value={to}
-                  onChange={(event) => setTo(event.target.value)}
-                />
-              </div>
-              <div className="data-list">
-                {entries.map((entry) => (
-                  <article key={entry.id}>
-                    <div>
-                      <strong>{entry.description ?? entry.type}</strong>
-                      <small>
-                        {new Date(entry.occurredAt).toLocaleString('pt-BR')}
-                      </small>
+            <details
+              className="feature-card wallet-history-menu"
+              id="extrato"
+              name="wallet-history"
+            >
+              <summary>
+                <div>
+                  <span className="section-kicker">Movimentações</span>
+                  <h2>Extrato</h2>
+                  <small>
+                    {entries.length}{' '}
+                    {entries.length === 1 ? 'lançamento' : 'lançamentos'} nos
+                    filtros atuais
+                  </small>
+                </div>
+                <span className="wallet-menu-chevron" aria-hidden="true">
+                  ⌄
+                </span>
+              </summary>
+              <div className="wallet-menu-content">
+                <div className="statement-toolbar">
+                  <div>
+                    <strong>Filtrar movimentações</strong>
+                    <small>Refine o período ou tipo de lançamento.</small>
+                  </div>
+                  <a className="secondary-button" href={exportUrl}>
+                    Exportar CSV
+                  </a>
+                </div>
+                <div className="statement-filters">
+                  <select
+                    aria-label="Tipo de movimentação"
+                    value={entryType}
+                    onChange={(event) => setEntryType(event.target.value)}
+                  >
+                    <option value="">Todos os tipos</option>
+                    <option value="payment_confirmed">Contribuições</option>
+                    <option value="funds_available">Disponibilizações</option>
+                    <option value="payout_completed">Saques</option>
+                  </select>
+                  <input
+                    aria-label="Data inicial"
+                    type="date"
+                    value={from}
+                    onChange={(event) => setFrom(event.target.value)}
+                  />
+                  <input
+                    aria-label="Data final"
+                    type="date"
+                    value={to}
+                    onChange={(event) => setTo(event.target.value)}
+                  />
+                </div>
+                <div className="data-list wallet-statement-list">
+                  {entries.length ? (
+                    entries.map((entry) => (
+                      <article key={entry.id}>
+                        <div className="wallet-history-identity">
+                          <strong>
+                            {entry.description ??
+                              entryLabels[entry.type] ??
+                              entry.type}
+                          </strong>
+                          <small>
+                            {new Date(entry.occurredAt).toLocaleString('pt-BR')}
+                          </small>
+                        </div>
+                        <div className="posting-summary">
+                          {entry.postings.map((posting, index) => (
+                            <span
+                              className={
+                                posting.direction === 'CREDIT'
+                                  ? 'posting-credit'
+                                  : 'posting-debit'
+                              }
+                              key={`${posting.code}-${index}`}
+                            >
+                              <b>
+                                {posting.direction === 'CREDIT' ? '+' : '−'}{' '}
+                                {money(posting.amountInCents)}
+                              </b>
+                              <small>
+                                {accountLabels[posting.account] ??
+                                  posting.account}
+                              </small>
+                            </span>
+                          ))}
+                        </div>
+                      </article>
+                    ))
+                  ) : (
+                    <div className="wallet-history-empty">
+                      <strong>Nenhuma movimentação encontrada</strong>
+                      <span>
+                        Altere os filtros para consultar outro período.
+                      </span>
                     </div>
-                    <div className="posting-summary">
-                      {entry.postings.map((posting, index) => (
-                        <span key={`${posting.code}-${index}`}>
-                          {posting.direction === 'CREDIT' ? '+' : '−'}{' '}
-                          {money(posting.amountInCents)} · {posting.account}
-                        </span>
-                      ))}
-                    </div>
-                  </article>
-                ))}
+                  )}
+                </div>
               </div>
-            </section>
+            </details>
           </>
         ) : null}
         {status ? (

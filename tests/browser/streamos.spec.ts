@@ -474,3 +474,29 @@ test('detalhes da contribuição abrem como modal central responsivo', async ({
   await expect(page.locator('body')).not.toHaveCSS('overflow', 'hidden');
   await expect(trigger).toBeFocused();
 });
+
+test('agenda e extrato funcionam como menus expansíveis da carteira', async ({
+  page,
+}) => {
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const registration = await page.request.post(`${api}/auth/register`, {
+    data: {
+      email: `wallet-menu-${suffix}@streamos.local`,
+      password: 'StreamOS-Wallet-Menu-123!',
+      displayName: 'Carteira Menu E2E',
+      acceptTerms: true,
+    },
+  });
+  expect(registration.ok()).toBeTruthy();
+
+  await page.goto('/carteira');
+  const receivables = page.locator('#recebiveis');
+  const statement = page.locator('#extrato');
+  await expect(receivables).toHaveAttribute('open', '');
+  await expect(statement).not.toHaveAttribute('open', '');
+  await statement.getByText('Extrato', { exact: true }).click();
+  await expect(statement).toHaveAttribute('open', '');
+  await expect(receivables).not.toHaveAttribute('open', '');
+  await expect(page.getByLabel('Tipo de movimentação')).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+});
