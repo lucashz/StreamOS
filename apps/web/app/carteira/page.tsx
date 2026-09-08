@@ -237,7 +237,7 @@ export default function WalletPage() {
             </section>
 
             <div className="wallet-grid" id="limites">
-              <section className="feature-card settings-form">
+              <section className="feature-card settings-form wallet-settings-card">
                 <h2>Destino Pix</h2>
                 {settings && !settings.legalProfileCompleted ? (
                   <div className="wallet-prerequisite" role="alert">
@@ -254,25 +254,27 @@ export default function WalletPage() {
                     </Link>
                   </div>
                 ) : null}
-                {settings?.pixKeyMasked ? (
-                  <>
-                    <p>
-                      Chave atual: <strong>{settings.pixKeyMasked}</strong>{' '}
-                      <small>({settings.pixKeyType})</small>
-                    </p>
-                    <span
-                      className={`status-pill${settings.providerWithdrawBlocked ? ' danger' : ''}`}
-                    >
-                      {settings.providerWithdrawBlocked
-                        ? 'Saque bloqueado — atualize sua chave Pix'
-                        : settings.providerSubaccountConfigured
-                          ? 'Carteira verificada'
-                          : 'Carteira sandbox'}
-                    </span>
-                  </>
-                ) : (
-                  <p>Cadastre uma chave Pix antes do primeiro recebimento.</p>
-                )}
+                <div className="wallet-card-overview">
+                  {settings?.pixKeyMasked ? (
+                    <>
+                      <p>
+                        Chave atual: <strong>{settings.pixKeyMasked}</strong>{' '}
+                        <small>({settings.pixKeyType})</small>
+                      </p>
+                      <span
+                        className={`status-pill${settings.providerWithdrawBlocked ? ' danger' : ''}`}
+                      >
+                        {settings.providerWithdrawBlocked
+                          ? 'Saque bloqueado — atualize sua chave Pix'
+                          : settings.providerSubaccountConfigured
+                            ? 'Carteira verificada'
+                            : 'Carteira sandbox'}
+                      </span>
+                    </>
+                  ) : (
+                    <p>Cadastre uma chave Pix antes do primeiro recebimento.</p>
+                  )}
+                </div>
                 <label>
                   Tipo
                   <select
@@ -302,7 +304,7 @@ export default function WalletPage() {
                 </button>
               </section>
 
-              <section className="feature-card settings-form">
+              <section className="feature-card settings-form wallet-settings-card">
                 <h2>Solicitar saque</h2>
                 <div className="limit-list">
                   <span>
