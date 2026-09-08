@@ -442,6 +442,9 @@ test('detalhes da contribuição abrem como modal central responsivo', async ({
     name: 'Abrir contribuição de Apoiador do modal',
   });
   await expect(trigger).toBeVisible();
+  await expect(
+    page.locator('.contribution-table-head').getByText('OBS', { exact: true }),
+  ).toHaveCount(0);
   await trigger.click();
   const dialog = page.getByRole('dialog', {
     name: 'Apoiador do modal',

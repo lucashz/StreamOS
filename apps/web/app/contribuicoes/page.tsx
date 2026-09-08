@@ -162,7 +162,6 @@ export default function ContributionsPage() {
               <span>Taxas</span>
               <span>Líquido</span>
               <span>Pagamento</span>
-              <span>OBS</span>
             </div>
           ) : null}
           {loading ? (
@@ -196,18 +195,6 @@ export default function ContributionsPage() {
                   tone={item.status === 'CONFIRMED' ? 'success' : 'neutral'}
                 >
                   {statusLabel[item.status] ?? item.status}
-                </StatusBadge>
-                <StatusBadge
-                  tone={
-                    item.trace.overlayStatus === 'COMPLETED'
-                      ? 'success'
-                      : item.trace.overlayFailure
-                        ? 'danger'
-                        : 'neutral'
-                  }
-                >
-                  {statusLabel[item.trace.overlayStatus] ??
-                    item.trace.overlayStatus}
                 </StatusBadge>
               </button>
             ))
