@@ -3665,7 +3665,7 @@ a {
   min-height: 390px;
   padding: 22px;
 }
-.wallet-settings-card {
+.wallet-page .wallet-settings-card {
   display: flex;
   flex-direction: column;
   gap: 16px;
