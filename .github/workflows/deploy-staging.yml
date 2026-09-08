@@ -1,0 +1,87 @@
+name: deploy-staging
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: streamos-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: staging
+    permissions:
+      contents: read
+    env:
+      DEPLOY_ROOT: /opt/streamos
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
+        run: |
+          test -n "$SSH_KEY"
+          test -n "$SSH_KNOWN_HOSTS"
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+
+      - name: Package release
+        run: |
+          tar \
+            --exclude=.git \
+            --exclude=.env \
+            --exclude=.env.staging \
+            --exclude=.runtime \
+            --exclude=node_modules \
+            --exclude=.next \
+            --exclude=.turbo \
+            -czf "/tmp/streamos-${GITHUB_RUN_ID}.tar.gz" .
+
+      - name: Upload release
+        env:
+          SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
+          SSH_USER: ${{ secrets.STAGING_SSH_USER }}
+          SSH_PORT: ${{ secrets.STAGING_SSH_PORT }}
+        run: |
+          test -n "$SSH_HOST"
+          test -n "$SSH_USER"
+          port="${SSH_PORT:-22}"
+          ssh -p "$port" "$SSH_USER@$SSH_HOST" "mkdir -p '$DEPLOY_ROOT/incoming' '$DEPLOY_ROOT/releases' '$DEPLOY_ROOT/shared'"
+          scp -P "$port" "/tmp/streamos-${GITHUB_RUN_ID}.tar.gz" "$SSH_USER@$SSH_HOST:$DEPLOY_ROOT/incoming/"
+
+      - name: Deploy and activate release
+        env:
+          SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
+          SSH_USER: ${{ secrets.STAGING_SSH_USER }}
+          SSH_PORT: ${{ secrets.STAGING_SSH_PORT }}
+        run: |
+          port="${SSH_PORT:-22}"
+          ssh -p "$port" "$SSH_USER@$SSH_HOST" \
+            "DEPLOY_ROOT='$DEPLOY_ROOT' RELEASE_ID='$GITHUB_RUN_ID' RELEASE_SHA='$GITHUB_SHA' sh -s" <<'REMOTE'
+          set -eu
+          archive="$DEPLOY_ROOT/incoming/streamos-$RELEASE_ID.tar.gz"
+          release="$DEPLOY_ROOT/releases/$RELEASE_ID"
+          env_file="$DEPLOY_ROOT/shared/.env.staging"
+          test -f "$archive"
+          test -f "$env_file"
+          test ! -e "$release"
+          mkdir -p "$release"
+          tar -xzf "$archive" -C "$release"
+          ln -s "$env_file" "$release/.env.staging"
+          cd "$release"
+          sh tools/deploy-staging.sh
+          ln -sfn "$release" "$DEPLOY_ROOT/current.next"
+          mv -Tf "$DEPLOY_ROOT/current.next" "$DEPLOY_ROOT/current"
+          rm -f "$archive"
+          REMOTE
+
+      - name: Deployment summary
+        run: |
+          echo "### StreamOS staging" >> "$GITHUB_STEP_SUMMARY"
+          echo "Release \`${GITHUB_SHA}\` implantada e validada pelo smoke test." >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,21 @@
+UPDATE "LiveQueueItem" SET "status" = 'QUEUED' WHERE "status" IN ('PENDING', 'AWAITING_MODERATION', 'APPROVED');
+UPDATE "LiveQueueItem" SET "status" = 'COMPLETED' WHERE "status" = 'PLAYED';
+UPDATE "LiveQueueItem" SET "status" = 'SKIPPED' WHERE "status" IN ('REJECTED', 'CANCELED');
+UPDATE "LiveQueueItem" SET "status" = 'PLAYING' WHERE "status" = 'PAUSED';
+UPDATE "LiveQueueAction" SET "previousStatus" = 'QUEUED' WHERE "previousStatus" IN ('PENDING', 'AWAITING_MODERATION', 'APPROVED');
+UPDATE "LiveQueueAction" SET "nextStatus" = 'QUEUED' WHERE "nextStatus" IN ('PENDING', 'AWAITING_MODERATION', 'APPROVED');
+UPDATE "LiveQueueAction" SET "previousStatus" = 'COMPLETED' WHERE "previousStatus" = 'PLAYED';
+UPDATE "LiveQueueAction" SET "nextStatus" = 'COMPLETED' WHERE "nextStatus" = 'PLAYED';
+UPDATE "LiveQueueAction" SET "previousStatus" = 'SKIPPED' WHERE "previousStatus" IN ('REJECTED', 'CANCELED');
+UPDATE "LiveQueueAction" SET "nextStatus" = 'SKIPPED' WHERE "nextStatus" IN ('REJECTED', 'CANCELED');
+UPDATE "LiveQueueAction" SET "previousStatus" = 'PLAYING' WHERE "previousStatus" = 'PAUSED';
+UPDATE "LiveQueueAction" SET "nextStatus" = 'PLAYING' WHERE "nextStatus" = 'PAUSED';
+
+ALTER TABLE "LiveQueueItem" ALTER COLUMN "status" DROP DEFAULT;
+ALTER TYPE "LiveQueueStatus" RENAME TO "LiveQueueStatus_legacy";
+CREATE TYPE "LiveQueueStatus" AS ENUM ('QUEUED', 'DISPATCHING', 'PLAYING', 'COMPLETED', 'MEDIA_FAILED', 'SKIPPED', 'FAILED', 'EXPIRED');
+ALTER TABLE "LiveQueueItem" ALTER COLUMN "status" TYPE "LiveQueueStatus" USING ("status"::text::"LiveQueueStatus");
+ALTER TABLE "LiveQueueAction" ALTER COLUMN "previousStatus" TYPE "LiveQueueStatus" USING ("previousStatus"::text::"LiveQueueStatus");
+ALTER TABLE "LiveQueueAction" ALTER COLUMN "nextStatus" TYPE "LiveQueueStatus" USING ("nextStatus"::text::"LiveQueueStatus");
+ALTER TABLE "LiveQueueItem" ALTER COLUMN "status" SET DEFAULT 'QUEUED';
+DROP TYPE "LiveQueueStatus_legacy";

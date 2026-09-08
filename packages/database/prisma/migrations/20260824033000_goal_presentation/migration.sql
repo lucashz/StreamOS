@@ -1,0 +1,5 @@
+ALTER TABLE "Goal"
+ADD COLUMN "deadline" TIMESTAMP(3),
+ADD COLUMN "color" TEXT NOT NULL DEFAULT '#7c5cff',
+ADD COLUMN "imageUrl" TEXT,
+ADD COLUMN "completionMessage" TEXT;

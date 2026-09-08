@@ -1,0 +1,280 @@
+/* Ajustes finais do workspace de alertas, carregados após os estilos legados. */
+.alert-editor-page {
+  max-width: 1400px;
+  gap: 18px;
+}
+
+.alert-editor-page > .feature-header,
+.alert-customization > .section-heading {
+  margin-bottom: 0;
+}
+
+.alert-editor-page .feature-header-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  align-items: stretch;
+}
+
+.alert-editor-page .feature-header-actions > .button-link {
+  width: 100%;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+}
+
+.alert-customization {
+  gap: 12px;
+}
+
+.alert-customization .advanced-alert-editor {
+  grid-template-columns: minmax(380px, 500px) minmax(420px, 1fr);
+  gap: 14px 16px;
+}
+
+.alert-customization .variation-list {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  padding: 16px;
+}
+
+.alert-customization .variation-list-head {
+  align-items: center;
+}
+
+.alert-customization .variation-list-head > .primary-button {
+  min-width: 96px;
+  min-height: 40px;
+}
+
+.alert-customization .alert-editor-steps {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  position: static;
+}
+
+.alert-customization .alert-template-picker {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  padding: 16px;
+}
+
+.alert-customization .alert-template-picker button {
+  grid-template-rows: minmax(64px, 1fr) auto;
+  min-height: 104px;
+  align-content: stretch;
+}
+
+.alert-customization .alert-template-picker button > strong {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+}
+
+.alert-customization .livepix-customize-card {
+  grid-column: 1;
+  grid-row: 4;
+}
+
+.alert-customization .alert-live-preview {
+  grid-column: 2;
+  grid-row: 4 / span 8;
+  position: sticky;
+  top: 16px;
+  z-index: 1;
+  align-self: start;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  gap: 12px;
+  padding: 16px;
+}
+
+/* Os cards e a prévia reproduzem a linguagem visual aplicada no overlay. */
+.alert-customization .alert-template-demo.template-neon-pulse,
+.alert-customization .alert-preview-stage.template-neon-pulse {
+  box-shadow:
+    0 0 28px
+      color-mix(in srgb, var(--preview-accent, var(--accent)) 28%, transparent),
+    inset 0 0 24px
+      color-mix(in srgb, var(--preview-accent, var(--accent)) 10%, transparent);
+}
+
+.alert-customization .alert-template-demo.template-card,
+.alert-customization .alert-preview-stage.template-card {
+  justify-items: start;
+  border-left-width: 6px;
+  border-radius: 9px;
+  text-align: left !important;
+}
+
+.alert-customization .alert-template-demo.template-minimal,
+.alert-customization .alert-preview-stage.template-minimal {
+  border-color: transparent !important;
+  background: transparent;
+  box-shadow: none;
+}
+
+.alert-customization .alert-preview-stage.template-video-focus {
+  width: 96%;
+  min-height: 88%;
+  align-content: end;
+  background: linear-gradient(180deg, #080b1433, #080b14f5 76%);
+}
+
+.alert-customization .alert-template-demo.template-video-focus {
+  align-content: end;
+  background: linear-gradient(180deg, #2b314055, #080b14 78%);
+}
+
+.alert-customization .alert-template-demo.template-song-compact,
+.alert-customization .alert-preview-stage.template-song-compact {
+  min-height: auto;
+  justify-items: start;
+  align-content: center;
+  border-radius: 16px;
+  text-align: left !important;
+}
+
+.alert-customization .alert-preview-stage.template-song-compact {
+  width: min(88%, 440px);
+  padding: 16px 20px;
+}
+
+.alert-customization
+  .alert-preview-stage:is(.template-card, .template-song-compact)
+  .preview-placeholder {
+  width: 72px;
+  height: 72px;
+}
+
+.alert-customization .livepix-config-heading {
+  grid-column: 1;
+  grid-row: 5;
+  margin: 2px 0 -2px;
+}
+
+.alert-customization .livepix-duration-card {
+  grid-column: 1;
+  grid-row: 6;
+}
+
+.alert-customization .livepix-sound-card {
+  grid-column: 1;
+  grid-row: 7;
+}
+
+.alert-customization .livepix-tts-card {
+  grid-column: 1;
+  grid-row: 8;
+}
+
+.alert-customization .livepix-info-card {
+  grid-column: 1;
+  grid-row: 9;
+}
+
+.alert-customization .livepix-advanced-card {
+  grid-column: 1;
+  grid-row: 10;
+}
+
+.alert-customization .editor-actions {
+  grid-column: 1;
+  grid-row: 11;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  align-items: stretch;
+  gap: 8px;
+}
+
+.alert-customization .editor-actions > button {
+  width: 100%;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+}
+
+.alert-customization .livepix-file-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 14px;
+}
+
+.alert-customization .alert-preview-controls {
+  align-items: center;
+}
+
+.alert-customization .alert-preview-controls button,
+.alert-customization .alert-preview-controls label {
+  min-height: 36px;
+}
+
+.alert-customization .alert-preview-controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alert-customization .alert-editor-form > p[role='status'] {
+  grid-column: 1;
+  grid-row: 12;
+  margin: 0;
+}
+
+.alert-customization
+  :is(
+    .livepix-customize-card,
+    .livepix-setting-card,
+    .livepix-info-card,
+    .livepix-advanced-card
+  ) {
+  gap: 14px;
+  padding: 16px;
+}
+
+@container (max-width: 920px) {
+  .alert-customization .advanced-alert-editor {
+    grid-template-columns: 1fr;
+  }
+
+  .alert-customization .variation-list,
+  .alert-customization .alert-editor-steps,
+  .alert-customization .alert-template-picker,
+  .alert-customization .livepix-customize-card,
+  .alert-customization .livepix-config-heading,
+  .alert-customization .livepix-duration-card,
+  .alert-customization .livepix-sound-card,
+  .alert-customization .livepix-tts-card,
+  .alert-customization .livepix-info-card,
+  .alert-customization .livepix-advanced-card,
+  .alert-customization .editor-actions,
+  .alert-customization .alert-editor-form > p[role='status'],
+  .alert-customization .alert-live-preview {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .alert-customization .alert-live-preview {
+    position: static !important;
+    z-index: 0;
+    margin: 0;
+  }
+}
+
+@container (max-width: 560px) {
+  .alert-customization .editor-actions {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .alert-editor-page .feature-header-actions {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+}

@@ -1,0 +1,38 @@
+{
+	email {$ACME_EMAIL:admin@localhost}
+}
+
+(streamos_common) {
+	encode zstd gzip
+	log {
+		output stdout
+		format json
+	}
+	header {
+		-Server
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), geolocation=(), microphone=()"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	}
+}
+
+{$APP_DOMAIN} {
+	import streamos_common
+	reverse_proxy web:3000
+}
+
+{$API_DOMAIN} {
+	import streamos_common
+	reverse_proxy api:3001
+}
+
+{$REALTIME_DOMAIN} {
+	import streamos_common
+	reverse_proxy realtime:3002
+}
+
+{$OVERLAY_DOMAIN} {
+	import streamos_common
+	reverse_proxy overlay:3003
+}

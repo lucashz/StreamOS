@@ -1,0 +1,225 @@
+name: streamos-staging
+
+x-app-environment: &app-environment
+  NODE_ENV: production
+  DATABASE_URL: postgresql://streamos:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}@postgres:5432/streamos
+  REDIS_URL: redis://redis:6379
+  APP_URL: https://${APP_DOMAIN:?APP_DOMAIN required}
+  API_URL: https://${API_DOMAIN:?API_DOMAIN required}
+  PUBLIC_API_URL: https://${API_DOMAIN:?API_DOMAIN required}
+  INTERNAL_API_URL: http://api:3001
+  REALTIME_URL: wss://${REALTIME_DOMAIN:?REALTIME_DOMAIN required}
+  OVERLAY_URL: https://${OVERLAY_DOMAIN:?OVERLAY_DOMAIN required}
+  SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET required}
+  WEBHOOK_MOCK_SECRET: ${WEBHOOK_MOCK_SECRET:?WEBHOOK_MOCK_SECRET required}
+  APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:?APP_ENCRYPTION_KEY required}
+  METRICS_TOKEN: ${METRICS_TOKEN:?METRICS_TOKEN required}
+  MAIL_HOST: mailpit
+  MAIL_PORT: 1025
+  PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-mock}
+  WOOVI_BASE_URL: ${WOOVI_BASE_URL:-}
+  WOOVI_APP_ID: ${WOOVI_APP_ID:-}
+  WOOVI_WEBHOOK_AUTHORIZATION: ${WOOVI_WEBHOOK_AUTHORIZATION:-}
+  WOOVI_WEBHOOK_PUBLIC_KEY: ${WOOVI_WEBHOOK_PUBLIC_KEY:-}
+  WOOVI_SOURCE_PIX_KEY: ${WOOVI_SOURCE_PIX_KEY:-}
+  PAYMENTS_ENABLED: ${PAYMENTS_ENABLED:-false}
+  PAYOUTS_ENABLED: ${PAYOUTS_ENABLED:-false}
+  VIDEOPIX_ENABLED: ${VIDEOPIX_ENABLED:-true}
+  SONGPIX_ENABLED: ${SONGPIX_ENABLED:-true}
+  SUBSCRIPTIONS_ENABLED: ${SUBSCRIPTIONS_ENABLED:-true}
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+  ERROR_TRACKING_DSN: ${ERROR_TRACKING_DSN:-}
+  VIDEO_PROVIDER: ${VIDEO_PROVIDER:-mock}
+  YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+  SONG_CATALOG_PROVIDER: ${SONG_CATALOG_PROVIDER:-mock}
+  SONG_CATALOG_BASE_URL: ${SONG_CATALOG_BASE_URL:-}
+  SONG_CATALOG_API_KEY: ${SONG_CATALOG_API_KEY:-}
+
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: 20m
+    max-file: '5'
+
+services:
+  proxy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?APP_DOMAIN required}
+      API_DOMAIN: ${API_DOMAIN:?API_DOMAIN required}
+      REALTIME_DOMAIN: ${REALTIME_DOMAIN:?REALTIME_DOMAIN required}
+      OVERLAY_DOMAIN: ${OVERLAY_DOMAIN:?OVERLAY_DOMAIN required}
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL required}
+    ports: ['80:80', '443:443', '443:443/udp']
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web: { condition: service_healthy }
+      overlay: { condition: service_healthy }
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      POSTGRES_DB: streamos
+      POSTGRES_USER: streamos
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U streamos -d streamos]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    logging: *default-logging
+    command: [redis-server, --appendonly, 'yes']
+    volumes: [redis_data:/data]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    restart: unless-stopped
+    logging: *default-logging
+    expose: ['1025', '8025']
+
+  migrate:
+    build:
+      context: .
+      args:
+        STREAMOS_PACKAGE: '@streamos/database'
+        NEXT_PUBLIC_API_URL: https://${API_DOMAIN:?API_DOMAIN required}
+        NEXT_PUBLIC_REALTIME_URL: https://${REALTIME_DOMAIN:?REALTIME_DOMAIN required}
+    environment: *app-environment
+    command: [sh, -c, corepack pnpm --filter @streamos/database db:deploy]
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: no
+    init: true
+    logging: *default-logging
+
+  api:
+    build:
+      context: .
+      args:
+        STREAMOS_PACKAGE: '@streamos/api'
+        NEXT_PUBLIC_API_URL: https://${API_DOMAIN:?API_DOMAIN required}
+        NEXT_PUBLIC_REALTIME_URL: https://${REALTIME_DOMAIN:?REALTIME_DOMAIN required}
+    restart: unless-stopped
+    init: true
+    logging: *default-logging
+    environment: *app-environment
+    expose: ['3001']
+    volumes: [media_data:/app/.runtime/uploads]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+      mailpit: { condition: service_started }
+    healthcheck:
+      test: [CMD, wget, -qO-, http://localhost:3001/health/ready]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  worker:
+    build:
+      context: .
+      args:
+        STREAMOS_PACKAGE: '@streamos/worker'
+        NEXT_PUBLIC_API_URL: https://${API_DOMAIN:?API_DOMAIN required}
+        NEXT_PUBLIC_REALTIME_URL: https://${REALTIME_DOMAIN:?REALTIME_DOMAIN required}
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+    logging: *default-logging
+    environment: *app-environment
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+
+  realtime:
+    build:
+      context: .
+      args:
+        STREAMOS_PACKAGE: '@streamos/realtime'
+        NEXT_PUBLIC_API_URL: https://${API_DOMAIN:?API_DOMAIN required}
+        NEXT_PUBLIC_REALTIME_URL: https://${REALTIME_DOMAIN:?REALTIME_DOMAIN required}
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+    logging: *default-logging
+    environment: *app-environment
+    expose: ['3002']
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "require('net').connect(3002,'127.0.0.1').on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  web:
+    build:
+      context: .
+      args:
+        STREAMOS_PACKAGE: '@streamos/web'
+        NEXT_PUBLIC_API_URL: https://${API_DOMAIN:?API_DOMAIN required}
+        NEXT_PUBLIC_REALTIME_URL: https://${REALTIME_DOMAIN:?REALTIME_DOMAIN required}
+        INTERNAL_API_URL: http://api:3001
+    restart: unless-stopped
+    init: true
+    logging: *default-logging
+    environment: *app-environment
+    expose: ['3000']
+    depends_on:
+      api: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, wget, -qO-, http://localhost:3000/entrar]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  overlay:
+    build:
+      context: .
+      args:
+        STREAMOS_PACKAGE: '@streamos/overlay'
+        NEXT_PUBLIC_API_URL: https://${API_DOMAIN:?API_DOMAIN required}
+        NEXT_PUBLIC_REALTIME_URL: https://${REALTIME_DOMAIN:?REALTIME_DOMAIN required}
+    restart: unless-stopped
+    init: true
+    logging: *default-logging
+    environment: *app-environment
+    expose: ['3003']
+    depends_on:
+      realtime: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, wget, -qO-, http://localhost:3003]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  postgres_data:
+  redis_data:
+  media_data:
+  caddy_data:
+  caddy_config:

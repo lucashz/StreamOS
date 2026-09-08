@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StreamOS — Estratégia, Produto e Infraestrutura</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  :root{
+    --ink:#0b1020; --muted:#5c6478; --paper:#f7f8fc; --line:#dfe3ed;
+    --violet:#7357ff; --cyan:#28d7e5; --lime:#b8f34a; --navy:#11172b;
+  }
+  html,body{margin:0;padding:0;background:#dfe3ea;color:var(--ink);font-family:Inter,Segoe UI,Arial,sans-serif}
+  .page{width:210mm;height:297mm;margin:8mm auto;background:white;position:relative;overflow:hidden;padding:18mm 17mm 16mm;page-break-after:always}
+  .page:last-child{page-break-after:auto}
+  h1,h2,h3,p{margin-top:0}
+  h1{font-size:38px;line-height:1.03;letter-spacing:-1.8px}
+  h2{font-size:25px;line-height:1.12;letter-spacing:-.7px;margin-bottom:7mm}
+  h3{font-size:13px;text-transform:uppercase;letter-spacing:1.1px;color:var(--violet);margin-bottom:3mm}
+  p,li,td,th{font-size:10.3px;line-height:1.45}
+  .muted{color:var(--muted)}
+  .small{font-size:8.2px;line-height:1.35}
+  .eyebrow{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--violet)}
+  .num{font-variant-numeric:tabular-nums}
+  .footer{position:absolute;left:17mm;right:17mm;bottom:8mm;border-top:1px solid var(--line);padding-top:3mm;display:flex;justify-content:space-between;color:#747c90;font-size:7.5px}
+  .cover{background:var(--navy);color:white;padding:24mm 20mm}
+  .cover:before{content:"";position:absolute;width:160mm;height:160mm;border-radius:50%;right:-55mm;top:-45mm;background:radial-gradient(circle at 35% 45%,rgba(40,215,229,.8),rgba(115,87,255,.25) 36%,transparent 69%)}
+  .cover:after{content:"";position:absolute;width:100mm;height:100mm;left:-50mm;bottom:-35mm;border-radius:50%;background:radial-gradient(circle,rgba(184,243,74,.23),transparent 68%)}
+  .brand{font-size:20px;font-weight:800;letter-spacing:-.5px}
+  .brand b{color:var(--cyan)}
+  .cover h1{font-size:49px;max-width:150mm;margin-top:48mm}
+  .cover .lead{font-size:16px;line-height:1.45;max-width:145mm;color:#d6dceb}
+  .chips{display:flex;gap:2mm;flex-wrap:wrap;margin-top:10mm}
+  .chip{border:1px solid rgba(255,255,255,.25);border-radius:99px;padding:2.5mm 4mm;font-size:9px;color:#eef1f8}
+  .cover-meta{position:absolute;bottom:22mm;left:20mm;right:20mm;display:flex;justify-content:space-between;align-items:end;color:#9ba6bc;font-size:9px}
+  .cover-meta strong{display:block;color:white;font-size:12px;margin-bottom:1mm}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:5mm}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm}
+  .card{border:1px solid var(--line);border-radius:4mm;padding:5mm;background:white}
+  .card.dark{background:var(--navy);color:white;border:0}
+  .card.tint{background:#f3f1ff;border-color:#dcd6ff}
+  .card h4{margin:0 0 2mm;font-size:12px}
+  .card p:last-child{margin-bottom:0}
+  .kpi{font-size:24px;font-weight:800;letter-spacing:-.7px;color:var(--violet)}
+  .kpi-label{font-size:8px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
+  .callout{padding:5mm;border-left:3px solid var(--cyan);background:#effcff;border-radius:0 3mm 3mm 0}
+  .callout strong{display:block;font-size:12px;margin-bottom:1mm}
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;color:#555f74;font-size:8px;text-transform:uppercase;letter-spacing:.6px;background:#f5f6fa}
+  th,td{padding:2.6mm 2.4mm;border-bottom:1px solid var(--line);vertical-align:top}
+  .yes{color:#16836c;font-weight:700}.warn{color:#be6b13;font-weight:700}.no{color:#b43e54;font-weight:700}
+  .flow{display:flex;align-items:stretch;gap:2mm;margin:5mm 0}
+  .flow .step{flex:1;background:#f3f5fa;border:1px solid var(--line);border-radius:3mm;padding:4mm 3mm;text-align:center;font-size:9px}
+  .flow .arrow{align-self:center;color:var(--violet);font-weight:800}
+  .bar{height:5px;background:#e9ebf2;border-radius:9px;overflow:hidden;margin-top:2mm}
+  .bar span{height:100%;display:block;background:linear-gradient(90deg,var(--violet),var(--cyan))}
+  ul{padding-left:5mm;margin:2mm 0 0}
+  li{margin-bottom:1.3mm}
+  .section-no{position:absolute;right:17mm;top:14mm;color:#e7e9f0;font-size:48px;font-weight:900}
+  .formula{font-family:Consolas,monospace;font-size:9px;padding:4mm;background:#10162a;color:#dce6ff;border-radius:3mm}
+  .timeline{border-left:2px solid #d8d3ff;margin-left:3mm;padding-left:7mm}
+  .phase{position:relative;margin-bottom:5mm}
+  .phase:before{content:"";position:absolute;width:8px;height:8px;border-radius:50%;background:var(--violet);left:-8.2mm;top:2px}
+  .phase strong{font-size:11px}.phase span{float:right;color:var(--violet);font-weight:700;font-size:9px}
+  .architecture{background:#0f1528;color:#eef2ff;border-radius:4mm;padding:5mm}
+  .arch-row{display:flex;gap:3mm;align-items:center;margin-bottom:3mm}
+  .arch-box{flex:1;border:1px solid #3c4663;border-radius:2mm;padding:3mm;text-align:center;font-size:8px;background:#18203a}
+  .arch-box.accent{border-color:var(--cyan);color:#adf7ff}
+  .arch-label{width:23mm;font-size:7px;text-transform:uppercase;letter-spacing:.8px;color:#8d99b6}
+  .sources li{font-size:8.1px;word-break:break-word;margin-bottom:2mm}
+  .tag{display:inline-block;font-size:7px;text-transform:uppercase;letter-spacing:.6px;font-weight:700;padding:1mm 2mm;border-radius:2mm;background:#ebe8ff;color:#5944c4}
+  .mock{border:1px solid #d9deea;border-radius:5mm;overflow:hidden;background:#f7f8fc;box-shadow:0 5px 18px rgba(22,29,54,.08)}
+  .mock-top{height:10mm;background:white;border-bottom:1px solid #e3e6ef;display:flex;align-items:center;padding:0 4mm;gap:1.5mm}
+  .dot{width:5px;height:5px;border-radius:50%;background:#d8dce6}.dot:nth-child(1){background:#ff7e78}.dot:nth-child(2){background:#ffc95d}.dot:nth-child(3){background:#56d68b}
+  .mock-body{padding:5mm}
+  .field{background:white;border:1px solid #dfe3ed;border-radius:2.5mm;padding:3mm;margin-bottom:2.5mm;color:#697186;font-size:8px}
+  .button{background:linear-gradient(90deg,var(--violet),#8a6cff);color:white;border-radius:2.5mm;padding:3mm;text-align:center;font-weight:800;font-size:9px}
+  .mini-row{display:flex;justify-content:space-between;gap:3mm;padding:2.5mm 0;border-bottom:1px solid #e4e7ef;font-size:8px}
+  .screen{background:linear-gradient(135deg,#11182d,#293351);border-radius:4mm;min-height:75mm;position:relative;overflow:hidden;color:white}
+  .alert-demo{position:absolute;left:12mm;right:12mm;top:21mm;background:rgba(12,17,32,.92);border:1px solid rgba(40,215,229,.7);border-radius:4mm;padding:5mm;text-align:center;box-shadow:0 0 30px rgba(40,215,229,.25)}
+  .alert-demo .amount{font-size:21px;font-weight:900;color:var(--lime)}
+  .boss{background:linear-gradient(180deg,#25153f,#11182d);border-radius:4mm;padding:7mm;color:white;text-align:center}
+  .boss-face{font-size:47px;line-height:1;margin:3mm 0}
+  .hp{height:9px;border-radius:9px;background:#3b2849;overflow:hidden;margin:3mm 0}.hp span{display:block;width:68%;height:100%;background:linear-gradient(90deg,#ff3f78,#ff8d4d)}
+  .spark{display:inline-block;background:#2b3655;border:1px solid #536080;border-radius:99px;padding:1.5mm 3mm;font-size:7px;margin:1mm}
+  @media print{html,body{background:white}.page{margin:0;box-shadow:none}}
+</style>
+</head>
+<body>
+
+<section class="page cover">
+  <div class="brand">Stream<b>OS</b></div>
+  <div class="eyebrow" style="color:var(--cyan);margin-top:8mm">Projeto estratégico • versão 2.0</div>
+  <h1>A infraestrutura da monetização ao vivo.</h1>
+  <p class="lead">Plataforma independente para pagamentos, carteira, saques, assinaturas, alertas e experiências interativas — concebida para substituir completamente a LivePix.</p>
+  <div class="chips"><span class="chip">Produto</span><span class="chip">Pagamentos</span><span class="chip">Infraestrutura</span><span class="chip">Segurança</span><span class="chip">FinOps</span></div>
+  <div class="cover-meta"><div><strong>Documento executivo e técnico</strong>Estratégia de construção e escala</div><div style="text-align:right"><strong>Julho de 2026</strong>Brasil • valores referenciais</div></div>
+</section>
+
+<section class="page">
+  <div class="section-no">01</div><div class="eyebrow">Tese do produto</div>
+  <h2>Não é uma camada sobre a LivePix.<br>É a alternativa completa.</h2>
+  <div class="callout"><strong>Definição corrigida</strong>StreamOS é uma plataforma independente de monetização para criadores. Recebe pagamentos, registra saldo, executa saques, gerencia recorrência e produz alertas sem exigir conta ou integração com a LivePix.</div>
+  <div class="grid2" style="margin-top:7mm">
+    <div>
+      <h3>Para quem contribui</h3>
+      <ul><li>Checkout rápido por Pix ou cartão</li><li>Mensagem, mídia e TTS</li><li>Assinatura e Pix Automático</li><li>Privacidade e transparência</li><li>Recompensas e experiências ao vivo</li></ul>
+    </div>
+    <div>
+      <h3>Para quem cria</h3>
+      <ul><li>Página pública personalizada</li><li>Alertas e overlays no OBS</li><li>Carteira, extrato e saque 24/7</li><li>Metas, rankings e campanhas</li><li>Dados, automações e API</li></ul>
+    </div>
+  </div>
+  <h3 style="margin-top:8mm">Princípio operacional</h3>
+  <div class="flow"><div class="step">Experiência<br><b>100% StreamOS</b></div><div class="arrow">→</div><div class="step">Orquestração<br><b>própria</b></div><div class="arrow">→</div><div class="step">Trilhos regulados<br><b>parceiros</b></div></div>
+  <p class="muted">Substituir a LivePix na experiência do usuário não exige virar banco no primeiro dia. A abordagem recomendada é controlar produto, dados, regras e ledger, usando uma instituição de pagamento regulada para os trilhos financeiros.</p>
+  <div class="grid3" style="margin-top:7mm">
+    <div class="card tint"><div class="kpi">1</div><div class="kpi-label">Conta StreamOS</div><p class="small">Um cadastro para monetização, comunidade e operação.</p></div>
+    <div class="card tint"><div class="kpi">&lt; 2s</div><div class="kpi-label">Meta de alerta</div><p class="small">Confirmação recebida até aparecer no overlay.</p></div>
+    <div class="card tint"><div class="kpi">24/7</div><div class="kpi-label">Operação</div><p class="small">Pagamentos e saques não respeitam horário comercial.</p></div>
+  </div>
+  <div class="footer"><span>StreamOS • Projeto estratégico</span><span>02</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">02</div><div class="eyebrow">Escopo funcional</div>
+  <h2>O produto mínimo que realmente substitui.</h2>
+  <table>
+    <thead><tr><th>Domínio</th><th>Capacidades obrigatórias</th><th>MVP</th></tr></thead>
+    <tbody>
+      <tr><td><b>Conta & identidade</b></td><td>Cadastro, KYC/KYB, 2FA, recuperação, consentimentos e dispositivo confiável</td><td class="yes">Sim</td></tr>
+      <tr><td><b>Checkout</b></td><td>Pix dinâmico, copia e cola, cartão, mensagem, anonimato e recibo</td><td class="yes">Sim</td></tr>
+      <tr><td><b>Financeiro</b></td><td>Ledger de dupla entrada, saldo pendente/disponível, taxas, saque e devolução</td><td class="yes">Sim</td></tr>
+      <tr><td><b>Streaming</b></td><td>Alertas em tempo real, browser source OBS, fila, TTS, mídia e replay</td><td class="yes">Sim</td></tr>
+      <tr><td><b>Recorrência</b></td><td>Assinaturas por cartão e Pix Automático, falha, retentativa e cancelamento</td><td class="warn">V1</td></tr>
+      <tr><td><b>Engajamento</b></td><td>Metas, rankings, boss battle, streak, recompensas e campanhas</td><td class="warn">V1</td></tr>
+      <tr><td><b>Risco & suporte</b></td><td>Antifraude, moderação, chargeback, denúncias, bloqueios e trilha de auditoria</td><td class="yes">Sim</td></tr>
+      <tr><td><b>Plataforma</b></td><td>Webhooks, API, integrações, app, marketplace e white-label</td><td class="no">V2/V3</td></tr>
+    </tbody>
+  </table>
+  <h3 style="margin-top:8mm">O coração: ledger financeiro</h3>
+  <div class="formula">saldo_disponível = créditos_liquidados − taxas − saques − devoluções − reservas_de_risco</div>
+  <p class="muted" style="margin-top:3mm">O saldo não deve ser um número editável. Cada movimento gera lançamentos debit/credit imutáveis, idempotentes e reconciliáveis com o parceiro financeiro.</p>
+  <div class="grid2" style="margin-top:6mm">
+    <div class="card"><h4>Eventos financeiros</h4><p>Pagamento criado → confirmado → liquidado → disponível → sacado. Cada transição tem origem, horário, responsável e chave de idempotência.</p></div>
+    <div class="card"><h4>Conciliação</h4><p>Comparação automática entre ledger, extrato do parceiro, adquirente e conta de liquidação. Divergências abrem incidente.</p></div>
+  </div>
+  <div class="footer"><span>StreamOS • Escopo funcional</span><span>03</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">03</div><div class="eyebrow">Jornada financeira</div>
+  <h2>Do apoio ao saque, sem depender da LivePix.</h2>
+  <div class="flow"><div class="step">Página do<br><b>criador</b></div><div class="arrow">→</div><div class="step">Pix/cartão<br><b>confirmado</b></div><div class="arrow">→</div><div class="step">Alerta<br><b>ao vivo</b></div><div class="arrow">→</div><div class="step">Carteira<br><b>e saque</b></div></div>
+  <div class="grid2" style="margin-top:6mm">
+    <div>
+      <h3>Checkout do apoiador</h3>
+      <ul><li>URL pública e QR Code próprio por criador</li><li>Pix dinâmico e copia e cola</li><li>Cartão com tokenização no adquirente</li><li>Mensagem, apelido e opção anônima</li><li>Upload de imagem, áudio, vídeo ou link</li><li>Consentimento e regras antes do envio</li><li>Recibo e status do pagamento</li></ul>
+    </div>
+    <div>
+      <h3>Carteira do criador</h3>
+      <ul><li>Saldo pendente, bloqueado e disponível</li><li>Extrato pesquisável e exportação</li><li>Taxa discriminada por transação</li><li>Saque Pix para mesma titularidade</li><li>Devolução total ou parcial</li><li>Reserva e hold baseados em risco</li><li>Notificação de pagamento e saque</li></ul>
+    </div>
+  </div>
+  <h3 style="margin-top:7mm">Assinaturas e receita recorrente</h3>
+  <div class="grid3">
+    <div class="card tint"><h4>Pix Automático</h4><p>Autorização, cobrança recorrente, limite, falha, retentativa e cancelamento.</p></div>
+    <div class="card tint"><h4>Cartão</h4><p>Planos mensais, token, atualização, chargeback e comunicação de falha.</p></div>
+    <div class="card tint"><h4>Benefícios</h4><p>Badges, conteúdo, Discord/comunidade e revogação ao expirar.</p></div>
+  </div>
+  <div class="callout" style="margin-top:7mm"><strong>Promessa central</strong>O criador abre uma conta, divulga seu link, recebe, interage e saca dentro do StreamOS. Nenhuma etapa operacional exige uma conta LivePix.</div>
+  <div class="footer"><span>StreamOS • Jornada financeira</span><span>04</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">04</div><div class="eyebrow">Streaming</div>
+  <h2>Alertas e overlays como produto, não acessório.</h2>
+  <div class="grid2">
+    <div class="card dark"><h4 style="font-size:17px">Browser Source para OBS</h4><p>URL individual protegida, conexão em tempo real, reconexão automática, replay e modo de teste sem pagamento real.</p></div>
+    <div class="card"><h4 style="font-size:17px">Editor visual</h4><p>Layouts, fontes, cores, animações, sons, duração, posição e regras por valor — sem exigir conhecimento técnico.</p></div>
+  </div>
+  <h3 style="margin-top:8mm">Tipos de alerta</h3>
+  <table>
+    <thead><tr><th>Formato</th><th>Controles</th><th>Risco tratado</th></tr></thead>
+    <tbody>
+      <tr><td>Texto + TTS</td><td>Voz, idioma, volume, valor mínimo e fila</td><td>Filtro de ofensa antes da transmissão</td></tr>
+      <tr><td>Imagem/GIF</td><td>Tamanho, duração e biblioteca aprovada</td><td>Scan, conteúdo impróprio e direitos</td></tr>
+      <tr><td>Áudio</td><td>Duração, normalização e volume máximo</td><td>Conteúdo ofensivo e sustos excessivos</td></tr>
+      <tr><td>Vídeo/clipe</td><td>Duração, preview e aprovação manual</td><td>NSFW, copyright e links maliciosos</td></tr>
+      <tr><td>Evento especial</td><td>Valor/faixa, raridade e cooldown</td><td>Spam e repetição abusiva</td></tr>
+    </tbody>
+  </table>
+  <h3 style="margin-top:7mm">Controles de transmissão</h3>
+  <div class="grid3">
+    <div class="card"><h4>Fila ao vivo</h4><p>Pausar, aprovar, pular, repetir, silenciar e priorizar alertas.</p></div>
+    <div class="card"><h4>Perfis</h4><p>Cenas distintas para gameplay, conversa, subathon ou evento.</p></div>
+    <div class="card"><h4>Moderação</h4><p>Automática, manual ou híbrida conforme risco do canal.</p></div>
+  </div>
+  <div class="callout" style="margin-top:7mm"><strong>Meta de experiência</strong>Pagamento confirmado até alerta visível em menos de 2 segundos no P95, com entrega idempotente e recuperação após queda do OBS.</div>
+  <div class="footer"><span>StreamOS • Alertas e overlays</span><span>05</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">05</div><div class="eyebrow">Gamificação</div>
+  <h2>Cada pagamento pode virar entretenimento.</h2>
+  <div class="grid2">
+    <div class="card tint"><h4>Dynamic Goals</h4><p>Metas com prazo, urgência e consequência: “faltam R$ 72 para liberar o desafio”. Progressão em tempo real e múltiplos estágios.</p></div>
+    <div class="card tint"><h4>Donate Streak</h4><p>Sequência por live, semana ou mês. Badges, multiplicadores e recompensas por consistência.</p></div>
+    <div class="card tint"><h4>Boss Battle</h4><p>Cada contribuição causa dano. Fases, equipes, ataques raros, barra no overlay e recompensa coletiva.</p></div>
+    <div class="card tint"><h4>Loot Drops</h4><p>Recompensa aleatória com probabilidades transparentes: som, destaque, desafio ou item digital.</p></div>
+    <div class="card tint"><h4>Ranking sazonal</h4><p>Top apoiadores diário, semanal, mensal e por temporada, com privacidade e opt-out.</p></div>
+    <div class="card tint"><h4>PixAthon</h4><p>Contribuições aumentam cronômetro, liberam milestones e acionam eventos automáticos.</p></div>
+  </div>
+  <h3 style="margin-top:7mm">Motor de regras</h3>
+  <div class="formula">SE valor ≥ R$ 20 E campanha = "boss" ENTÃO dano = 200 + bônus_aleatório; emitir alerta; atualizar ranking</div>
+  <p class="muted" style="margin-top:3mm">O streamer configura gatilhos sem código. O motor recebe o evento financeiro confirmado e dispara ações com cooldown, limites e auditoria.</p>
+  <div class="grid3" style="margin-top:6mm">
+    <div class="card"><div class="kpi">↑ ticket</div><div class="kpi-label">Progressão e recompensa</div></div>
+    <div class="card"><div class="kpi">↑ frequência</div><div class="kpi-label">Streak e temporadas</div></div>
+    <div class="card"><div class="kpi">↑ retenção</div><div class="kpi-label">Eventos coletivos</div></div>
+  </div>
+  <div class="footer"><span>StreamOS • Gamificação</span><span>06</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">06</div><div class="eyebrow">Integrações</div>
+  <h2>O pagamento influencia a live inteira.</h2>
+  <table>
+    <thead><tr><th>Plataforma</th><th>Experiências</th><th>Cuidados</th></tr></thead>
+    <tbody>
+      <tr><td><b>Twitch</b></td><td>Chat commands, badges, pontos, metas, eventos e ranking</td><td>OAuth, escopos mínimos e limites da API</td></tr>
+      <tr><td><b>Kick</b></td><td>Comandos, eventos, widgets e automações equivalentes</td><td>Adaptador independente pela evolução da API</td></tr>
+      <tr><td><b>YouTube</b></td><td>Chat, video request, clip queue e timestamps de highlights</td><td>Quota, moderação e direitos autorais</td></tr>
+      <tr><td><b>Spotify</b></td><td>Song request, votação, fila e ações compatíveis com a API</td><td>Políticas, conta do criador e restrições de reprodução</td></tr>
+      <tr><td><b>Discord</b></td><td>Cargos para assinantes, comunidade e notificações</td><td>Sincronização e revogação de acesso</td></tr>
+      <tr><td><b>OBS</b></td><td>Browser sources, dock de controle e troca de cenas</td><td>Token secreto e operação offline/reconnect</td></tr>
+    </tbody>
+  </table>
+  <h3 style="margin-top:8mm">Experiências compostas</h3>
+  <div class="grid2">
+    <div class="card dark"><h4>Song Request</h4><p>O apoiador paga, escolhe uma música permitida e entra numa fila moderada. Valores maiores podem priorizar sem quebrar limites definidos.</p></div>
+    <div class="card"><h4>Video Request</h4><p>Link ou clipe curto passa por whitelist, duração máxima, preview e aprovação antes de aparecer na live.</p></div>
+    <div class="card"><h4>Comandos do chat</h4><p><b>!meta</b>, <b>!boss</b>, <b>!top</b> e <b>!desafio</b> consultam estado do StreamOS sem expor dados financeiros.</p></div>
+    <div class="card"><h4>Automação de cena</h4><p>Meta atingida pode trocar overlay, reproduzir som, iniciar cronômetro ou chamar integração autorizada.</p></div>
+  </div>
+  <div class="callout" style="margin-top:7mm"><strong>Arquitetura de integração</strong>Cada plataforma fica atrás de um adaptador. Se uma API mudar, o core financeiro e o motor de regras continuam funcionando.</div>
+  <div class="footer"><span>StreamOS • Integrações</span><span>07</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">07</div><div class="eyebrow">Inteligência artificial</div>
+  <h2>IA aplicada onde melhora receita ou segurança.</h2>
+  <div class="grid2">
+    <div>
+      <h3>Durante a live</h3>
+      <div class="card tint"><h4>TTS inteligente</h4><p>Vozes autorizadas, estilos, idioma, normalização e cache. Cobrança/limite por plano para controlar custo.</p></div>
+      <div class="card tint" style="margin-top:4mm"><h4>Moderação prévia</h4><p>Classifica texto e mídia antes do overlay, combinando regras determinísticas, listas e modelo.</p></div>
+      <div class="card tint" style="margin-top:4mm"><h4>Recomendação contextual</h4><p>Sugere ativar meta, campanha ou dinâmica com base no momento e histórico do canal.</p></div>
+    </div>
+    <div>
+      <h3>Depois da live</h3>
+      <div class="card"><h4>Coach de monetização</h4><p>Compara horário, conteúdo, ticket, conversão e campanhas: “sexta converte melhor após partidas ranqueadas”.</p></div>
+      <div class="card" style="margin-top:4mm"><h4>Highlights automáticos</h4><p>Marca grandes contribuições e reações, gera timestamps, cortes, legendas e versões para Shorts.</p></div>
+      <div class="card" style="margin-top:4mm"><h4>Resumo operacional</h4><p>Receita, apoiadores, metas, incidentes de moderação e oportunidades da próxima live.</p></div>
+    </div>
+  </div>
+  <h3 style="margin-top:7mm">Guardrails</h3>
+  <table><tr><td>Privacidade</td><td>Minimização, consentimento e anonimização para analytics</td></tr><tr><td>Custo</td><td>Fila, quota por plano, cache e fallback sem IA</td></tr><tr><td>Qualidade</td><td>Confiança, revisão humana e feedback do streamer</td></tr><tr><td>Segurança</td><td>IA não autoriza saque nem altera ledger de forma autônoma</td></tr></table>
+  <div class="footer"><span>StreamOS • Inteligência artificial</span><span>08</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">08</div><div class="eyebrow">Painel, app e modelo de negócio</div>
+  <h2>Uma operação completa para o criador.</h2>
+  <div class="grid2">
+    <div>
+      <h3>Dashboard web</h3>
+      <ul><li>Receita diária, mensal e por live</li><li>Ticket médio e frequência</li><li>Top apoiadores e retenção</li><li>Conversão de página e campanhas</li><li>Saldo, extrato, saques e devoluções</li><li>Editor de alertas, overlays e regras</li><li>Equipe, permissões e auditoria</li></ul>
+    </div>
+    <div>
+      <h3>Aplicativo móvel</h3>
+      <ul><li>Push de contribuição e meta concluída</li><li>Aprovar ou bloquear mídia</li><li>Pausar alertas e TTS</li><li>Alterar meta ou campanha</li><li>Consultar saldo e solicitar saque</li><li>Responder incidente durante a live</li><li>Resumo após transmissão</li></ul>
+    </div>
+  </div>
+  <h3 style="margin-top:7mm">Monetização sugerida</h3>
+  <table>
+    <thead><tr><th>Plano</th><th>Inclui</th><th>Receita</th></tr></thead>
+    <tbody>
+      <tr><td><b>Start</b></td><td>Checkout, Pix, alerta básico, meta e dashboard essencial</td><td>Taxa por transação</td></tr>
+      <tr><td><b>Creator Pro</b></td><td>Overlays avançados, TTS, gamificação, integrações e analytics</td><td>Mensalidade + taxa menor</td></tr>
+      <tr><td><b>Studio</b></td><td>Equipe, múltiplos canais, permissões, API e suporte prioritário</td><td>Mensalidade superior</td></tr>
+      <tr><td><b>Enterprise</b></td><td>White-label, SLA, limites, onboarding e contrato próprio</td><td>Contrato negociado</td></tr>
+    </tbody>
+  </table>
+  <div class="grid3" style="margin-top:7mm">
+    <div class="card tint"><h4>Sem barreira inicial</h4><p>Plano de entrada sem mensalidade facilita aquisição.</p></div>
+    <div class="card tint"><h4>Custo repassável</h4><p>IA, TTS e mídia pesada têm quotas e adicionais.</p></div>
+    <div class="card tint"><h4>Receita alinhada</h4><p>StreamOS cresce quando o criador monetiza melhor.</p></div>
+  </div>
+  <div class="footer"><span>StreamOS • Painel, app e negócio</span><span>09</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">D1</div><div class="eyebrow">Demonstração conceitual</div>
+  <h2>Checkout simples para quem apoia.<br>Controle completo para quem recebe.</h2>
+  <div class="grid2">
+    <div>
+      <h3>Página de contribuição</h3>
+      <div class="mock">
+        <div class="mock-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="small muted" style="margin-left:3mm">streamos.com/luna</span></div>
+        <div class="mock-body">
+          <div style="text-align:center"><div style="width:17mm;height:17mm;border-radius:50%;background:linear-gradient(135deg,var(--violet),var(--cyan));margin:0 auto 2mm"></div><b>Luna Plays</b><p class="small muted">Envie uma mensagem para aparecer na live</p></div>
+          <div class="field"><b>Valor</b><span style="float:right;font-size:15px;color:var(--ink)">R$ 20,00</span><br>&nbsp;</div>
+          <div class="field">Seu apelido: <b>PixelHero</b></div>
+          <div class="field" style="height:16mm">Mensagem: Boa sorte no boss! 🎮</div>
+          <div style="display:flex;gap:2mm;margin-bottom:3mm"><span class="tag">Pix</span><span class="tag">Cartão</span><span class="tag">Anônimo</span></div>
+          <div class="button">Continuar com Pix</div>
+          <p class="small muted" style="text-align:center;margin-top:3mm">Mensagem moderada antes de aparecer</p>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3>Carteira do criador</h3>
+      <div class="mock">
+        <div class="mock-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="small muted" style="margin-left:3mm">Painel StreamOS</span></div>
+        <div class="mock-body">
+          <span class="small muted">Saldo disponível</span><div style="font-size:27px;font-weight:900;margin:1mm 0 4mm">R$ 1.842,70</div>
+          <div class="grid2" style="gap:2mm"><div class="card" style="padding:3mm"><span class="small muted">Pendente</span><br><b>R$ 286,40</b></div><div class="card" style="padding:3mm"><span class="small muted">Este mês</span><br><b>R$ 4.918</b></div></div>
+          <div style="margin-top:4mm"><b style="font-size:9px">Atividade recente</b>
+            <div class="mini-row"><span>PixelHero · Pix</span><b class="yes">+ R$ 20,00</b></div>
+            <div class="mini-row"><span>AnaK · assinatura</span><b class="yes">+ R$ 14,90</b></div>
+            <div class="mini-row"><span>Saque Pix</span><b>− R$ 500,00</b></div>
+          </div>
+          <div class="button" style="margin-top:4mm">Solicitar saque</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="small muted" style="margin-top:5mm">Mockup ilustrativo. A interface final será validada com criadores e testes de usabilidade.</p>
+  <div class="footer"><span>StreamOS • Demonstração de pagamento</span><span>10</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">D2</div><div class="eyebrow">Demonstração conceitual</div>
+  <h2>O pagamento se transforma em momento ao vivo.</h2>
+  <div class="screen">
+    <div style="position:absolute;left:5mm;top:4mm;font-size:8px;color:#9faac5">PREVIEW • CENA GAMEPLAY</div>
+    <div style="position:absolute;right:5mm;top:4mm"><span class="spark">OBS conectado</span><span class="spark">Fila: 2</span></div>
+    <div class="alert-demo">
+      <div class="small" style="color:#aeb8d0;text-transform:uppercase;letter-spacing:1px">Novo apoio de PixelHero</div>
+      <div class="amount">R$ 20,00</div>
+      <div style="font-size:12px;margin-top:2mm">“Boa sorte no boss!”</div>
+      <div style="font-size:8px;color:#9ba8c6;margin-top:3mm">🔊 TTS Narrador · Boss recebeu 200 de dano</div>
+    </div>
+    <div style="position:absolute;left:6mm;right:6mm;bottom:5mm;display:flex;justify-content:space-between;font-size:8px;color:#aab4cd"><span>Meta: Setup novo</span><span>R$ 720 / R$ 1.000</span></div>
+  </div>
+  <div class="grid3" style="margin-top:6mm">
+    <div class="card"><h4>Antes</h4><p>Filtro de texto e mídia, regras de valor mínimo e aprovação opcional.</p></div>
+    <div class="card"><h4>Durante</h4><p>WebSocket entrega alerta, TTS entra na fila e overlay atualiza a meta.</p></div>
+    <div class="card"><h4>Depois</h4><p>Evento fica no histórico, ranking e analytics da live.</p></div>
+  </div>
+  <h3 style="margin-top:7mm">Editor do alerta</h3>
+  <div class="mock">
+    <div class="mock-body" style="display:grid;grid-template-columns:40mm 1fr;gap:5mm">
+      <div><div class="field"><b>Template</b><br>Neon Pulse</div><div class="field"><b>Valor mínimo</b><br>R$ 5,00</div><div class="field"><b>Voz</b><br>Narrador</div><div class="field"><b>Duração</b><br>8 segundos</div></div>
+      <div><b style="font-size:9px">Comportamento</b><div class="mini-row"><span>Mostrar apelido e valor</span><b class="yes">Ativo</b></div><div class="mini-row"><span>Leitura por TTS</span><b class="yes">Ativo</b></div><div class="mini-row"><span>Aprovar vídeo manualmente</span><b class="yes">Ativo</b></div><div class="mini-row"><span>Som especial acima de</span><b>R$ 50</b></div><div class="button" style="margin-top:4mm">Salvar e testar no OBS</div></div>
+    </div>
+  </div>
+  <div class="footer"><span>StreamOS • Demonstração de alerta</span><span>11</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">D3</div><div class="eyebrow">Demonstração conceitual</div>
+  <h2>Boss Battle e meta dinâmica em ação.</h2>
+  <div class="grid2">
+    <div class="boss">
+      <div class="small" style="color:#c9b8e8;letter-spacing:1px">BOSS DA COMUNIDADE</div>
+      <div class="boss-face">👾</div>
+      <b style="font-size:17px">REI DO LAG</b>
+      <div class="hp"><span></span></div>
+      <div style="display:flex;justify-content:space-between;font-size:8px"><span>68.200 HP</span><span>100.000 HP</span></div>
+      <div style="margin-top:6mm"><span class="spark">R$ 1 = 10 dano</span><span class="spark">Combo 3×</span></div>
+      <div style="margin-top:5mm;font-size:10px;color:var(--lime)">PixelHero causou 200 de dano!</div>
+    </div>
+    <div>
+      <h3>Meta contextual</h3>
+      <div class="card tint" style="padding:7mm">
+        <span class="tag">15:00 restantes</span>
+        <h4 style="font-size:18px;margin-top:4mm">Derrote o boss para liberar o desafio</h4>
+        <div class="bar" style="height:9px;margin:5mm 0 2mm"><span style="width:72%"></span></div>
+        <div style="display:flex;justify-content:space-between"><b>R$ 720</b><b>Meta R$ 1.000</b></div>
+        <p class="muted" style="margin-top:5mm">Faltam <b style="color:var(--violet)">R$ 280</b>. Se a comunidade concluir, Luna joga a próxima partida sem HUD.</p>
+      </div>
+      <div class="card" style="margin-top:4mm"><h4>Recompensas possíveis</h4><div class="mini-row"><span>Som raro</span><b>35%</b></div><div class="mini-row"><span>Golpe crítico 2×</span><b>20%</b></div><div class="mini-row"><span>Escolher desafio</span><b>5%</b></div></div>
+    </div>
+  </div>
+  <h3 style="margin-top:7mm">O que o streamer configura</h3>
+  <div class="grid3">
+    <div class="card"><h4>Economia</h4><p>Conversão em dano, HP, valores mínimos, combos e limites.</p></div>
+    <div class="card"><h4>Visual</h4><p>Boss, barra, animações, sons, fases e posição no overlay.</p></div>
+    <div class="card"><h4>Resultado</h4><p>Recompensa, desafio, sorteio ou desbloqueio ao concluir.</p></div>
+  </div>
+  <p class="small muted" style="margin-top:5mm">Probabilidades e condições devem ser transparentes. Recompensas não devem caracterizar aposta ou promessa financeira.</p>
+  <div class="footer"><span>StreamOS • Demonstração de gamificação</span><span>12</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">D4</div><div class="eyebrow">Demonstração conceitual</div>
+  <h2>Dashboard que transforma dados em decisão.</h2>
+  <div class="mock">
+    <div class="mock-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="small muted" style="margin-left:3mm">Visão geral · últimos 30 dias</span></div>
+    <div class="mock-body">
+      <div class="grid3">
+        <div class="card"><span class="small muted">Receita</span><div class="kpi">R$ 4.918</div><span class="small yes">↑ 18% no mês</span></div>
+        <div class="card"><span class="small muted">Ticket médio</span><div class="kpi">R$ 16,40</div><span class="small yes">↑ R$ 2,10</span></div>
+        <div class="card"><span class="small muted">Apoiadores recorrentes</span><div class="kpi">84</div><span class="small yes">↑ 12 novos</span></div>
+      </div>
+      <div class="grid2" style="margin-top:4mm">
+        <div class="card"><h4>Receita por live</h4><div style="height:38mm;display:flex;align-items:end;gap:3mm;padding:4mm 2mm 0"><span style="height:35%;width:12%;background:#d9d3ff"></span><span style="height:52%;width:12%;background:#c5bcff"></span><span style="height:43%;width:12%;background:#d9d3ff"></span><span style="height:78%;width:12%;background:#8b75ff"></span><span style="height:64%;width:12%;background:#a493ff"></span><span style="height:92%;width:12%;background:#28d7e5"></span></div></div>
+        <div class="card tint"><span class="tag">Insight StreamOS</span><h4 style="font-size:15px;margin-top:4mm">Boss Battle aumentou o ticket em 22%</h4><p>O melhor momento ocorreu entre 22h10 e 22h35. Repita a campanha após partidas ranqueadas e teste uma meta de R$ 350.</p><div class="button">Criar campanha sugerida</div></div>
+      </div>
+    </div>
+  </div>
+  <h3 style="margin-top:7mm">Relatório depois da live</h3>
+  <div class="grid3">
+    <div class="card"><h4>Melhor momento</h4><p>22h18 · apoio de R$ 100<br><span class="yes">Gerar highlight</span></p></div>
+    <div class="card"><h4>Conversão</h4><p>3,8% dos visitantes apoiaram<br><span class="yes">+0,7 p.p.</span></p></div>
+    <div class="card"><h4>Próxima ação</h4><p>Reativar streak na sexta<br><span class="yes">Agendar</span></p></div>
+  </div>
+  <div class="footer"><span>StreamOS • Demonstração de dashboard</span><span>13</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">03</div><div class="eyebrow">Arquitetura de referência</div>
+  <h2>Separar dinheiro, experiência e processamento.</h2>
+  <div class="architecture">
+    <div class="arch-row"><div class="arch-label">Canais</div><div class="arch-box">Web / Checkout</div><div class="arch-box">Painel / App</div><div class="arch-box">OBS Browser Source</div></div>
+    <div class="arch-row"><div class="arch-label">Edge</div><div class="arch-box accent">CDN + WAF + DDoS</div><div class="arch-box">API Gateway</div><div class="arch-box">WebSocket Gateway</div></div>
+    <div class="arch-row"><div class="arch-label">Domínios</div><div class="arch-box">Identity</div><div class="arch-box accent">Payments + Ledger</div><div class="arch-box">Alerts</div><div class="arch-box">Campaigns</div></div>
+    <div class="arch-row"><div class="arch-label">Assíncrono</div><div class="arch-box">Event Bus</div><div class="arch-box">Filas / Workers</div><div class="arch-box">TTS / Moderação</div><div class="arch-box">Webhooks</div></div>
+    <div class="arch-row"><div class="arch-label">Dados</div><div class="arch-box accent">PostgreSQL HA</div><div class="arch-box">Redis / Valkey</div><div class="arch-box">Objetos / Mídia</div><div class="arch-box">Analytics</div></div>
+    <div class="arch-row"><div class="arch-label">Externos</div><div class="arch-box accent">BaaS / Pix</div><div class="arch-box">Adquirente</div><div class="arch-box">Antifraude</div><div class="arch-box">Twitch / Kick / YT</div></div>
+  </div>
+  <div class="grid2" style="margin-top:7mm">
+    <div><h3>Regras técnicas essenciais</h3><ul><li>Idempotência em toda mutação financeira</li><li>Outbox pattern para eventos confiáveis</li><li>Dados de cartão fora do ambiente StreamOS</li><li>Criptografia em trânsito e repouso</li><li>Segregação de ambientes e privilégios mínimos</li><li>Backups imutáveis e teste periódico de restauração</li></ul></div>
+    <div><h3>Metas de serviço iniciais</h3><table><tr><td>Disponibilidade checkout</td><td><b>99,95%</b></td></tr><tr><td>Disponibilidade painel</td><td><b>99,9%</b></td></tr><tr><td>RPO financeiro</td><td><b>≤ 5 min</b></td></tr><tr><td>RTO financeiro</td><td><b>≤ 60 min</b></td></tr><tr><td>P95 API interna</td><td><b>≤ 300 ms</b></td></tr><tr><td>Evento → overlay P95</td><td><b>≤ 2 s</b></td></tr></table></div>
+  </div>
+  <div class="callout" style="margin-top:6mm"><strong>Decisão recomendada</strong>Começar como modular monolith bem separado, com pagamentos e ledger isolados. Extrair serviços apenas quando escala, risco ou cadência de equipes justificar.</div>
+  <div class="footer"><span>StreamOS • Arquitetura de referência</span><span>04</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">04</div><div class="eyebrow">Variáveis de infraestrutura</div>
+  <h2>Dimensionar pelo evento de pico, não pela média.</h2>
+  <p>Lives concentram tráfego: uma campanha viral pode produzir dezenas de vezes a carga média em poucos minutos. As variáveis abaixo alimentam capacidade e custo.</p>
+  <table>
+    <thead><tr><th>Variável</th><th>Símbolo</th><th>Impacto principal</th></tr></thead>
+    <tbody>
+      <tr><td>Criadores ativos simultâneos</td><td class="num">C</td><td>WebSockets, partições, conexões e suporte</td></tr>
+      <tr><td>Espectadores por live no pico</td><td class="num">V</td><td>Checkout, CDN, rate limit e antifraude</td></tr>
+      <tr><td>Pagamentos por segundo</td><td class="num">PPS</td><td>API, banco, ledger, filas e webhooks</td></tr>
+      <tr><td>Eventos de overlay por segundo</td><td class="num">EPS</td><td>Gateway WebSocket, fan-out e Redis</td></tr>
+      <tr><td>Tamanho médio de mídia</td><td class="num">M</td><td>Storage, CDN, moderação e saída de dados</td></tr>
+      <tr><td>Retenção de transações</td><td class="num">Rt</td><td>PostgreSQL, archive e compliance</td></tr>
+      <tr><td>Retenção de mídia</td><td class="num">Rm</td><td>Object storage e lifecycle</td></tr>
+      <tr><td>Taxa de TTS/moderação</td><td class="num">AI%</td><td>Workers, GPU/API externa e filas</td></tr>
+      <tr><td>SLA, RPO e RTO</td><td class="num">S</td><td>Redundância, DR, equipe e custo fixo</td></tr>
+      <tr><td>Fraude/chargeback</td><td class="num">F%</td><td>Reserva financeira e custo operacional</td></tr>
+    </tbody>
+  </table>
+  <div class="grid2" style="margin-top:7mm">
+    <div>
+      <h3>Fórmulas de planejamento</h3>
+      <div class="formula">PPS_pico = criadores_ao_vivo × espectadores_médios × conversão_por_segundo × fator_viral</div>
+      <div class="formula" style="margin-top:3mm">storage_mês = transações × bytes_evento + uploads × tamanho_médio − expurgo</div>
+      <div class="formula" style="margin-top:3mm">egress_mês = views_de_mídia × tamanho_médio × (1 − cache_hit)</div>
+    </div>
+    <div>
+      <h3>Cenários de referência</h3>
+      <table><tr><th></th><th>Validação</th><th>Tração</th><th>Escala</th></tr><tr><td>Criadores ativos</td><td>500</td><td>10 mil</td><td>100 mil</td></tr><tr><td>PPS pico</td><td>5</td><td>75</td><td>750+</td></tr><tr><td>Eventos/s</td><td>25</td><td>500</td><td>5 mil+</td></tr><tr><td>Mídia/mês</td><td>1 TB</td><td>15 TB</td><td>150 TB</td></tr></table>
+      <p class="small muted">Números ilustrativos para orientar testes. A telemetria real deve substituir as hipóteses após o beta.</p>
+    </div>
+  </div>
+  <div class="footer"><span>StreamOS • Variáveis de infraestrutura</span><span>05</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">05</div><div class="eyebrow">Cloud econômica + open source</div>
+  <h2>Controle de software sem comprar hardware.</h2>
+  <div class="grid3">
+    <div class="card"><h4>CAPEX zero</h4><p>Máquinas virtuais, volumes e redes são alugados por mês. Não há compra de servidores, switches ou datacenter.</p></div>
+    <div class="card"><h4>Software aberto</h4><p>PostgreSQL, Valkey, Docker, Coolify, Caddy, Grafana, Loki e OpenTelemetry evitam licenças.</p></div>
+    <div class="card"><h4>Operação enxuta</h4><p>Automação de deploy, backup e monitoramento reduz trabalho, mas a equipe continua responsável por disponibilidade.</p></div>
+  </div>
+  <h3 style="margin-top:7mm">Arquitetura cloud enxuta</h3>
+  <table>
+    <thead><tr><th>Camada</th><th>Desenho inicial</th><th>Por quê</th></tr></thead>
+    <tbody>
+      <tr><td>Compute</td><td>1–2 VMs Linux + Docker/Coolify</td><td>Baixo custo, deploy simples e expansão vertical</td></tr>
+      <tr><td>Banco</td><td>PostgreSQL gerenciado econômico ou Supabase</td><td>Backup e manutenção sem operar cluster no MVP</td></tr>
+      <tr><td>Cache/filas</td><td>Valkey/Redis pequeno ou serviço serverless</td><td>Eventos, rate limit e BullMQ conforme demanda</td></tr>
+      <tr><td>Edge</td><td>Cloudflare CDN, DNS, TLS e proteção</td><td>Reduz tráfego na origem e protege o checkout</td></tr>
+      <tr><td>Mídia</td><td>Object storage compatível com S3</td><td>Pagamento por uso e lifecycle automático</td></tr>
+      <tr><td>Backup</td><td>Cópia diária em outro provedor/região</td><td>Evitar dependência e falha única do provedor</td></tr>
+    </tbody>
+  </table>
+  <div class="grid2" style="margin-top:7mm">
+    <div class="card dark"><h4>Faixa de planejamento</h4><div style="font-size:24px;font-weight:800;color:var(--cyan)">R$ 300–2.500/mês</div><p class="small">Protótipo e beta controlado, usando free tiers e VMs pequenas. Cresce conforme usuários, banco, mídia, logs e disponibilidade.</p></div>
+    <div class="card"><h4>Trade-off principal</h4><p>É mais barato que serviços AWS gerenciados, porém exige cuidar de atualizações, backup, restore, segurança, observabilidade e incidentes.</p></div>
+  </div>
+  <div class="callout" style="margin-top:6mm"><strong>Quando faz sentido</strong>É a melhor opção para validar sem investimento inicial: poucos serviços, arquitetura portável e custo mensal mínimo. Componentes críticos podem migrar gradualmente para serviços gerenciados.</div>
+  <div class="footer"><span>StreamOS • Cloud econômica e open source</span><span>06</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">06</div><div class="eyebrow">AWS</div>
+  <h2>Velocidade e resiliência em troca de custo variável.</h2>
+  <table>
+    <thead><tr><th>Necessidade</th><th>Serviço de referência</th><th>Variável de custo</th></tr></thead>
+    <tbody>
+      <tr><td>Containers/API</td><td>ECS Fargate ou EKS/EC2</td><td>vCPU-hora, memória-hora, nós e carga</td></tr>
+      <tr><td>Banco financeiro</td><td>RDS PostgreSQL Multi-AZ</td><td>Instância, storage, IOPS, backup e réplica</td></tr>
+      <tr><td>Cache/tempo real</td><td>ElastiCache Valkey</td><td>Nós/capacidade, requests e transferência</td></tr>
+      <tr><td>Eventos/filas</td><td>SQS + EventBridge</td><td>Requests, payloads e retenção</td></tr>
+      <tr><td>Mídia</td><td>S3 + CloudFront</td><td>GB armazenado, requests e saída</td></tr>
+      <tr><td>Perímetro</td><td>CloudFront + WAF + Shield</td><td>Requests, regras e tráfego</td></tr>
+      <tr><td>Segredos/chaves</td><td>KMS + Secrets Manager</td><td>Chaves, chamadas e segredos</td></tr>
+      <tr><td>Observabilidade</td><td>CloudWatch + OpenTelemetry</td><td>Logs ingeridos, retenção, métricas e traces</td></tr>
+    </tbody>
+  </table>
+  <h3 style="margin-top:7mm">Faixas mensais de planejamento — AWS</h3>
+  <table>
+    <thead><tr><th>Estágio</th><th>Arquitetura</th><th>Infra/mês</th><th>Observação</th></tr></thead>
+    <tbody>
+      <tr><td><b>Protótipo</b></td><td>Free tiers, serverless e ambiente sem HA</td><td><b>R$ 0–1.500</b></td><td>Somente desenvolvimento e validação</td></tr>
+      <tr><td><b>Beta</b></td><td>Serviços pequenos, backups e limites controlados</td><td><b>R$ 2 mil–8 mil</b></td><td>Sem SLA comercial elevado</td></tr>
+      <tr><td><b>Produção</b></td><td>Multi-AZ, WAF, banco HA e observabilidade</td><td><b>R$ 15 mil–60 mil</b></td><td>Ativar quando receita e risco justificarem</td></tr>
+      <tr><td><b>Tração/escala</b></td><td>Autoscaling, réplicas, DR e maior mídia</td><td><b>R$ 70 mil+</b></td><td>Otimização e negociação privada</td></tr>
+    </tbody>
+  </table>
+  <p class="small muted">Estimativas direcionais, não cotações. Não incluem taxas do parceiro financeiro, adquirência, IA/TTS, folha, impostos ou reservas contra fraude. Validar na AWS Pricing Calculator com câmbio e carga reais.</p>
+  <div class="grid2" style="margin-top:6mm">
+    <div class="card tint"><h4>O que encarece</h4><p>NAT Gateway, transferência entre zonas, logs sem controle, banco superdimensionado, egress de vídeo e recursos ociosos 24/7.</p></div>
+    <div class="card tint"><h4>O que reduz</h4><p>Graviton, autoscaling, lifecycle de mídia, CDN, Savings Plans após estabilidade e Spot somente para workers tolerantes a interrupção.</p></div>
+  </div>
+  <div class="footer"><span>StreamOS • AWS</span><span>07</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">07</div><div class="eyebrow">Comparativo</div>
+  <h2>Cloud econômica × AWS gerenciada × híbrida.</h2>
+  <table>
+    <thead><tr><th>Critério</th><th>Cloud econômica</th><th>AWS gerenciada</th><th>Híbrida</th></tr></thead>
+    <tbody>
+      <tr><td>Investimento inicial</td><td class="yes">Próximo de zero</td><td class="yes">Próximo de zero</td><td class="yes">Próximo de zero</td></tr>
+      <tr><td>Custo mensal no MVP</td><td class="yes">Muito baixo</td><td class="warn">Baixo/médio</td><td class="yes">Baixo</td></tr>
+      <tr><td>Tempo até beta</td><td class="yes">Rápido</td><td class="yes">Rápido</td><td class="warn">Moderado</td></tr>
+      <tr><td>Elasticidade para viral</td><td class="warn">Exige automação</td><td class="yes">Alta</td><td class="yes">Alta no edge</td></tr>
+      <tr><td>Alta disponibilidade</td><td class="warn">Responsabilidade da equipe</td><td class="yes">Serviços gerenciados</td><td class="warn">Dividida</td></tr>
+      <tr><td>Portabilidade</td><td class="yes">Alta com open source</td><td class="warn">Varia por serviço</td><td class="yes">Alta</td></tr>
+      <tr><td>Equipe operacional</td><td class="warn">Mais DevOps</td><td class="yes">Menor</td><td class="warn">Intermediária</td></tr>
+      <tr><td>Melhor momento</td><td>Protótipo e beta</td><td>Core crítico e escala</td><td>Evolução recomendada</td></tr>
+    </tbody>
+  </table>
+  <h3 style="margin-top:8mm">TCO em cinco blocos</h3>
+  <div class="grid3">
+    <div class="card"><span class="tag">01</span><h4 style="margin-top:2mm">Tecnologia</h4><p>Compute, banco, storage, rede, licenças e backup.</p></div>
+    <div class="card"><span class="tag">02</span><h4 style="margin-top:2mm">Pessoas</h4><p>SRE, segurança, plantão, banco, FinOps e suporte.</p></div>
+    <div class="card"><span class="tag">03</span><h4 style="margin-top:2mm">Risco</h4><p>Downtime, fraude, perda de dados, multas e reputação.</p></div>
+    <div class="card"><span class="tag">04</span><h4 style="margin-top:2mm">Fornecedores</h4><p>Mensalidades, limites gratuitos, câmbio, lock-in e portabilidade.</p></div>
+    <div class="card"><span class="tag">05</span><h4 style="margin-top:2mm">Velocidade</h4><p>Meses até receita e facilidade para experimentar.</p></div>
+    <div class="card dark"><h4>Resultado</h4><p class="small">Na fase inicial, velocidade e redução de risco tendem a valer mais que economia unitária teórica.</p></div>
+  </div>
+  <div class="callout" style="margin-top:7mm"><strong>Recomendação</strong>Começar híbrido e econômico: SaaS/free tiers para funções comoditizadas, cloud barata para containers e AWS apenas onde um serviço gerenciado reduzir risco material. Migrar gradualmente conforme receita e carga.</div>
+  <div class="footer"><span>StreamOS • Comparativo de infraestrutura</span><span>08</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">08</div><div class="eyebrow">Segurança e compliance</div>
+  <h2>Uma plataforma financeira precisa nascer auditável.</h2>
+  <div class="grid2">
+    <div>
+      <h3>Controles de produto</h3>
+      <ul><li>KYC/KYB e validação de titularidade</li><li>2FA e gestão de sessão/dispositivo</li><li>Limites por conta, operação e horário</li><li>Hold e reserva baseados em risco</li><li>Moderação antes do alerta público</li><li>Canal de denúncia e contestação</li></ul>
+      <h3 style="margin-top:6mm">Controles técnicos</h3>
+      <ul><li>Zero trust e privilégio mínimo</li><li>Segredos em cofre e rotação de chaves</li><li>WAF, DDoS, bot control e rate limit</li><li>SIEM, auditoria imutável e alertas</li><li>SAST, DAST, dependências e pentest</li><li>Plano de incidente e exercícios de DR</li></ul>
+    </div>
+    <div>
+      <h3>Responsabilidades</h3>
+      <table><tr><th>StreamOS</th><th>Parceiro regulado</th></tr><tr><td>UX, regras, ledger interno, suporte, moderação, segurança da aplicação e LGPD</td><td>Conta/liquidação, acesso Pix, salvaguarda conforme arranjo, controles regulatórios contratados</td></tr><tr><td>Conciliação e evidências</td><td>Extratos e eventos financeiros</td></tr><tr><td>Política de risco do produto</td><td>Limites e controles do trilho</td></tr></table>
+      <div class="card tint" style="margin-top:5mm"><h4>Importante</h4><p>Terceirizar o trilho não terceiriza a responsabilidade sobre experiência, segurança da aplicação, tratamento de dados, atendimento e governança de fornecedores.</p></div>
+    </div>
+  </div>
+  <h3 style="margin-top:8mm">Objetivos mensuráveis</h3>
+  <div class="grid3">
+    <div class="card"><div class="kpi">100%</div><div class="kpi-label">Movimentos rastreáveis</div></div>
+    <div class="card"><div class="kpi">&lt; 15 min</div><div class="kpi-label">Detecção crítica</div></div>
+    <div class="card"><div class="kpi">2×/ano</div><div class="kpi-label">Teste de recuperação</div></div>
+  </div>
+  <p class="small muted" style="margin-top:6mm">O enquadramento jurídico e regulatório depende do fluxo de recursos, contratos, titularidade das contas e serviços ofertados. Validar com assessoria especializada e com o parceiro antes do lançamento.</p>
+  <div class="footer"><span>StreamOS • Segurança e compliance</span><span>09</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">09</div><div class="eyebrow">Stack de custo mínimo</div>
+  <h2>Comprar o que não diferencia. Construir só o core.</h2>
+  <p>Sem capital inicial, o StreamOS deve usar planos gratuitos, créditos e cobrança por consumo. O código próprio fica concentrado no ledger, conciliação, regras de monetização, alertas e experiência do criador.</p>
+  <table>
+    <thead><tr><th>Necessidade</th><th>Opção inicial</th><th>Estratégia</th></tr></thead>
+    <tbody>
+      <tr><td>Frontend e painel</td><td>Cloudflare Pages / Vercel</td><td>Plano gratuito e CDN global</td></tr>
+      <tr><td>API e workers</td><td>VM cloud + Docker + Coolify</td><td>Uma origem simples, reproduzível e barata</td></tr>
+      <tr><td>Banco PostgreSQL</td><td>Supabase/Neon ou PostgreSQL gerenciado</td><td>Free tier no protótipo; plano pago antes de dinheiro real</td></tr>
+      <tr><td>Cache e filas</td><td>Upstash/Valkey + BullMQ</td><td>Serverless no início; nó dedicado quando compensar</td></tr>
+      <tr><td>Autenticação</td><td>Clerk, Supabase Auth ou Keycloak</td><td>SaaS para lançar; open source se custo/controle justificar</td></tr>
+      <tr><td>Arquivos e mídia</td><td>Cloudflare R2 ou storage S3 compatível</td><td>Lifecycle, limites de upload e cache agressivo</td></tr>
+      <tr><td>E-mail</td><td>Resend / Amazon SES</td><td>Pagamento por uso e templates próprios</td></tr>
+      <tr><td>Erros e métricas</td><td>Sentry + Grafana Cloud</td><td>Free tiers com amostragem e retenção curta</td></tr>
+      <tr><td>Analytics</td><td>PostHog Cloud ou self-hosted</td><td>Eventos essenciais; evitar coleta sem propósito</td></tr>
+      <tr><td>CI/CD e código</td><td>GitHub + GitHub Actions</td><td>Build, testes, scans e deploy automatizado</td></tr>
+      <tr><td>Pagamentos/KYC</td><td>BaaS + adquirente + antifraude</td><td>Taxa por transação, sem construir infraestrutura regulada</td></tr>
+      <tr><td>TTS/moderação</td><td>APIs por consumo</td><td>Limites por plano e repasse do custo variável</td></tr>
+    </tbody>
+  </table>
+  <div class="grid2" style="margin-top:7mm">
+    <div class="card tint"><h4>Construir internamente</h4><p>Ledger, conciliação, orquestração, regras de saque, alertas em tempo real, overlays, campanhas, gamificação e inteligência de monetização.</p></div>
+    <div class="card tint"><h4>Usar terceiros</h4><p>Identidade básica, e-mail, armazenamento, CDN, observabilidade, KYC, trilhos financeiros, cartão, TTS e ferramentas internas.</p></div>
+  </div>
+  <div class="callout" style="margin-top:6mm"><strong>Regra de saída</strong>Todo fornecedor precisa de exportação de dados, contrato de API e alternativa conhecida. Free tier é ferramenta de validação, não dependência sem plano de migração.</div>
+  <div class="footer"><span>StreamOS • Stack de custo mínimo</span><span>10</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">09</div><div class="eyebrow">FinOps e unidade econômica</div>
+  <h2>Infraestrutura deve crescer abaixo da receita.</h2>
+  <div class="formula">margem_contribuição = receita_de_taxas − custos_de_pagamento − fraude − infra_variável − suporte_variável</div>
+  <div class="grid2" style="margin-top:7mm">
+    <div>
+      <h3>Métricas do negócio</h3>
+      <table><tr><td>TPV</td><td>Volume total processado</td></tr><tr><td>Take rate líquido</td><td>Receita após parceiros</td></tr><tr><td>Custo por pagamento</td><td>Trilho + infra + risco</td></tr><tr><td>Margem por criador</td><td>Receita − custo atribuível</td></tr><tr><td>Fraude/chargeback</td><td>% do TPV e perda líquida</td></tr><tr><td>LTV/CAC</td><td>Retorno de aquisição</td></tr></table>
+    </div>
+    <div>
+      <h3>Métricas da plataforma</h3>
+      <table><tr><td>Custo por 1 mil eventos</td><td>API + fila + observabilidade</td></tr><tr><td>Custo por GB entregue</td><td>Storage + CDN + egress</td></tr><tr><td>Utilização compute</td><td>CPU/memória e ociosidade</td></tr><tr><td>Log por transação</td><td>Volume e retenção</td></tr><tr><td>Disponibilidade</td><td>Minutos e custo de falha</td></tr><tr><td>Forecast variance</td><td>Previsto × realizado</td></tr></table>
+    </div>
+  </div>
+  <h3 style="margin-top:8mm">Guardrails recomendados</h3>
+  <div class="grid3">
+    <div class="card tint"><h4>Tags obrigatórias</h4><p>Produto, ambiente, owner, centro de custo e criticidade.</p></div>
+    <div class="card tint"><h4>Budgets e anomalias</h4><p>Alertas por conta/serviço e bloqueio de abuso, nunca de fluxo financeiro legítimo.</p></div>
+    <div class="card tint"><h4>Showback semanal</h4><p>Cada equipe enxerga seu custo e seus maiores vetores.</p></div>
+  </div>
+  <div class="grid2" style="margin-top:6mm">
+    <div class="card dark"><h4>Meta saudável</h4><p>Infraestrutura de aplicação deve representar uma fração previsível da receita líquida e cair proporcionalmente com escala.</p></div>
+    <div class="card"><h4>Não otimizar cedo demais</h4><p>Reduzir R$ 5 mil/mês não compensa atrasar o produto ou aumentar risco financeiro. Otimização segue telemetria e impacto.</p></div>
+  </div>
+  <div class="footer"><span>StreamOS • FinOps e unidade econômica</span><span>10</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">10</div><div class="eyebrow">Roadmap</div>
+  <h2>Construção em gates de risco.</h2>
+  <div class="timeline">
+    <div class="phase"><strong>Fase 0 — Fundamentos</strong><span>4–8 semanas</span><p>Parceiro financeiro, desenho jurídico, threat model, fluxos de dinheiro, protótipo e contrato de dados.</p></div>
+    <div class="phase"><strong>Fase 1 — MVP financeiro fechado</strong><span>8–12 semanas</span><p>Cadastro, KYC, Pix, ledger, conciliação, saldo, saque, painel admin e auditoria. Testes com dinheiro controlado.</p></div>
+    <div class="phase"><strong>Fase 2 — Beta de streaming</strong><span>6–8 semanas</span><p>Checkout público, alertas OBS, WebSockets, TTS, moderação, metas e observabilidade completa.</p></div>
+    <div class="phase"><strong>Fase 3 — Lançamento comercial</strong><span>6–10 semanas</span><p>Multi-AZ, suporte, antifraude calibrado, cartão, chargeback, SLIs/SLOs, pentest e recuperação testada.</p></div>
+    <div class="phase"><strong>Fase 4 — Retenção e recorrência</strong><span>8–12 semanas</span><p>Pix Automático, assinaturas, recompensas, rankings, campanhas, integrações e app.</p></div>
+    <div class="phase"><strong>Fase 5 — Plataforma</strong><span>Contínua</span><p>API pública, marketplace, white-label, segundo parceiro financeiro, DR regional e otimização de TCO.</p></div>
+  </div>
+  <h3 style="margin-top:7mm">Gates antes de abrir escala</h3>
+  <div class="grid3">
+    <div class="card"><h4>Dinheiro</h4><p>Conciliação fecha 100%; idempotência provada; devolução e saque testados.</p></div>
+    <div class="card"><h4>Resiliência</h4><p>Falha de nó, zona, parceiro e fila simulada; restore validado.</p></div>
+    <div class="card"><h4>Operação</h4><p>Runbooks, plantão, suporte, incident commander e comunicação definidos.</p></div>
+  </div>
+  <div class="callout" style="margin-top:7mm"><strong>Prazo realista</strong>De 5 a 8 meses para uma primeira versão comercial responsável; 12–18 meses para cobertura funcional madura. O prazo depende sobretudo do parceiro financeiro, compliance e qualidade operacional.</div>
+  <div class="footer"><span>StreamOS • Roadmap</span><span>11</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">11</div><div class="eyebrow">Decisões</div>
+  <h2>Plano recomendado.</h2>
+  <div class="grid2">
+    <div class="card dark"><div class="eyebrow" style="color:var(--cyan)">Agora</div><h4 style="font-size:18px;margin-top:3mm">Cloud econômica + terceiros</h4><p>CAPEX zero, free tiers e pagamento por consumo. Uma arquitetura pequena, portável e suficiente para validar produto e receita.</p></div>
+    <div class="card"><div class="eyebrow">Depois</div><h4 style="font-size:18px;margin-top:3mm">Híbrido orientado por risco</h4><p>Migrar banco, filas ou compute crítico para AWS gerenciada somente quando volume, receita e SLA justificarem o custo.</p></div>
+  </div>
+  <h3 style="margin-top:8mm">Próximas cinco decisões executivas</h3>
+  <table>
+    <tr><td><b>01</b></td><td><b>Modelo financeiro</b><br><span class="muted">Conta individual, conta escrow/split ou outro arranjo aprovado pelo parceiro.</span></td></tr>
+    <tr><td><b>02</b></td><td><b>Parceiro principal e contingência</b><br><span class="muted">Pix, Pix Automático, saque, webhooks, limites, SLA e portabilidade de dados.</span></td></tr>
+    <tr><td><b>03</b></td><td><b>Unidade econômica</b><br><span class="muted">Take rate, custo do trilho, reserva de risco, saque, imposto e margem mínima.</span></td></tr>
+    <tr><td><b>04</b></td><td><b>SLO comercial</b><br><span class="muted">Disponibilidade, latência do alerta, prazo de saque e suporte.</span></td></tr>
+    <tr><td><b>05</b></td><td><b>Escopo do beta</b><br><span class="muted">Número de criadores, limites de TPV, features e critérios de saída.</span></td></tr>
+  </table>
+  <div class="callout" style="margin-top:8mm"><strong>Tese final</strong>O diferencial não é simplesmente receber Pix. É controlar toda a jornada — pagamento, confiança, disponibilidade, entretenimento e inteligência — com uma base financeira auditável e uma infraestrutura capaz de absorver momentos virais.</div>
+  <p style="font-size:16px;font-weight:800;margin-top:10mm;letter-spacing:-.4px">StreamOS: o sistema operacional da monetização ao vivo.</p>
+  <div class="footer"><span>StreamOS • Plano recomendado</span><span>12</span></div>
+</section>
+
+<section class="page">
+  <div class="section-no">A</div><div class="eyebrow">Apêndice</div>
+  <h2>Premissas e fontes.</h2>
+  <h3>Premissas das estimativas</h3>
+  <ul>
+    <li>Valores em reais são faixas de planejamento, arredondadas, com margem para região São Paulo e variação cambial.</li>
+    <li>AWS sob demanda, antes de descontos negociados; arquitetura exata depende da telemetria e do SLA.</li>
+    <li>Não há infraestrutura física própria: todos os cenários usam provedores cloud, serviços SaaS e ferramentas open source.</li>
+    <li>Folha, impostos, taxas financeiras, adquirência, antifraude, IA/TTS e reserva de perdas são tratados separadamente.</li>
+    <li>O documento não substitui parecer jurídico, regulatório, contábil nem cotação comercial.</li>
+  </ul>
+  <h3 style="margin-top:7mm">Fontes oficiais consultadas</h3>
+  <ol class="sources">
+    <li>Banco Central do Brasil — Área das instituições participantes no Pix: https://www.bcb.gov.br/estabilidadefinanceira/participantespix</li>
+    <li>Banco Central do Brasil — Perguntas frequentes Pix e Pix Automático: https://www.bcb.gov.br/meubc/faqs/s/pix</li>
+    <li>Amazon Web Services — Preços do Amazon EC2 sob demanda: https://aws.amazon.com/pt/ec2/pricing/on-demand/</li>
+    <li>Amazon Web Services — Preços do RDS para PostgreSQL: https://aws.amazon.com/pt/rds/postgresql/pricing/</li>
+    <li>Amazon Web Services — Preços do ElastiCache: https://aws.amazon.com/pt/elasticache/pricing/</li>
+    <li>Amazon Web Services — Preços do CloudFront: https://aws.amazon.com/pt/cloudfront/pricing/</li>
+    <li>LivePix — Visão pública do produto e funcionalidades: https://livepix.gg/</li>
+    <li>LivePix — Termos para criadores: https://livepix.gg/institucional/termos</li>
+  </ol>
+  <div class="card tint" style="margin-top:8mm"><h4>Como usar este documento</h4><p>Converter as hipóteses em um modelo financeiro parametrizado; cotar pelo menos dois parceiros de pagamento; executar load test com os três cenários; e revisar custos após 30, 90 e 180 dias de produção.</p></div>
+  <div class="footer"><span>StreamOS • Premissas e fontes</span><span>13</span></div>
+</section>
+<script>
+  (() => {
+    const mode = new URLSearchParams(location.search).get("doc");
+    if (!mode) return;
+    const pages = [...document.querySelectorAll("section.page")];
+    const cover = pages[0];
+    const title = cover.querySelector("h1");
+    const lead = cover.querySelector(".lead");
+    const chips = cover.querySelector(".chips");
+    const metaTitle = cover.querySelector(".cover-meta strong");
+    const keep = new Set();
+
+    if (mode === "features") {
+      [0,1,2,3,4,5,6,7,8,9,10,11,12].forEach(i => keep.add(i));
+      title.textContent = "Produto e funcionalidades.";
+      lead.textContent = "A experiência completa do StreamOS: pagamentos, carteira, alertas, overlays, gamificação, integrações, inteligência artificial, painel e aplicativo.";
+      chips.innerHTML = "<span class='chip'>Pagamentos</span><span class='chip'>Streaming</span><span class='chip'>Gamificação</span><span class='chip'>Integrações</span><span class='chip'>IA</span>";
+      metaTitle.textContent = "Documento de produto";
+      document.title = "StreamOS — Produto e Funcionalidades";
+    }
+
+    if (mode === "planning") {
+      [0,1,2,13,14,15,16,17,18,19,20,21,22,23].forEach(i => keep.add(i));
+      title.textContent = "Planejamento e infraestrutura.";
+      lead.textContent = "Estratégia executiva e técnica para construir, operar e escalar o StreamOS com investimento inicial mínimo e infraestrutura 100% cloud.";
+      chips.innerHTML = "<span class='chip'>Arquitetura</span><span class='chip'>Cloud</span><span class='chip'>Custos</span><span class='chip'>Segurança</span><span class='chip'>Roadmap</span>";
+      metaTitle.textContent = "Documento de planejamento";
+      document.title = "StreamOS — Planejamento e Infraestrutura";
+    }
+
+    pages.forEach((page, index) => {
+      if (!keep.has(index)) page.remove();
+    });
+    [...document.querySelectorAll("section.page")].forEach((page, index, all) => {
+      const number = page.querySelector(".footer span:last-child");
+      if (number && index > 0) number.textContent = String(index + 1).padStart(2, "0");
+    });
+  })();
+</script>
+</body>
+</html>

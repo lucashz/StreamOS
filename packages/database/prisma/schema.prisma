@@ -1,0 +1,1030 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  MODERATOR
+  FINANCE
+  VIEWER
+  MEMBER
+  SUPPORT
+}
+
+enum ComplianceStatus {
+  PENDING
+  SANDBOX_APPROVED
+  APPROVED
+  REJECTED
+  BLOCKED
+}
+
+enum PaymentStatus {
+  CREATED
+  PENDING
+  CONFIRMED
+  SETTLED
+  AVAILABLE
+  REFUNDED
+  FAILED
+}
+
+enum LedgerDirection {
+  DEBIT
+  CREDIT
+}
+
+enum PayoutStatus {
+  REQUESTED
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELED
+}
+
+enum LiveQueueStatus {
+  QUEUED
+  DISPATCHING
+  PLAYING
+  COMPLETED
+  MEDIA_FAILED
+  SKIPPED
+  FAILED
+  EXPIRED
+}
+
+model User {
+  id                  String               @id @default(uuid()) @db.Uuid
+  email               String               @unique
+  passwordHash        String
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  memberships         Membership[]
+  sessions            Session[]
+  passwordResetTokens PasswordResetToken[]
+  consents            UserConsent[]
+  auditLogs           AuditLog[]           @relation("AuditActor")
+  liveQueueActions    LiveQueueAction[]    @relation("LiveQueueActor")
+}
+
+model UserConsent {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  type       String
+  version    String
+  ipAddress  String?
+  acceptedAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, type, version])
+  @@index([userId, acceptedAt])
+}
+
+model Organization {
+  id                      String                   @id @default(uuid()) @db.Uuid
+  name                    String
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  deactivatedAt           DateTime?
+  memberships             Membership[]
+  creatorProfile          CreatorProfile?
+  complianceProfile       ComplianceProfile?
+  paymentIntents          PaymentIntent[]
+  payments                Payment[]
+  ledgerAccounts          LedgerAccount[]
+  journalEntries          JournalEntry[]
+  payouts                 Payout[]
+  walletSettings          WalletSettings?
+  widgets                 Widget[]
+  songSessions            SongSession[]
+  videoSessions           VideoSession[]
+  refunds                 Refund[]
+  outboxEvents            OutboxEvent[]
+  overlayChannels         OverlayChannel[]
+  alertConfig             AlertConfig?
+  goals                   Goal[]
+  auditLogs               AuditLog[]
+  moderationPolicies      ModerationPolicy[]
+  moderationItems         ModerationItem[]
+  ttsConfig               TtsConfig?
+  ttsJobs                 TtsJob[]
+  campaigns               FundraisingCampaign[]
+  campaignContributions   CampaignContribution[]
+  subscriptionPlans       SubscriptionPlan[]
+  subscriptions           CreatorSubscription[]
+  teamInvites             TeamInvite[]
+  apiTokens               ApiToken[]
+  webhookEndpoints        WebhookEndpoint[]
+  webhookDeliveries       WebhookDelivery[]
+  integrationConnections  IntegrationConnection[]
+  liveQueueState          LiveQueueState?
+  liveQueueItems          LiveQueueItem[]
+  liveQueueActions        LiveQueueAction[]
+  liveSessions            LiveSession[]
+  alertMediaAssets        AlertMediaAsset[]
+  alertVariations         AlertVariation[]
+  overlayPlaybackReceipts OverlayPlaybackReceipt[]
+}
+
+model Membership {
+  id             String         @id @default(uuid()) @db.Uuid
+  userId         String         @db.Uuid
+  organizationId String         @db.Uuid
+  role           MembershipRole @default(MEMBER)
+  createdAt      DateTime       @default(now())
+  user           User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+}
+
+model Session {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @db.Uuid
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime  @default(now())
+  userAgent  String?
+  ipAddress  String?
+  revokedAt  DateTime?
+  activeOrganizationId String? @db.Uuid
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model CreatorProfile {
+  id                         String       @id @default(uuid()) @db.Uuid
+  organizationId             String       @unique @db.Uuid
+  slug                       String       @unique
+  displayName                String
+  bio                        String?
+  avatarUrl                  String?
+  coverUrl                   String?
+  isPublished                Boolean      @default(false)
+  minimumContributionInCents BigInt       @default(100)
+  onboardingCompletedAt      DateTime?
+  createdAt                  DateTime     @default(now())
+  updatedAt                  DateTime     @updatedAt
+  organization               Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+}
+
+model ComplianceProfile {
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String           @unique @db.Uuid
+  status         ComplianceStatus @default(PENDING)
+  providerRef    String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+}
+
+model PaymentIntent {
+  id                   String                @id @default(uuid()) @db.Uuid
+  organizationId       String                @db.Uuid
+  provider             String
+  providerReference    String?               @unique
+  idempotencyKey       String                @unique
+  amountInCents        BigInt
+  supporterName        String?
+  message              String?
+  anonymous            Boolean               @default(false)
+  alertType            String                @default("TEXT")
+  audioUrl             String?
+  audioDurationSeconds Int?
+  ttsVoice             String?
+  status               PaymentStatus         @default(CREATED)
+  expiresAt            DateTime
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  payment              Payment?
+  songRequest          SongRequest?
+  videoRequest         VideoRequest?
+  campaignContribution CampaignContribution?
+
+  @@index([organizationId, createdAt])
+}
+
+model SongSession {
+  id                          String        @id @default(uuid()) @db.Uuid
+  organizationId              String        @db.Uuid
+  name                        String
+  theme                       String
+  allowedGenres               String[]
+  allowedArtists              String[]
+  blockedArtists              String[]
+  blockedTerms                String[]      @default([])
+  provider                    String        @default("YOUTUBE")
+  volume                      Int           @default(80)
+  automatic                   Boolean       @default(true)
+  minimumContributionInCents  BigInt        @default(500)
+  maximumDurationSeconds      Int           @default(360)
+  maximumQueueSize            Int           @default(30)
+  maximumRequestsPerSupporter Int           @default(3)
+  status                      String        @default("DRAFT")
+  createdAt                   DateTime      @default(now())
+  updatedAt                   DateTime      @updatedAt
+  organization                Organization  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  requests                    SongRequest[]
+
+  @@index([organizationId, status])
+}
+
+model SongRequest {
+  id              String         @id @default(uuid()) @db.Uuid
+  songSessionId   String         @db.Uuid
+  paymentIntentId String?        @unique @db.Uuid
+  externalId      String
+  provider        String         @default("MOCK")
+  title           String
+  artist          String
+  genre           String
+  durationSeconds Int
+  artworkUrl      String?
+  playbackUrl     String?
+  playbackRestrictions Json      @default("{}")
+  supporterName   String
+  amountInCents   BigInt         @default(500)
+  status          String         @default("AWAITING_PAYMENT")
+  checkoutExpiresAt DateTime
+  position        Int?
+  rejectionReason String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  session         SongSession    @relation(fields: [songSessionId], references: [id], onDelete: Restrict)
+  paymentIntent   PaymentIntent? @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
+
+  @@index([songSessionId, status, position])
+  @@index([songSessionId, supporterName, createdAt])
+}
+
+model VideoSession {
+  id                         String         @id @default(uuid()) @db.Uuid
+  organizationId             String         @db.Uuid
+  name                       String
+  pricePerSecondInCents      BigInt         @default(5)
+  minimumContributionInCents BigInt         @default(300)
+  maximumDurationSeconds     Int            @default(300)
+  minimumViews               Int            @default(10000)
+  minimumAgeDays             Int            @default(7)
+  maximumQueueSize           Int            @default(20)
+  blockMadeForKids           Boolean        @default(true)
+  blockLiveContent           Boolean        @default(true)
+  allowedChannelIds          String[]
+  blockedChannelIds          String[]
+  blockedTitleTerms          String[]
+  automatic                  Boolean        @default(true)
+  status                     String         @default("DRAFT")
+  createdAt                  DateTime       @default(now())
+  updatedAt                  DateTime       @updatedAt
+  organization               Organization   @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  requests                   VideoRequest[]
+
+  @@index([organizationId, status])
+}
+
+model VideoRequest {
+  id               String         @id @default(uuid()) @db.Uuid
+  videoSessionId   String         @db.Uuid
+  paymentIntentId  String?        @unique @db.Uuid
+  provider         String
+  externalId       String
+  url              String
+  title            String
+  channelTitle     String
+  channelId        String         @default("")
+  durationSeconds  Int
+  selectedSeconds  Int
+  startAtSeconds   Int            @default(0)
+  views            Int
+  publishedAt      DateTime
+  thumbnailUrl     String?
+  embeddable       Boolean
+  madeForKids      Boolean        @default(false)
+  broadcastType    String         @default("NONE")
+  supporterName    String
+  amountInCents    BigInt
+  status           String         @default("AWAITING_PAYMENT")
+  moderationReason String?
+  checkoutExpiresAt DateTime
+  position         Int?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  session          VideoSession   @relation(fields: [videoSessionId], references: [id], onDelete: Restrict)
+  paymentIntent    PaymentIntent? @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
+
+  @@index([videoSessionId, status, position])
+  @@index([videoSessionId, externalId, createdAt])
+}
+
+model Payment {
+  id                 String        @id @default(uuid()) @db.Uuid
+  organizationId     String        @db.Uuid
+  paymentIntentId    String        @unique @db.Uuid
+  providerReference  String        @unique
+  amountInCents      BigInt
+  platformFeeInCents BigInt
+  providerFeeInCents BigInt
+  creatorNetInCents  BigInt
+  status             PaymentStatus
+  confirmedAt        DateTime?
+  settledAt          DateTime?
+  availableAt        DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  organization       Organization  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  paymentIntent      PaymentIntent @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
+  refunds            Refund[]
+
+  @@index([organizationId, createdAt])
+}
+
+model ProviderWebhook {
+  id              String    @id @default(uuid()) @db.Uuid
+  provider        String
+  providerEventId String
+  idempotencyKey  String    @unique
+  payload         Json
+  payloadHash     String
+  receivedAt      DateTime  @default(now())
+  processedAt     DateTime?
+  failureReason   String?
+
+  @@unique([provider, providerEventId])
+  @@index([receivedAt])
+}
+
+model LedgerAccount {
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String?       @db.Uuid
+  code           String
+  name           String
+  createdAt      DateTime      @default(now())
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  postings       Posting[]
+
+  @@unique([organizationId, code])
+}
+
+model JournalEntry {
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String?       @db.Uuid
+  type           String
+  referenceId    String
+  idempotencyKey String        @unique
+  description    String?
+  occurredAt     DateTime
+  createdAt      DateTime      @default(now())
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  postings       Posting[]
+
+  @@unique([type, referenceId])
+  @@index([organizationId, occurredAt])
+}
+
+model Posting {
+  id              String          @id @default(uuid()) @db.Uuid
+  journalEntryId  String          @db.Uuid
+  ledgerAccountId String          @db.Uuid
+  direction       LedgerDirection
+  amountInCents   BigInt
+  createdAt       DateTime        @default(now())
+  journalEntry    JournalEntry    @relation(fields: [journalEntryId], references: [id], onDelete: Restrict)
+  ledgerAccount   LedgerAccount   @relation(fields: [ledgerAccountId], references: [id], onDelete: Restrict)
+
+  @@index([journalEntryId])
+  @@index([ledgerAccountId, createdAt])
+}
+
+model BalanceProjection {
+  id              String   @id @default(uuid()) @db.Uuid
+  ledgerAccountId String   @unique @db.Uuid
+  amountInCents   BigInt
+  updatedAt       DateTime @updatedAt
+}
+
+model Payout {
+  id                String       @id @default(uuid()) @db.Uuid
+  organizationId    String       @db.Uuid
+  idempotencyKey    String       @unique
+  amountInCents     BigInt
+  status            PayoutStatus @default(REQUESTED)
+  requestedAt       DateTime     @default(now())
+  completedAt       DateTime?
+  destinationMasked String?
+  failureReason     String?
+  provider          String       @default("mock")
+  providerReference String?      @unique
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+}
+
+model WalletSettings {
+  id                        String       @id @default(uuid()) @db.Uuid
+  organizationId            String       @unique @db.Uuid
+  pixKeyType                String?
+  pixKeyHash                String?
+  pixKeyMasked              String?
+  pixKeyCiphertext          String?
+  pixKeyVerifiedAt          DateTime?
+  legalName                 String?
+  taxIdHash                 String?
+  taxIdMasked               String?
+  taxIdCiphertext           String?
+  financialTermsAcceptedAt  DateTime?
+  providerSubaccountId      String?      @unique
+  providerSubaccountStatus  String       @default("NOT_CONFIGURED")
+  providerWithdrawBlocked   Boolean      @default(false)
+  providerSyncedAt          DateTime?
+  minimumPayoutInCents      BigInt       @default(1000)
+  dailyPayoutLimitInCents   BigInt       @default(100000)
+  monthlyPayoutLimitInCents BigInt       @default(1000000)
+  createdAt                 DateTime     @default(now())
+  updatedAt                 DateTime     @updatedAt
+  organization              Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+}
+
+model Refund {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  paymentId      String       @db.Uuid
+  idempotencyKey String       @unique
+  amountInCents  BigInt
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  payment        Payment      @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+}
+
+model OutboxEvent {
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String?       @db.Uuid
+  eventType      String
+  eventVersion   Int
+  aggregateId    String        @db.Uuid
+  correlationId  String        @db.Uuid
+  causationId    String?       @db.Uuid
+  payload        Json
+  occurredAt     DateTime
+  publishedAt    DateTime?
+  attempts       Int           @default(0)
+  lastError      String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@index([publishedAt, occurredAt])
+}
+
+model OverlayChannel {
+  id               String                   @id @default(uuid()) @db.Uuid
+  organizationId   String                   @db.Uuid
+  tokenHash        String                   @unique
+  revokedAt        DateTime?
+  createdAt        DateTime                 @default(now())
+  nextSequence     BigInt                   @default(1)
+  connectedAt      DateTime?
+  lastHeartbeatAt  DateTime?
+  disconnectedAt   DateTime?
+  widgetId         String?                  @unique @db.Uuid
+  organization     Organization             @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  widget           Widget?                  @relation(fields: [widgetId], references: [id], onDelete: Restrict)
+  deliveries       OverlayDelivery[]
+  playbackReceipts OverlayPlaybackReceipt[]
+}
+
+model Widget {
+  id             String          @id @default(uuid()) @db.Uuid
+  organizationId String          @db.Uuid
+  type           String
+  name           String
+  enabled        Boolean         @default(true)
+  config         Json
+  configVersion  Int             @default(1)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  channel        OverlayChannel?
+
+  @@index([organizationId, deletedAt])
+  @@index([organizationId, type])
+}
+
+model OverlayDelivery {
+  id               String         @id @default(uuid()) @db.Uuid
+  overlayChannelId String         @db.Uuid
+  eventId          String         @db.Uuid
+  sequence         BigInt
+  deliveredAt      DateTime?
+  acknowledgedAt   DateTime?
+  overlayChannel   OverlayChannel @relation(fields: [overlayChannelId], references: [id], onDelete: Restrict)
+
+  @@unique([overlayChannelId, eventId])
+  @@unique([overlayChannelId, sequence])
+}
+
+model OverlayPlaybackReceipt {
+  id               String         @id @default(uuid()) @db.Uuid
+  organizationId   String         @db.Uuid
+  overlayChannelId String         @db.Uuid
+  eventId          String         @db.Uuid
+  status           String
+  mediaReadyAt     DateTime?
+  startedAt        DateTime?
+  completedAt      DateTime?
+  failedAt         DateTime?
+  failureReason    String?
+  lastSequence     Int            @default(0)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  organization     Organization   @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  overlayChannel   OverlayChannel @relation(fields: [overlayChannelId], references: [id], onDelete: Restrict)
+
+  @@unique([overlayChannelId, eventId])
+  @@index([organizationId, updatedAt])
+  @@index([overlayChannelId, status])
+}
+
+model AlertConfig {
+  id                String           @id @default(uuid()) @db.Uuid
+  organizationId    String           @unique @db.Uuid
+  enabled           Boolean          @default(true)
+  moderationEnabled Boolean          @default(false)
+  minimumInCents    BigInt           @default(0)
+  durationMs        Int              @default(8000)
+  theme             Json
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  organization      Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  variations        AlertVariation[]
+}
+
+model AlertMediaAsset {
+  id               String           @id @default(uuid()) @db.Uuid
+  organizationId   String           @db.Uuid
+  name             String
+  kind             String
+  mimeType         String
+  url              String
+  sizeInBytes      Int
+  durationMs       Int?
+  width            Int?
+  height           Int?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  deletedAt        DateTime?
+  organization     Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  visualVariations AlertVariation[] @relation("AlertVisualAsset")
+  soundVariations  AlertVariation[] @relation("AlertSoundAsset")
+
+  @@index([organizationId, deletedAt])
+  @@index([organizationId, kind])
+}
+
+model AlertVariation {
+  id                String           @id @default(uuid()) @db.Uuid
+  organizationId    String           @db.Uuid
+  alertConfigId     String           @db.Uuid
+  name              String
+  enabled           Boolean          @default(true)
+  isDefault         Boolean          @default(false)
+  priority          Int              @default(0)
+  minimumInCents    BigInt?
+  maximumInCents    BigInt?
+  template          String           @default("neon-pulse")
+  accent            String           @default("#a98cff")
+  textColor         String           @default("#ffffff")
+  fontFamily        String           @default("Inter")
+  fontSize          Int              @default(32)
+  textAlign         String           @default("center")
+  layout            Json
+  minimumDurationMs Int              @default(5000)
+  maximumDurationMs Int              @default(12000)
+  soundVolume       Int              @default(80)
+  ttsEnabled        Boolean          @default(true)
+  ttsVoice          String           @default("pt-BR-default")
+  ttsRate           Float            @default(1)
+  ttsVolume         Int              @default(100)
+  showSupporter     Boolean          @default(true)
+  showAmount        Boolean          @default(true)
+  showMessage       Boolean          @default(true)
+  visualAssetId     String?          @db.Uuid
+  soundAssetId      String?          @db.Uuid
+  configVersion     Int              @default(1)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  deletedAt         DateTime?
+  organization      Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  alertConfig       AlertConfig      @relation(fields: [alertConfigId], references: [id], onDelete: Restrict)
+  visualAsset       AlertMediaAsset? @relation("AlertVisualAsset", fields: [visualAssetId], references: [id], onDelete: Restrict)
+  soundAsset        AlertMediaAsset? @relation("AlertSoundAsset", fields: [soundAssetId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, enabled, priority])
+  @@index([alertConfigId, deletedAt])
+  @@index([organizationId, minimumInCents, maximumInCents])
+}
+
+model Goal {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  title          String
+  targetInCents  BigInt
+  currentInCents BigInt       @default(0)
+  active         Boolean      @default(true)
+  deadline       DateTime?
+  color          String       @default("#7c5cff")
+  imageUrl       String?
+  completionMessage String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, active])
+}
+
+model AuditLog {
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String?       @db.Uuid
+  actorUserId    String?       @db.Uuid
+  action         String
+  targetType     String
+  targetId       String?
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  actor          User?         @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, createdAt])
+  @@index([actorUserId, createdAt])
+}
+
+model ModerationPolicy {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  name           String
+  blockedWords   String[]
+  blockLinks     Boolean      @default(true)
+  minimumInCents BigInt       @default(0)
+  enabled        Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, enabled])
+}
+
+model ModerationItem {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  sourceType     String
+  sourceId       String
+  supporterName  String?
+  content        String
+  amountInCents  BigInt?
+  status         String       @default("PENDING")
+  decisionReason String?
+  decidedById    String?      @db.Uuid
+  decidedAt      DateTime?
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  ttsJob         TtsJob?
+
+  @@unique([sourceType, sourceId])
+  @@index([organizationId, status, createdAt])
+}
+
+model TtsConfig {
+  id                String       @id @default(uuid()) @db.Uuid
+  organizationId    String       @unique @db.Uuid
+  enabled           Boolean      @default(false)
+  voice             String       @default("pt-BR-default")
+  minimumInCents    BigInt       @default(500)
+  maximumCharacters Int          @default(200)
+  paused            Boolean      @default(false)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+}
+
+model TtsJob {
+  id               String         @id @default(uuid()) @db.Uuid
+  organizationId   String         @db.Uuid
+  moderationItemId String         @unique @db.Uuid
+  text             String
+  voice            String
+  status           String         @default("QUEUED")
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  organization     Organization   @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  moderationItem   ModerationItem @relation(fields: [moderationItemId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, status, createdAt])
+}
+
+model FundraisingCampaign {
+  id             String                 @id @default(uuid()) @db.Uuid
+  organizationId String                 @db.Uuid
+  slug           String
+  title          String
+  description    String
+  imageUrl       String?
+  targetInCents  BigInt
+  startsAt       DateTime               @default(now())
+  endsAt         DateTime?
+  status         String                 @default("DRAFT")
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  contributions  CampaignContribution[]
+  rewards        CampaignReward[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, status])
+}
+
+model CampaignContribution {
+  id              String              @id @default(uuid()) @db.Uuid
+  organizationId  String              @db.Uuid
+  campaignId      String              @db.Uuid
+  paymentIntentId String              @unique @db.Uuid
+  amountInCents   BigInt
+  supporterName   String?
+  confirmedAt     DateTime?
+  createdAt       DateTime            @default(now())
+  organization    Organization        @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  campaign        FundraisingCampaign @relation(fields: [campaignId], references: [id], onDelete: Restrict)
+  paymentIntent   PaymentIntent       @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
+  claims          RewardClaim[]
+
+  @@index([campaignId, confirmedAt])
+}
+
+model CampaignReward {
+  id             String              @id @default(uuid()) @db.Uuid
+  campaignId     String              @db.Uuid
+  title          String
+  description    String
+  minimumInCents BigInt
+  quantity       Int?
+  claimedCount   Int                 @default(0)
+  active         Boolean             @default(true)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  campaign       FundraisingCampaign @relation(fields: [campaignId], references: [id], onDelete: Restrict)
+  claims         RewardClaim[]
+
+  @@index([campaignId, active])
+}
+
+model RewardClaim {
+  id                     String               @id @default(uuid()) @db.Uuid
+  rewardId               String               @db.Uuid
+  campaignContributionId String               @db.Uuid
+  status                 String               @default("CLAIMED")
+  deliveryNote           String?
+  deliveredAt            DateTime?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  reward                 CampaignReward       @relation(fields: [rewardId], references: [id], onDelete: Restrict)
+  campaignContribution   CampaignContribution @relation(fields: [campaignContributionId], references: [id], onDelete: Restrict)
+
+  @@unique([rewardId, campaignContributionId])
+  @@index([rewardId, status])
+}
+
+model SubscriptionPlan {
+  id             String                @id @default(uuid()) @db.Uuid
+  organizationId String                @db.Uuid
+  slug           String
+  name           String
+  description    String
+  priceInCents   BigInt
+  benefits       Json                  @default("[]")
+  published      Boolean               @default(false)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  subscriptions  CreatorSubscription[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, published])
+}
+
+model CreatorSubscription {
+  id                 String                @id @default(uuid()) @db.Uuid
+  organizationId     String                @db.Uuid
+  planId             String                @db.Uuid
+  supporterName      String
+  supporterEmail     String
+  status             String                @default("ACTIVE")
+  currentPeriodStart DateTime              @default(now())
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean               @default(false)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  organization       Organization          @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  plan               SubscriptionPlan      @relation(fields: [planId], references: [id], onDelete: Restrict)
+  renewals           SubscriptionRenewal[]
+
+  @@index([organizationId, status])
+  @@index([supporterEmail, createdAt])
+}
+
+model SubscriptionRenewal {
+  id             String              @id @default(uuid()) @db.Uuid
+  subscriptionId String              @db.Uuid
+  amountInCents  BigInt
+  periodStart    DateTime
+  periodEnd      DateTime
+  status         String              @default("MOCK_PAID")
+  idempotencyKey String?             @unique
+  createdAt      DateTime            @default(now())
+  subscription   CreatorSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+
+  @@index([subscriptionId, createdAt])
+}
+
+model TeamInvite {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @db.Uuid
+  email          String
+  role           MembershipRole
+  tokenHash      String         @unique
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime       @default(now())
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, email])
+}
+
+model ApiToken {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  name           String
+  tokenHash      String       @unique
+  tokenPrefix    String
+  scopes         String[]
+  expiresAt      DateTime?
+  revokedAt      DateTime?
+  lastUsedAt     DateTime?
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, revokedAt])
+}
+
+model WebhookEndpoint {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  url            String
+  secretHash     String
+  secretCiphertext String
+  events         String[]
+  enabled        Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  deliveries     WebhookDelivery[]
+
+  @@index([organizationId, enabled])
+}
+
+model WebhookDelivery {
+  id             String          @id @default(uuid()) @db.Uuid
+  organizationId String          @db.Uuid
+  endpointId     String          @db.Uuid
+  outboxEventId  String          @db.Uuid
+  eventType      String
+  status         String          @default("PENDING")
+  attempts       Int             @default(0)
+  nextAttemptAt  DateTime        @default(now())
+  responseStatus Int?
+  requestBody    Json?
+  responseBody   String?
+  lastError      String?
+  deliveredAt    DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  endpoint       WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Restrict)
+
+  @@unique([endpointId, outboxEventId])
+  @@index([status, nextAttemptAt])
+  @@index([organizationId, createdAt])
+}
+
+model IntegrationConnection {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  provider       String
+  status         String       @default("MOCK_CONNECTED")
+  displayName    String?
+  configuration  Json         @default("{}")
+  connectedAt    DateTime     @default(now())
+  revokedAt      DateTime?
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@unique([organizationId, provider])
+}
+
+model LiveQueueState {
+  id                     String       @id @default(uuid()) @db.Uuid
+  organizationId         String       @unique @db.Uuid
+  paused                 Boolean      @default(false)
+  autoAdvance            Boolean      @default(true)
+  queueMode              String       @default("BALANCED")
+  playbackTimeoutSeconds Int          @default(120)
+  masterVolume           Int          @default(100)
+  version                Int          @default(1)
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+  organization           Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+}
+
+model LiveSession {
+  id             String          @id @default(uuid()) @db.Uuid
+  organizationId String          @db.Uuid
+  name           String
+  status         String          @default("ACTIVE")
+  startedAt      DateTime        @default(now())
+  endedAt        DateTime?
+  createdAt      DateTime        @default(now())
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  queueItems     LiveQueueItem[]
+
+  @@index([organizationId, status, startedAt])
+}
+
+model LiveQueueItem {
+  id               String            @id @default(uuid()) @db.Uuid
+  organizationId   String            @db.Uuid
+  liveSessionId    String?           @db.Uuid
+  sourceType       String
+  sourceId         String
+  kind             String
+  supporterName    String?
+  amountInCents    BigInt?
+  title            String?
+  content          String?
+  metadata         Json
+  moderationStatus String?
+  status           LiveQueueStatus   @default(QUEUED)
+  position         Int
+  startedAt        DateTime?
+  finishedAt       DateTime?
+  playbackDeadline DateTime?
+  failureReason    String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  liveSession      LiveSession?      @relation(fields: [liveSessionId], references: [id], onDelete: SetNull)
+  actions          LiveQueueAction[]
+
+  @@unique([organizationId, sourceType, sourceId])
+  @@index([organizationId, status, position])
+  @@index([organizationId, createdAt])
+  @@index([liveSessionId, createdAt])
+}
+
+model LiveQueueAction {
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String           @db.Uuid
+  queueItemId    String?          @db.Uuid
+  actorUserId    String?          @db.Uuid
+  action         String
+  origin         String
+  previousStatus LiveQueueStatus?
+  nextStatus     LiveQueueStatus?
+  reason         String?
+  idempotencyKey String           @unique
+  metadata       Json?
+  createdAt      DateTime         @default(now())
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  queueItem      LiveQueueItem?   @relation(fields: [queueItemId], references: [id], onDelete: Restrict)
+  actor          User?            @relation("LiveQueueActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, createdAt])
+  @@index([queueItemId, createdAt])
+}

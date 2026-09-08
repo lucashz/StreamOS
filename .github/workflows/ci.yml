@@ -1,0 +1,107 @@
+name: ci
+on:
+  push:
+  pull_request:
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: streamos
+          POSTGRES_USER: streamos
+          POSTGRES_PASSWORD: streamos
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U streamos" --health-interval 5s
+          --health-timeout 3s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+      mailpit:
+        image: axllent/mailpit:latest
+        ports: ['1025:1025', '8025:8025']
+    env:
+      DATABASE_URL: postgresql://streamos:streamos@localhost:5432/streamos
+      REDIS_URL: redis://localhost:6379
+      APP_URL: http://localhost:3000
+      API_URL: http://localhost:3001
+      REALTIME_URL: ws://localhost:3002
+      OVERLAY_URL: http://localhost:3003
+      SESSION_SECRET: ci-session-secret-with-at-least-32-characters
+      WEBHOOK_MOCK_SECRET: ci-webhook-secret-with-at-least-32-characters
+      APP_ENCRYPTION_KEY: ci-encryption-secret-with-at-least-32-characters
+      METRICS_TOKEN: ci-metrics-secret-with-at-least-32-characters
+      POSTGRES_PASSWORD: ci-postgres-password
+      MAIL_HOST: localhost
+      MAIL_PORT: 1025
+      NODE_ENV: test
+      PAYMENT_PROVIDER: mock
+      PAYMENTS_ENABLED: 'true'
+      PAYOUTS_ENABLED: 'false'
+      VIDEOPIX_ENABLED: 'true'
+      SONGPIX_ENABLED: 'true'
+      SUBSCRIPTIONS_ENABLED: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - run: corepack enable && corepack pnpm install --frozen-lockfile
+      - run: corepack pnpm exec playwright install --with-deps chromium
+      - name: Materialize CI environment
+        run: env | grep -E '^(DATABASE_URL|REDIS_URL|APP_URL|API_URL|REALTIME_URL|OVERLAY_URL|SESSION_SECRET|WEBHOOK_MOCK_SECRET|APP_ENCRYPTION_KEY|METRICS_TOKEN|MAIL_HOST|MAIL_PORT|NODE_ENV|PAYMENT_PROVIDER|PAYMENTS_ENABLED|PAYOUTS_ENABLED|VIDEOPIX_ENABLED|SONGPIX_ENABLED|SUBSCRIPTIONS_ENABLED)=' > .env
+      - run: corepack pnpm db:deploy
+      - run: corepack pnpm lint
+      - run: corepack pnpm typecheck
+      - run: corepack pnpm test
+      - run: corepack pnpm build
+      - name: Start production services
+        run: |
+          corepack pnpm --filter @streamos/api start > /tmp/streamos-api.log 2>&1 &
+          corepack pnpm --filter @streamos/worker start > /tmp/streamos-worker.log 2>&1 &
+          corepack pnpm --filter @streamos/realtime start > /tmp/streamos-realtime.log 2>&1 &
+          corepack pnpm --filter @streamos/web start > /tmp/streamos-web.log 2>&1 &
+          corepack pnpm --filter @streamos/overlay start > /tmp/streamos-overlay.log 2>&1 &
+      - name: Integrated smoke and E2E
+        run: |
+          for attempt in $(seq 1 30); do
+            corepack pnpm smoke:staging && break
+            if [ "$attempt" = 30 ]; then
+              cat /tmp/streamos-*.log
+              exit 1
+            fi
+            sleep 2
+          done
+          corepack pnpm test:e2e:local
+          corepack pnpm test:e2e:accounts
+          corepack pnpm test:e2e:wallet
+          corepack pnpm test:e2e:widgets
+          corepack pnpm test:e2e:songpix
+          corepack pnpm test:e2e:videopix
+          corepack pnpm test:e2e:moderation
+          corepack pnpm test:e2e:campaigns
+          corepack pnpm test:e2e:subscriptions
+          corepack pnpm test:e2e:platform
+          corepack pnpm test:e2e:live-control
+          corepack pnpm test:e2e:alerts
+          corepack pnpm test:e2e:browser
+          corepack pnpm test:load:beta
+      - run: docker compose --env-file .env.staging.example -f compose.staging.yaml config --quiet
+      - name: Build production images
+        run: |
+          for package in api worker realtime web overlay; do
+            docker build --build-arg STREAMOS_PACKAGE=@streamos/$package -t streamos-$package:ci .
+          done
+      - name: Preserve service logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: streamos-ci-service-logs
+          path: /tmp/streamos-*.log
+          if-no-files-found: ignore
+          retention-days: 7
