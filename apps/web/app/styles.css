@@ -5742,8 +5742,13 @@ a {
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.025);
 }
-.audio-recorder > div { display: grid; gap: 3px; }
-.audio-recorder small { color: var(--muted); }
+.audio-recorder > div {
+  display: grid;
+  gap: 3px;
+}
+.audio-recorder small {
+  color: var(--muted);
+}
 .recording-dot {
   width: 12px;
   height: 12px;
@@ -5774,7 +5779,9 @@ a {
   width: 100%;
 }
 .copy-pix-button span,
-.confirm-trim-button span { font-size: 1.1em; }
+.confirm-trim-button span {
+  font-size: 1.1em;
+}
 .confirm-trim-button {
   display: inline-flex;
   align-items: center;
@@ -5783,11 +5790,19 @@ a {
   padding-inline: 20px;
 }
 @keyframes recording-pulse {
-  50% { opacity: 0.48; transform: scale(0.86); }
+  50% {
+    opacity: 0.48;
+    transform: scale(0.86);
+  }
 }
 @media (max-width: 560px) {
-  .audio-recorder { grid-template-columns: auto 1fr; }
-  .audio-recorder button { grid-column: 1 / -1; width: 100%; }
+  .audio-recorder {
+    grid-template-columns: auto 1fr;
+  }
+  .audio-recorder button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
 }
 .audio-donate-preview {
   display: grid;
@@ -7135,6 +7150,9 @@ a {
   padding: 0;
   background: transparent;
 }
+.feature-page [id] {
+  scroll-margin-top: 72px;
+}
 .panel-content > main[style] {
   max-width: none !important;
   margin: 0 !important;
@@ -8342,7 +8360,11 @@ a {
   padding: 0;
   border: 0;
 }
-.voice-picker > p { margin: 0; color: var(--muted); font-size: .82rem; }
+.voice-picker > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
 .voice-profile-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -8358,14 +8380,18 @@ a {
   border-radius: 12px;
   text-align: center;
   cursor: pointer;
-  background: rgba(255, 255, 255, .02);
+  background: rgba(255, 255, 255, 0.02);
 }
 .voice-profile.selected {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
-.voice-profile > input { position: absolute; opacity: 0; pointer-events: none; }
+.voice-profile > input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
 .voice-avatar {
   display: grid;
   place-items: center;
@@ -8374,10 +8400,20 @@ a {
   border-radius: 50%;
   font-size: 25px;
   background: linear-gradient(145deg, #292142, #11131d);
-  border: 1px solid rgba(169, 140, 255, .4);
+  border: 1px solid rgba(169, 140, 255, 0.4);
 }
-.voice-profile small { color: var(--muted); font-size: .68rem; }
-.voice-profile button { min-height: 30px; margin-top: 5px; padding: 5px 9px; font-size: .7rem; }
+.voice-profile small {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+.voice-profile button {
+  min-height: 30px;
+  margin-top: 5px;
+  padding: 5px 9px;
+  font-size: 0.7rem;
+}
 @media (max-width: 680px) {
-  .voice-profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .voice-profile-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

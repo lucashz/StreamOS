@@ -127,12 +127,17 @@ const expectedSignature = createHmac('sha256', endpoint.body.signingSecret)
   .digest('hex');
 if (received.headers['x-streamos-signature'] !== `sha256=${expectedSignature}`)
   throw new Error('Assinatura HMAC inválida');
-overview = await request('/dashboard/platform', {
-  headers: { cookie: ownerCookie },
-});
-const delivery = overview.body.webhooks.find(
-  (item) => item.id === endpoint.body.id,
-)?.deliveries[0];
+let delivery;
+for (let attempt = 0; attempt < 25; attempt += 1) {
+  overview = await request('/dashboard/platform', {
+    headers: { cookie: ownerCookie },
+  });
+  delivery = overview.body.webhooks.find(
+    (item) => item.id === endpoint.body.id,
+  )?.deliveries[0];
+  if (delivery?.status === 'DELIVERED') break;
+  await new Promise((resolve) => setTimeout(resolve, 200));
+}
 if (delivery?.status !== 'DELIVERED')
   throw new Error('Histórico de entrega inconsistente');
 await request(`/dashboard/team/members/${member.id}`, {

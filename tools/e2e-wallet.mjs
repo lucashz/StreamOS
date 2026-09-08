@@ -65,6 +65,9 @@ await request(
       bio: 'Teste da carteira operacional',
       minimumContributionInCents: 100,
       isPublished: true,
+      legalName: 'Carteira E2E Ltda',
+      taxId: '11222333000181',
+      financialTermsAccepted: true,
     },
     cookie,
   ),
@@ -143,6 +146,35 @@ if (
   receivable.netInCents !== 18_840
 )
   throw new Error(`Recebível incorreto: ${JSON.stringify(receivable)}`);
+
+if (process.env.PAYOUTS_ENABLED !== 'true') {
+  const disabledPayout = await request(
+    '/dashboard/payouts',
+    json('POST', { amountInCents: 2_000 }, cookie, {
+      'idempotency-key': `disabled-${randomUUID()}`,
+    }),
+    400,
+  );
+  if (!JSON.stringify(disabledPayout.body).includes('temporariamente indisponíveis'))
+    throw new Error(
+      `Kill switch de saques não retornou a mensagem esperada: ${JSON.stringify(disabledPayout.body)}`,
+    );
+  console.log(
+    JSON.stringify(
+      {
+        result: 'ok',
+        pixKeyProtected: true,
+        receivableGrossInCents: receivable.grossInCents,
+        receivableNetInCents: receivable.netInCents,
+        payoutsEnabled: false,
+        payoutKillSwitchEnforced: true,
+      },
+      null,
+      2,
+    ),
+  );
+  process.exit(0);
+}
 
 await request(
   '/dashboard/payouts',

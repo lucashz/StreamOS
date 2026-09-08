@@ -98,6 +98,16 @@ O próximo bloco é concluir o **Ciclo 12 — staging**. A configuração de pro
 - [x] ~~Inicializador local transacional com Docker, PIDs, logs e health checks de API, realtime, web e overlay.~~
 - [ ] Confirmar saída, pausa e reinício do áudio no mixer de uma instalação real do OBS.
 
+#### Ciclo 16 — revisão de interface anterior ao staging
+
+- [x] ~~Criar roteiro reproduzível para revisão menu por menu e box por box.~~
+- [x] ~~Percorrer 25 destinos em 360, 768, 1366 e 1920 px, com 100 combinações registradas.~~
+- [x] ~~Corrigir âncoras de TTS, bloqueios e recompensas e remover o item redundante Conexões.~~
+- [x] ~~Reexecutar regressão funcional de contas, carteira, moderação, widgets, mídia, campanhas, assinaturas, plataforma, fila e alertas.~~
+- [ ] Repetir a inspeção com uma organização antiga e conteúdo longo para validar estados densos.
+- [ ] Fazer uma rodada assistida com usuário externo para avaliar compreensão e ordem das ações.
+- [ ] Concluir a validação física de áudio e microfone em navegador e OBS reais.
+
 #### Ciclo 12 — ambiente de staging
 
 - [x] ~~Imagens de produção validadas para web, API, worker, realtime e overlay, executadas por usuário não privilegiado.~~

@@ -27,6 +27,7 @@
     "test:e2e:live-control": "dotenv -e .env -- node tools/e2e-live-control.mjs",
     "test:e2e:alerts": "dotenv -e .env -- node tools/e2e-alert-editor.mjs",
     "test:e2e:browser": "dotenv -e .env -- playwright test",
+    "audit:ui": "dotenv -e .env -- node tools/audit-ui.mjs",
     "test:load:beta": "dotenv -e .env -- node tools/load-beta.mjs",
     "test:resilience:beta": "dotenv -e .env -- node tools/resilience-beta.mjs",
     "smoke:staging": "dotenv -e .env -- node tools/smoke-staging.mjs",

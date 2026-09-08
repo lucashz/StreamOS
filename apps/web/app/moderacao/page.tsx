@@ -127,7 +127,7 @@ export default function ModerationPage() {
           Bloquear conteúdo impede sua reprodução, mas não devolve a
           contribuição.
         </p>
-        <section className="panel" style={{ padding: 24 }}>
+        <section id="tts" className="panel" style={{ padding: 24 }}>
           <h2>Configuração</h2>
           <label className="consent-field">
             <input
@@ -204,7 +204,11 @@ export default function ModerationPage() {
             Salvar
           </button>
         </section>
-        <section className="panel" style={{ padding: 24, marginTop: 20 }}>
+        <section
+          id="bloqueios"
+          className="panel"
+          style={{ padding: 24, marginTop: 20 }}
+        >
           <h2>Políticas</h2>
           <label>
             Palavras bloqueadas

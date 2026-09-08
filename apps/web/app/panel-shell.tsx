@@ -218,7 +218,6 @@ const groups: ReadonlyArray<{
     items: [
       ['Perfil', '/conta#perfil', 'users'],
       ['Equipe', '/plataforma#equipe', 'users'],
-      ['Conexões', '/plataforma#conexoes', 'plug'],
       ['Integrações', '/plataforma#integracoes', 'plug'],
       ['API', '/plataforma#api', 'settings'],
       ['Webhooks', '/plataforma#webhooks', 'activity'],

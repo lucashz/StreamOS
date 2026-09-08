@@ -84,7 +84,9 @@ export default function CampaignsPage() {
     );
     if (r.ok) {
       setTitle('');
-      setDescription(''); setImageUrl(''); setEndsAt('');
+      setDescription('');
+      setImageUrl('');
+      setEndsAt('');
       await load();
     }
   }
@@ -114,7 +116,8 @@ export default function CampaignsPage() {
     });
     setRewardCampaign('');
     setRewardName('');
-    setRewardDescription(''); setRewardQuantity('');
+    setRewardDescription('');
+    setRewardQuantity('');
     await load();
   }
   async function deliver(claimId: string) {
@@ -159,20 +162,49 @@ export default function CampaignsPage() {
               inputMode="decimal"
             />
           </label>
-          <label>Descrição<textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={2000} /></label>
-          <div className="form-grid two-columns"><label>Imagem<input type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." /></label><label>Prazo<input type="date" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} /></label></div>
+          <label>
+            Descrição
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={2000}
+            />
+          </label>
+          <div className="form-grid two-columns">
+            <label>
+              Imagem
+              <input
+                type="url"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="https://..."
+              />
+            </label>
+            <label>
+              Prazo
+              <input
+                type="date"
+                value={endsAt}
+                onChange={(e) => setEndsAt(e.target.value)}
+              />
+            </label>
+          </div>
           <button disabled={!title} onClick={() => void create()}>
             Criar rascunho
           </button>
         </section>
-        <section className="data-list polished-list">
+        <section id="recompensas" className="data-list polished-list">
           {items.map((item) => (
             <article className="feature-card" key={item.id}>
               <div>
                 <strong>{item.title}</strong>
                 <small>
                   {item.status} · {money(item.currentInCents)} de{' '}
-                  {money(item.targetInCents)} · {item.contributions.length} contribuições {item.endsAt ? `· até ${new Date(item.endsAt).toLocaleDateString('pt-BR')}` : ''}
+                  {money(item.targetInCents)} · {item.contributions.length}{' '}
+                  contribuições{' '}
+                  {item.endsAt
+                    ? `· até ${new Date(item.endsAt).toLocaleDateString('pt-BR')}`
+                    : ''}
                 </small>
                 <div className="progress">
                   <i
@@ -239,8 +271,20 @@ export default function CampaignsPage() {
                     value={rewardName}
                     onChange={(e) => setRewardName(e.target.value)}
                   />
-                  <input aria-label="Descrição da recompensa" placeholder="Descrição e instruções de entrega" value={rewardDescription} onChange={(e) => setRewardDescription(e.target.value)} />
-                  <input aria-label="Quantidade da recompensa" type="number" min="1" placeholder="Quantidade (vazio = ilimitada)" value={rewardQuantity} onChange={(e) => setRewardQuantity(e.target.value)} />
+                  <input
+                    aria-label="Descrição da recompensa"
+                    placeholder="Descrição e instruções de entrega"
+                    value={rewardDescription}
+                    onChange={(e) => setRewardDescription(e.target.value)}
+                  />
+                  <input
+                    aria-label="Quantidade da recompensa"
+                    type="number"
+                    min="1"
+                    placeholder="Quantidade (vazio = ilimitada)"
+                    value={rewardQuantity}
+                    onChange={(e) => setRewardQuantity(e.target.value)}
+                  />
                   <input
                     aria-label="Valor mínimo"
                     placeholder="Valor mínimo"
