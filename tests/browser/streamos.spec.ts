@@ -232,6 +232,38 @@ test('configurações executam os fluxos principais com retorno visível', async
   await expect(page.getByText('Gate do beta')).toBeVisible();
 });
 
+test('assinaturas criam e publicam um plano com retorno visível', async ({
+  page,
+}) => {
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const registration = await page.request.post(`${api}/auth/register`, {
+    data: {
+      email: `subscriptions-${suffix}@streamos.local`,
+      password: 'StreamOS-Subscriptions-123!',
+      displayName: 'Assinaturas E2E',
+      acceptTerms: true,
+    },
+  });
+  expect(registration.ok()).toBeTruthy();
+
+  await page.goto('/assinaturas');
+  await page.getByLabel('Nome').fill('Clube E2E');
+  await page.getByLabel('Preço mensal').fill('19,90');
+  await page.getByLabel('Descrição').fill('Plano criado pelo teste funcional.');
+  await page.getByRole('button', { name: 'Criar plano' }).click();
+  await expect(page.getByRole('status')).toContainText(
+    'Plano criado como rascunho',
+  );
+
+  const plan = page.locator('article.feature-card').filter({
+    has: page.getByText('Clube E2E', { exact: true }),
+  });
+  await expect(plan.getByText('Rascunho')).toBeVisible();
+  await plan.getByRole('button', { name: 'Publicar', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Plano publicado');
+  await expect(plan.getByText('Publicado')).toBeVisible();
+});
+
 test('alerta percorre a fila e desaparece automaticamente', async ({
   page,
 }, testInfo) => {

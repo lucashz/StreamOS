@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { PanelShell } from '../panel-shell';
+import { PageHeader } from '../ui';
 const api = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 type Plan = {
   id: string;
@@ -32,70 +33,163 @@ export default function Page() {
   const [benefits, setBenefits] = useState(
     'Badge exclusivo, Grupo da comunidade',
   );
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState('Carregando planos…');
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState('');
+  const priceInCents = Math.round(Number(price.replace(',', '.')) * 100);
+  const activeSubscriptions = plans.flatMap((plan) =>
+    plan.subscriptions.filter(
+      (subscription) => subscription.status === 'ACTIVE',
+    ),
+  );
+  const monthlyRevenue = plans.reduce(
+    (total, plan) =>
+      total +
+      plan.priceInCents *
+        plan.subscriptions.filter(
+          (subscription) => subscription.status === 'ACTIVE',
+        ).length,
+    0,
+  );
   const load = async () => {
-    const r = await fetch(`${api}/dashboard/subscription-plans`, {
-      credentials: 'include',
-    });
-    if (r.ok) setPlans((await r.json()) as Plan[]);
+    try {
+      const r = await fetch(`${api}/dashboard/subscription-plans`, {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      const body = (await r.json().catch(() => [])) as Plan[] & {
+        message?: string;
+      };
+      if (!r.ok) throw new Error(body.message ?? 'Não foi possível carregar.');
+      setPlans(body);
+      setStatus('Planos sincronizados.');
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível carregar os planos.',
+      );
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => {
     void load();
   }, []);
   async function create() {
-    await fetch(`${api}/dashboard/subscription-plans`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        description,
-        priceInCents: Math.round(Number(price.replace(',', '.')) * 100),
-        benefits: benefits
-          .split(',')
-          .map((item) => item.trim())
-          .filter(Boolean),
-      }),
-    });
-    setName('');
-    setDescription('');
-    await load();
+    if (
+      busy ||
+      !name.trim() ||
+      !Number.isFinite(priceInCents) ||
+      priceInCents <= 0
+    )
+      return;
+    setBusy('create');
+    setStatus('Criando plano…');
+    try {
+      const response = await fetch(`${api}/dashboard/subscription-plans`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          description: description.trim(),
+          priceInCents,
+          benefits: benefits
+            .split(',')
+            .map((item) => item.trim())
+            .filter(Boolean),
+        }),
+      });
+      const body = (await response.json().catch(() => ({}))) as {
+        message?: string;
+      };
+      if (!response.ok)
+        throw new Error(body.message ?? 'Não foi possível criar o plano.');
+      setName('');
+      setDescription('');
+      await load();
+      setStatus('Plano criado como rascunho.');
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível criar o plano.',
+      );
+    } finally {
+      setBusy('');
+    }
   }
   async function cancel(id: string) {
+    if (busy) return;
+    setBusy(id);
+    setStatus('Agendando cancelamento…');
     const response = await fetch(
       `${api}/dashboard/subscriptions/${id}/cancel`,
+      { method: 'POST', credentials: 'include' },
+    ).catch(() => null);
+    if (response?.ok) {
+      await load();
+      setStatus('Cancelamento agendado para o fim do período.');
+    } else {
+      const body = (await response?.json().catch(() => ({}))) as {
+        message?: string;
+      };
+      setStatus(body.message ?? 'Não foi possível agendar o cancelamento.');
+    }
+    setBusy('');
+  }
+  async function publish(id: string, value: boolean) {
+    if (busy) return;
+    setBusy(id);
+    setStatus(value ? 'Publicando plano…' : 'Retirando plano do ar…');
+    const response = await fetch(
+      `${api}/dashboard/subscription-plans/${id}/publish`,
       {
         method: 'POST',
         credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ published: value }),
       },
-    );
-    setStatus(
-      response.ok
-        ? 'Cancelamento agendado para o fim do período.'
-        : 'Não foi possível cancelar.',
-    );
-    if (response.ok) await load();
-  }
-  async function publish(id: string, value: boolean) {
-    await fetch(`${api}/dashboard/subscription-plans/${id}/publish`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ published: value }),
-    });
-    await load();
+    ).catch(() => null);
+    if (response?.ok) {
+      await load();
+      setStatus(value ? 'Plano publicado.' : 'Plano retirado do ar.');
+    } else {
+      const body = (await response?.json().catch(() => ({}))) as {
+        message?: string;
+      };
+      setStatus(body.message ?? 'Não foi possível alterar a publicação.');
+    }
+    setBusy('');
   }
   return (
     <PanelShell>
       <main className="feature-page">
-        <header>
-          <span className="section-kicker">Comunidade</span>
-          <h1>Planos de assinatura</h1>
-          <p>
-            Crie benefícios recorrentes. As cobranças ainda são simuladas
-            localmente.
-          </p>
-        </header>
+        <PageHeader
+          eyebrow="Comunidade"
+          title="Planos de assinatura"
+          description="Crie benefícios recorrentes e acompanhe seus membros ativos."
+        />
+        <section className="metric-grid" aria-label="Resumo das assinaturas">
+          <article className="metric-card">
+            <small>Planos publicados</small>
+            <strong>{plans.filter((plan) => plan.published).length}</strong>
+          </article>
+          <article className="metric-card">
+            <small>Membros ativos</small>
+            <strong>{activeSubscriptions.length}</strong>
+          </article>
+          <article className="metric-card">
+            <small>Receita mensal estimada</small>
+            <strong>
+              {new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+              }).format(monthlyRevenue / 100)}
+            </strong>
+          </article>
+        </section>
         <section className="feature-card settings-form compact-create-card">
           <h2>Novo plano</h2>
           <label>
@@ -105,8 +199,16 @@ export default function Page() {
           <label>
             Preço mensal
             <input value={price} onChange={(e) => setPrice(e.target.value)} />
+            <small>Valor mensal cobrado de cada membro.</small>
           </label>
-          <label>Descrição<textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} /></label>
+          <label>
+            Descrição
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={500}
+            />
+          </label>
           <label>
             Benefícios, separados por vírgula
             <input
@@ -114,8 +216,16 @@ export default function Page() {
               onChange={(e) => setBenefits(e.target.value)}
             />
           </label>
-          <button disabled={!name} onClick={() => void create()}>
-            Criar plano
+          <button
+            disabled={
+              Boolean(busy) ||
+              !name.trim() ||
+              !Number.isFinite(priceInCents) ||
+              priceInCents <= 0
+            }
+            onClick={() => void create()}
+          >
+            {busy === 'create' ? 'Criando…' : 'Criar plano'}
           </button>
         </section>
         <section className="data-list polished-list">
@@ -142,8 +252,14 @@ export default function Page() {
                         {subscription.status === 'ACTIVE'
                           ? 'Ativa'
                           : 'Cancelada'}{' '}
-                        · {subscription.renewals.length} cobrança(s)
-                        {' '}· início {new Date(subscription.createdAt).toLocaleDateString('pt-BR')} · próxima renovação {new Date(subscription.currentPeriodEnd).toLocaleDateString('pt-BR')}
+                        · {subscription.renewals.length} cobrança(s) · início{' '}
+                        {new Date(subscription.createdAt).toLocaleDateString(
+                          'pt-BR',
+                        )}{' '}
+                        · próxima renovação{' '}
+                        {new Date(
+                          subscription.currentPeriodEnd,
+                        ).toLocaleDateString('pt-BR')}
                         {subscription.cancelAtPeriodEnd
                           ? ' · encerra no fim do período'
                           : ''}
@@ -153,6 +269,7 @@ export default function Page() {
                     !subscription.cancelAtPeriodEnd ? (
                       <button
                         className="secondary-button"
+                        disabled={Boolean(busy)}
                         onClick={() => void cancel(subscription.id)}
                       >
                         Cancelar no fim do período
@@ -161,13 +278,20 @@ export default function Page() {
                   </div>
                 ))}
               </div>
-              <button onClick={() => void publish(p.id, !p.published)}>
-                {p.published ? 'Despublicar' : 'Publicar'}
+              <button
+                disabled={Boolean(busy)}
+                onClick={() => void publish(p.id, !p.published)}
+              >
+                {busy === p.id
+                  ? 'Processando…'
+                  : p.published
+                    ? 'Despublicar'
+                    : 'Publicar'}
               </button>
             </article>
           ))}
         </section>
-        {!plans.length && (
+        {!loading && !plans.length && (
           <section className="feature-empty">
             <div className="empty-art">◇</div>
             <div>
