@@ -6217,6 +6217,148 @@ a {
     width: 100%;
   }
 }
+
+/* Organização comum das páginas do menu Configurações. */
+.settings-page {
+  align-content: start;
+}
+
+.settings-page > :is(.back-link, .settings-page-header, .settings-local-nav),
+.account-settings-page > :is(.settings-sessions-card, #organizacao) {
+  grid-column: 1 / -1;
+}
+
+.settings-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.settings-page-header > div,
+.settings-page-header:not(.operations-header) {
+  min-width: 0;
+}
+
+.settings-page-header h1,
+.settings-page-header p {
+  margin-bottom: 0;
+}
+
+.settings-local-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  scrollbar-width: thin;
+}
+
+.settings-local-nav a {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.settings-local-nav a:hover,
+.settings-local-nav a:focus-visible {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--text);
+  outline: none;
+}
+
+.settings-page
+  :is(
+    #perfil,
+    #seguranca,
+    #organizacao,
+    #equipe,
+    #integracoes,
+    #api,
+    #webhooks
+  ) {
+  scroll-margin-top: 18px;
+}
+
+.settings-section-heading {
+  display: grid;
+  gap: 5px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-section-heading h2,
+.settings-section-heading p {
+  margin: 0;
+}
+
+.settings-section-heading p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.account-settings-page {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.account-settings-page > .settings-form > .primary-button,
+.platform-settings-page > .settings-form > .primary-button {
+  width: fit-content;
+  min-width: 144px;
+}
+
+.settings-sessions-card .data-list article {
+  align-items: center;
+}
+
+.settings-sessions-card .data-list button {
+  flex: none;
+  min-width: 104px;
+}
+
+.platform-settings-page > .feature-card {
+  display: grid;
+  gap: 16px;
+}
+
+.platform-settings-page .subscription-member-row {
+  gap: 10px;
+}
+
+.platform-settings-page .subscription-member-row > button {
+  min-height: 38px;
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .account-settings-page {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-page-header,
+  .settings-sessions-card .data-list article {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .settings-sessions-card .data-list button,
+  .account-settings-page > .settings-form > .primary-button,
+  .platform-settings-page > .settings-form > .primary-button {
+    width: 100%;
+  }
+}
 .audio-donate-preview {
   display: grid;
   grid-template-columns: 1fr auto;

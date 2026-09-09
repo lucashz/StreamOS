@@ -170,7 +170,9 @@ const groups: ReadonlyArray<{
   label: string;
   icon: IconName;
   roles: ReadonlyArray<string>;
-  items: ReadonlyArray<readonly [string, string, IconName]>;
+  items: ReadonlyArray<
+    readonly [string, string, IconName, ReadonlyArray<string>?]
+  >;
 }> = [
   {
     label: 'Visão geral',
@@ -214,15 +216,13 @@ const groups: ReadonlyArray<{
   {
     label: 'Configurações',
     icon: 'settings',
-    roles: ['OWNER', 'ADMIN', 'VIEWER'],
+    roles: ['OWNER', 'ADMIN', 'MODERATOR', 'FINANCE', 'VIEWER'],
     items: [
-      ['Perfil', '/conta#perfil', 'users'],
-      ['Equipe', '/plataforma#equipe', 'users'],
-      ['Integrações', '/plataforma#integracoes', 'plug'],
-      ['API', '/plataforma#api', 'settings'],
-      ['Webhooks', '/plataforma#webhooks', 'activity'],
-      ['Segurança', '/conta#seguranca', 'shield'],
-      ['Minha conta', '/conta#organizacao', 'settings'],
+      ['Conta e segurança', '/conta', 'users'],
+      ['Equipe', '/plataforma#equipe', 'users', ['OWNER', 'ADMIN']],
+      ['Integrações', '/plataforma#integracoes', 'plug', ['OWNER', 'ADMIN']],
+      ['API e webhooks', '/plataforma#api', 'settings', ['OWNER', 'ADMIN']],
+      ['Saúde do sistema', '/saude', 'activity', ['OWNER', 'ADMIN']],
     ],
   },
 ];
@@ -316,7 +316,11 @@ export function PanelSidebar({
       <nav aria-label="Navegação principal">
         <p className="nav-label">StreamOS</p>
         {visibleGroups.map((group) => {
-          const active = group.items.some(([, href]) => {
+          const visibleItems = group.items.filter(
+            ([, , , itemRoles]) =>
+              !itemRoles || !role || itemRoles.includes(role),
+          );
+          const active = visibleItems.some(([, href]) => {
             const target = basePath(href);
             return (
               pathname === target ||
@@ -340,7 +344,7 @@ export function PanelSidebar({
                 <b>⌄</b>
               </summary>
               <div className="nav-submenu">
-                {group.items.map(([label, href, icon]) => (
+                {visibleItems.map(([label, href, icon]) => (
                   <NavLink
                     key={href}
                     label={label}

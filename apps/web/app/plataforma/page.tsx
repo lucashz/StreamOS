@@ -35,7 +35,12 @@ type Overview = {
   scopes: string[];
   webhookEvents: string[];
 };
-const rolePermissions: Record<string, string> = { ADMIN: 'Gerencia equipe, transmissão, conteúdo e configurações.', MODERATOR: 'Controla fila, alertas e moderação; não acessa saques.', FINANCE: 'Consulta carteira, recebíveis, extrato e saques.', VIEWER: 'Somente leitura nas áreas autorizadas.' };
+const rolePermissions: Record<string, string> = {
+  ADMIN: 'Gerencia equipe, transmissão, conteúdo e configurações.',
+  MODERATOR: 'Controla fila, alertas e moderação; não acessa saques.',
+  FINANCE: 'Consulta carteira, recebíveis, extrato e saques.',
+  VIEWER: 'Somente leitura nas áreas autorizadas.',
+};
 export default function Page() {
   const [data, setData] = useState<Overview>();
   const [email, setEmail] = useState('');
@@ -75,16 +80,27 @@ export default function Page() {
   };
   return (
     <PanelShell>
-      <main className="feature-page">
-        <header>
+      <main className="feature-page settings-page platform-settings-page">
+        <header className="settings-page-header">
           <span className="section-kicker">Configurações</span>
-          <h1>Equipe, API e integrações</h1>
+          <h1>Organização e integrações</h1>
           <p>
             Controle acessos, credenciais e entregas externas da organização.
           </p>
         </header>
+        <nav className="settings-local-nav" aria-label="Seções da plataforma">
+          <a href="#equipe">Equipe</a>
+          <a href="#integracoes">Integrações</a>
+          <a href="#api">API</a>
+          <a href="#webhooks">Webhooks</a>
+        </nav>
         <section id="equipe" className="feature-card settings-form">
-          <h2>Equipe</h2>
+          <div className="settings-section-heading">
+            <h2>Equipe</h2>
+            <p>
+              Convide pessoas e defina o nível de acesso de cada integrante.
+            </p>
+          </div>
           <div className="inline-fields">
             <label>
               E-mail
@@ -102,6 +118,7 @@ export default function Page() {
             </label>
           </div>
           <button
+            className="primary-button"
             disabled={!email}
             onClick={() =>
               void (async () => {
@@ -119,7 +136,9 @@ export default function Page() {
           >
             Gerar convite
           </button>
-          <p className="role-explanation"><strong>{role}</strong> — {rolePermissions[role]}</p>
+          <p className="role-explanation">
+            <strong>{role}</strong> — {rolePermissions[role]}
+          </p>
           {inviteToken && (
             <div className="generated-secret">
               <small>Convite gerado — copie agora</small>
@@ -144,7 +163,7 @@ export default function Page() {
               </select>
               {m.role !== 'OWNER' && (
                 <button
-                  className="secondary"
+                  className="secondary-button"
                   onClick={() =>
                     void mutate(`/dashboard/team/members/${m.id}`, 'DELETE')
                   }
@@ -162,7 +181,7 @@ export default function Page() {
                   Convite: {i.email} · {i.role}
                 </span>
                 <button
-                  className="secondary"
+                  className="secondary-button"
                   onClick={() =>
                     void mutate(`/dashboard/team/invites/${i.id}/revoke`)
                   }
@@ -173,7 +192,12 @@ export default function Page() {
             ))}
         </section>
         <section id="api" className="feature-card settings-form">
-          <h2>Tokens de API</h2>
+          <div className="settings-section-heading">
+            <h2>Tokens de API</h2>
+            <p>
+              Crie credenciais para automações e mantenha apenas tokens em uso.
+            </p>
+          </div>
           <label>
             Nome
             <input
@@ -182,6 +206,7 @@ export default function Page() {
             />
           </label>
           <button
+            className="primary-button"
             onClick={() =>
               void (async () => {
                 const b = await mutate<{ token: string }>(
@@ -213,7 +238,7 @@ export default function Page() {
               {!t.revokedAt && (
                 <>
                   <button
-                    className="secondary"
+                    className="secondary-button"
                     onClick={() =>
                       void (async () => {
                         const b = await mutate<{ token: string }>(
@@ -226,7 +251,7 @@ export default function Page() {
                     Rotacionar
                   </button>
                   <button
-                    className="secondary"
+                    className="secondary-button"
                     onClick={() =>
                       void mutate(`/dashboard/api-tokens/${t.id}/revoke`)
                     }
@@ -239,7 +264,10 @@ export default function Page() {
           ))}
         </section>
         <section id="webhooks" className="feature-card settings-form">
-          <h2>Webhooks assinados</h2>
+          <div className="settings-section-heading">
+            <h2>Webhooks</h2>
+            <p>Envie eventos assinados da StreamOS para seus sistemas.</p>
+          </div>
           <label>
             URL
             <input
@@ -249,6 +277,7 @@ export default function Page() {
             />
           </label>
           <button
+            className="primary-button"
             disabled={!url}
             onClick={() =>
               void (async () => {
@@ -279,7 +308,7 @@ export default function Page() {
                   {w.url} · {w.enabled ? 'ativo' : 'pausado'}
                 </span>
                 <button
-                  className="secondary"
+                  className="secondary-button"
                   onClick={() =>
                     void mutate(
                       `/dashboard/webhook-endpoints/${w.id}`,
@@ -291,7 +320,7 @@ export default function Page() {
                   {w.enabled ? 'Pausar' : 'Ativar'}
                 </button>
                 <button
-                  className="secondary"
+                  className="secondary-button"
                   onClick={() =>
                     void (async () => {
                       const b = await mutate<{ signingSecret: string }>(
@@ -312,7 +341,7 @@ export default function Page() {
                   </small>
                   {d.status === 'FAILED' && (
                     <button
-                      className="secondary"
+                      className="secondary-button"
                       onClick={() =>
                         void mutate(
                           `/dashboard/webhook-deliveries/${d.id}/retry`,
@@ -328,12 +357,57 @@ export default function Page() {
           ))}
         </section>
         <section id="integracoes" className="feature-card">
-          <h2>Integrações em modo local</h2>
-          <p>As conexões locais simulam autorização e permitem validar permissões e estados da interface.</p>
+          <div className="settings-section-heading">
+            <h2>Integrações</h2>
+            <p>
+              Conecte os serviços usados na transmissão e confira suas
+              permissões.
+            </p>
+          </div>
           <div className="integration-grid">
-          {['twitch', 'youtube', 'discord'].map((p) => (
-            <article key={p}><strong>{p[0]?.toUpperCase()}{p.slice(1)}</strong><small>{data?.integrations.find((item) => item.provider === p.toUpperCase())?.status ?? 'Desconectado'}</small><span>Permissões básicas de conta e eventos.</span><div className="compact-actions"><button onClick={() => void mutate(`/dashboard/integrations/${p}/connect`, 'POST', {})}>Conectar</button><button className="secondary-button" onClick={() => void mutate(`/dashboard/integrations/${p}/test`)}>Testar</button><button className="secondary-button" onClick={() => void mutate(`/dashboard/integrations/${p}/disconnect`)}>Desconectar</button></div></article>
-          ))}
+            {['twitch', 'youtube', 'discord'].map((p) => (
+              <article key={p}>
+                <strong>
+                  {p[0]?.toUpperCase()}
+                  {p.slice(1)}
+                </strong>
+                <small>
+                  {data?.integrations.find(
+                    (item) => item.provider === p.toUpperCase(),
+                  )?.status ?? 'Desconectado'}
+                </small>
+                <span>Permissões básicas de conta e eventos.</span>
+                <div className="compact-actions">
+                  <button
+                    onClick={() =>
+                      void mutate(
+                        `/dashboard/integrations/${p}/connect`,
+                        'POST',
+                        {},
+                      )
+                    }
+                  >
+                    Conectar
+                  </button>
+                  <button
+                    className="secondary-button"
+                    onClick={() =>
+                      void mutate(`/dashboard/integrations/${p}/test`)
+                    }
+                  >
+                    Testar
+                  </button>
+                  <button
+                    className="secondary-button"
+                    onClick={() =>
+                      void mutate(`/dashboard/integrations/${p}/disconnect`)
+                    }
+                  >
+                    Desconectar
+                  </button>
+                </div>
+              </article>
+            ))}
           </div>
           {data?.integrations.map((i) => (
             <p key={i.id}>

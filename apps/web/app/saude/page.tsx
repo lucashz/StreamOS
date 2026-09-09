@@ -8,8 +8,21 @@ const api = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 type Operations = {
   periodHours: number;
   checkedAt: string;
-  psp: { provider: string; environment: string; credentialsConfigured: boolean; webhookConfigured: boolean; pixOutEnabled: boolean; kycKyb: string; medHandling: string };
-  infrastructure: { postgresql: string; redis: string; worker: string; realtime: string };
+  psp: {
+    provider: string;
+    environment: string;
+    credentialsConfigured: boolean;
+    webhookConfigured: boolean;
+    pixOutEnabled: boolean;
+    kycKyb: string;
+    medHandling: string;
+  };
+  infrastructure: {
+    postgresql: string;
+    redis: string;
+    worker: string;
+    realtime: string;
+  };
   flags: {
     paymentsEnabled: boolean;
     payoutsEnabled: boolean;
@@ -98,13 +111,13 @@ export default function HealthPage() {
   return (
     <PanelShell>
       <main className="feature-page operations-page">
-        <header className="operations-header">
+        <header className="operations-header settings-page-header">
           <div>
-            <span className="section-kicker">Operação</span>
+            <span className="section-kicker">Configurações · Operação</span>
             <h1>Saúde do sistema</h1>
             <p>Pagamentos, alertas e integrações nas últimas 24 horas.</p>
           </div>
-          <button className="secondary" onClick={() => void load()}>
+          <button className="secondary-button" onClick={() => void load()}>
             Atualizar
           </button>
         </header>
@@ -183,7 +196,10 @@ export default function HealthPage() {
                   {data.betaGate.ready ? 'Apto para operar' : 'Bloqueado'}
                 </h2>
               </div>
-              <small>Última verificação: {new Date(data.checkedAt).toLocaleString('pt-BR')}</small>
+              <small>
+                Última verificação:{' '}
+                {new Date(data.checkedAt).toLocaleString('pt-BR')}
+              </small>
               {data.betaGate.reasons.length ? (
                 <ul>
                   {data.betaGate.reasons.map((reason) => (
@@ -196,20 +212,70 @@ export default function HealthPage() {
             </section>
 
             <section className="feature-card psp-health">
-              <div className="panel-heading"><div><span className="section-kicker">Financeiro</span><h2>Provedor Pix</h2></div><strong>{data.psp.provider}</strong></div>
+              <div className="panel-heading">
+                <div>
+                  <span className="section-kicker">Financeiro</span>
+                  <h2>Provedor Pix</h2>
+                </div>
+                <strong>{data.psp.provider}</strong>
+              </div>
               <dl className="psp-health-grid">
-                <div><dt>Ambiente</dt><dd>{data.psp.environment}</dd></div>
-                <div><dt>Credenciais</dt><dd>{data.psp.credentialsConfigured ? 'Configuradas' : 'Pendentes'}</dd></div>
-                <div><dt>Webhook</dt><dd>{data.psp.webhookConfigured ? 'Configurado' : 'Pendente'}</dd></div>
-                <div><dt>Pix Out</dt><dd>{data.psp.pixOutEnabled ? 'Habilitado' : 'Desabilitado'}</dd></div>
-                <div><dt>KYC/KYB</dt><dd>{data.psp.kycKyb}</dd></div>
-                <div><dt>MED</dt><dd>{data.psp.medHandling}</dd></div>
+                <div>
+                  <dt>Ambiente</dt>
+                  <dd>{data.psp.environment}</dd>
+                </div>
+                <div>
+                  <dt>Credenciais</dt>
+                  <dd>
+                    {data.psp.credentialsConfigured
+                      ? 'Configuradas'
+                      : 'Pendentes'}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Webhook</dt>
+                  <dd>
+                    {data.psp.webhookConfigured ? 'Configurado' : 'Pendente'}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Pix Out</dt>
+                  <dd>
+                    {data.psp.pixOutEnabled ? 'Habilitado' : 'Desabilitado'}
+                  </dd>
+                </div>
+                <div>
+                  <dt>KYC/KYB</dt>
+                  <dd>{data.psp.kycKyb}</dd>
+                </div>
+                <div>
+                  <dt>MED</dt>
+                  <dd>{data.psp.medHandling}</dd>
+                </div>
               </dl>
             </section>
             <section className="feature-card psp-health">
-              <div className="panel-heading"><div><span className="section-kicker">Infraestrutura</span><h2>Serviços essenciais</h2></div></div>
+              <div className="panel-heading">
+                <div>
+                  <span className="section-kicker">Infraestrutura</span>
+                  <h2>Serviços essenciais</h2>
+                </div>
+              </div>
               <dl className="psp-health-grid">
-                {Object.entries(data.infrastructure).map(([service, state]) => <div key={service}><dt>{service === 'postgresql' ? 'PostgreSQL' : service === 'redis' ? 'Redis' : service === 'worker' ? 'Worker' : 'Realtime'}</dt><dd>{state}</dd></div>)}
+                {Object.entries(data.infrastructure).map(([service, state]) => (
+                  <div key={service}>
+                    <dt>
+                      {service === 'postgresql'
+                        ? 'PostgreSQL'
+                        : service === 'redis'
+                          ? 'Redis'
+                          : service === 'worker'
+                            ? 'Worker'
+                            : 'Realtime'}
+                    </dt>
+                    <dd>{state}</dd>
+                  </div>
+                ))}
               </dl>
             </section>
 

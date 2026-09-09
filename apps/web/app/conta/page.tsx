@@ -11,7 +11,12 @@ type Viewer = {
     role: string;
     organization: {
       name: string;
-      creatorProfile: { displayName: string; bio: string | null; slug: string; avatarUrl: string | null } | null;
+      creatorProfile: {
+        displayName: string;
+        bio: string | null;
+        slug: string;
+        avatarUrl: string | null;
+      } | null;
     };
   }>;
 };
@@ -118,23 +123,42 @@ export default function AccountPage() {
     window.location.href = '/entrar';
   }
   async function deactivateOrganization() {
-    const response = await fetch(`${api}/auth/account/deactivate-organization`, { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ confirmation: deactivationConfirmation }) });
+    const response = await fetch(
+      `${api}/auth/account/deactivate-organization`,
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ confirmation: deactivationConfirmation }),
+      },
+    );
     if (response.ok) window.location.href = '/entrar';
-    else { const body = (await response.json()) as { message?: string }; setStatus(body.message ?? 'Não foi possível desativar a organização.'); }
+    else {
+      const body = (await response.json()) as { message?: string };
+      setStatus(body.message ?? 'Não foi possível desativar a organização.');
+    }
   }
   return (
     <PanelShell>
-      <main className="feature-page">
+      <main className="feature-page settings-page account-settings-page">
         <Link href="/" className="back-link">
           ← Visão geral
         </Link>
-        <header>
-          <span className="section-kicker">Sua conta</span>
-          <h1>Perfil e segurança</h1>
-          <p>Gerencie seus dados, senha e dispositivos conectados.</p>
+        <header className="settings-page-header">
+          <span className="section-kicker">Configurações</span>
+          <h1>Conta e segurança</h1>
+          <p>Gerencie seu perfil público, senha, sessões e organização.</p>
         </header>
+        <nav className="settings-local-nav" aria-label="Seções da conta">
+          <a href="#perfil">Perfil</a>
+          <a href="#seguranca">Senha e sessões</a>
+          <a href="#organizacao">Organização</a>
+        </nav>
         <section id="perfil" className="feature-card settings-form">
-          <h2>Perfil</h2>
+          <div className="settings-section-heading">
+            <h2>Perfil público</h2>
+            <p>Informações exibidas na sua página de contribuições.</p>
+          </div>
           <label>
             Nome público
             <input
@@ -158,12 +182,27 @@ export default function AccountPage() {
               maxLength={500}
             />
           </label>
-          <label>Avatar<input type="url" value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://..." /></label>
-          <button onClick={() => void saveProfile()}>Salvar perfil</button>
+          <label>
+            Avatar
+            <input
+              type="url"
+              value={avatarUrl}
+              onChange={(e) => setAvatarUrl(e.target.value)}
+              placeholder="https://..."
+            />
+          </label>
+          <button className="primary-button" onClick={() => void saveProfile()}>
+            Salvar perfil
+          </button>
         </section>
         <section id="seguranca" className="feature-card settings-form">
-          <h2>Alterar senha</h2>
-          <p>A StreamOS não usa autenticação em duas etapas nesta fase.</p>
+          <div className="settings-section-heading">
+            <h2>Alterar senha</h2>
+            <p>
+              Use pelo menos 10 caracteres. A alteração encerra as outras
+              sessões.
+            </p>
+          </div>
           <label>
             Senha atual
             <input
@@ -183,10 +222,18 @@ export default function AccountPage() {
               minLength={10}
             />
           </label>
-          <button onClick={() => void changePassword()}>Alterar senha</button>
+          <button
+            className="primary-button"
+            onClick={() => void changePassword()}
+          >
+            Alterar senha
+          </button>
         </section>
-        <section className="feature-card">
-          <h2>Sessões ativas</h2>
+        <section className="feature-card settings-sessions-card">
+          <div className="settings-section-heading">
+            <h2>Sessões ativas</h2>
+            <p>Revise os dispositivos conectados à sua conta.</p>
+          </div>
           <div className="data-list">
             {sessions.map((session) => (
               <article key={session.id}>
@@ -203,7 +250,10 @@ export default function AccountPage() {
                     {new Date(session.lastUsedAt).toLocaleString('pt-BR')}
                   </small>
                 </div>
-                <button onClick={() => void revoke(session.id)}>
+                <button
+                  className="secondary-button"
+                  onClick={() => void revoke(session.id)}
+                >
                   Encerrar
                 </button>
               </article>
@@ -215,8 +265,49 @@ export default function AccountPage() {
         </section>
         <section id="organizacao" className="feature-card settings-form">
           <h2>Organização</h2>
-          <div className="organization-summary"><span><small>Nome</small><strong>{organizationName}</strong></span><span><small>Endereço público</small><strong>/{organizationSlug}</strong></span><span><small>Seu papel</small><strong>{role.toLowerCase()}</strong></span><span><small>Ambiente</small><strong>Local / sandbox</strong></span></div>
-          {role === 'OWNER' ? <div className="danger-zone"><h3>Desativar organização</h3><p>A página pública será retirada do ar e todas as suas sessões serão encerradas. Os registros financeiros serão preservados.</p><label>Digite <strong>{organizationName}</strong> para confirmar<input value={deactivationConfirmation} onChange={(event) => setDeactivationConfirmation(event.target.value)} /></label><button className="danger-button" disabled={deactivationConfirmation !== organizationName} onClick={() => void deactivateOrganization()}>Desativar organização</button></div> : null}
+          <div className="organization-summary">
+            <span>
+              <small>Nome</small>
+              <strong>{organizationName}</strong>
+            </span>
+            <span>
+              <small>Endereço público</small>
+              <strong>/{organizationSlug}</strong>
+            </span>
+            <span>
+              <small>Seu papel</small>
+              <strong>{role.toLowerCase()}</strong>
+            </span>
+            <span>
+              <small>Ambiente</small>
+              <strong>Local / sandbox</strong>
+            </span>
+          </div>
+          {role === 'OWNER' ? (
+            <div className="danger-zone">
+              <h3>Desativar organização</h3>
+              <p>
+                A página pública será retirada do ar e todas as suas sessões
+                serão encerradas. Os registros financeiros serão preservados.
+              </p>
+              <label>
+                Digite <strong>{organizationName}</strong> para confirmar
+                <input
+                  value={deactivationConfirmation}
+                  onChange={(event) =>
+                    setDeactivationConfirmation(event.target.value)
+                  }
+                />
+              </label>
+              <button
+                className="danger-button"
+                disabled={deactivationConfirmation !== organizationName}
+                onClick={() => void deactivateOrganization()}
+              >
+                Desativar organização
+              </button>
+            </div>
+          ) : null}
         </section>
         {status ? (
           <p className="account-status" role="status">
