@@ -6231,28 +6231,8 @@ a {
   margin: 0;
 }
 
-.account-settings-page {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: start;
-}
-
-.account-settings-page > #perfil {
-  grid-column: 1;
-}
-
-.account-settings-page > #seguranca {
-  grid-column: 2;
-}
-
 .account-settings-page > :is(#perfil, #seguranca) {
-  align-self: stretch;
-  margin: 0;
   padding: 20px;
-}
-
-.account-settings-page > :is(.settings-sessions-card, #organizacao) {
-  grid-column: 1 / -1;
-  margin: 0;
 }
 
 .account-settings-page .settings-form {
@@ -6277,33 +6257,27 @@ a {
   display: inline;
 }
 
+.platform-settings-page > .feature-card {
+  padding: 20px;
+}
+
 .platform-settings-page > .page-header {
   order: 1;
 }
-
 .platform-settings-page > .settings-tabs {
   order: 2;
 }
-
 .platform-settings-page > #equipe {
   order: 3;
 }
-
 .platform-settings-page > #integracoes {
   order: 4;
 }
-
 .platform-settings-page > #api {
   order: 5;
 }
-
 .platform-settings-page > #webhooks {
   order: 6;
-}
-
-.platform-settings-page > .feature-card {
-  margin: 0;
-  padding: 20px;
 }
 
 .platform-settings-page .integration-grid {
@@ -6339,16 +6313,6 @@ a {
   margin-bottom: 2px;
 }
 
-@media (max-width: 900px) {
-  .account-settings-page {
-    grid-template-columns: 1fr;
-  }
-
-  .account-settings-page > :is(#perfil, #seguranca) {
-    grid-column: 1;
-  }
-}
-
 @media (max-width: 520px) {
   .settings-page > .settings-tabs {
     margin-inline: -4px;
@@ -6366,12 +6330,15 @@ a {
 
 /* Organização comum das páginas do menu Configurações. */
 .settings-page {
-  align-content: start;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.settings-page > :is(.back-link, .page-header, .settings-tabs),
-.account-settings-page > :is(.settings-sessions-card, #organizacao) {
-  grid-column: 1 / -1;
+.settings-page > .settings-tabs {
+  box-sizing: border-box;
+  width: min(100%, 1080px);
+  margin-inline: auto;
 }
 
 .settings-tabs {
@@ -6439,32 +6406,6 @@ a {
   line-height: 1.5;
 }
 
-.account-settings-page {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.platform-settings-page {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: start;
-}
-
-.platform-settings-page
-  > :is(.page-header, .settings-tabs, #equipe, #integracoes) {
-  grid-column: 1 / -1;
-}
-
-.platform-settings-page > #api {
-  grid-column: 1;
-  align-self: stretch;
-}
-
-.platform-settings-page > #webhooks {
-  grid-column: 2;
-  align-self: stretch;
-}
-
 .platform-settings-page > :is(#api, #webhooks) > .primary-button {
   align-self: end;
   margin-top: auto;
@@ -6500,15 +6441,6 @@ a {
 }
 
 @media (max-width: 760px) {
-  .account-settings-page,
-  .platform-settings-page {
-    grid-template-columns: 1fr;
-  }
-
-  .platform-settings-page > :is(#api, #webhooks) {
-    grid-column: 1;
-  }
-
   .settings-sessions-card .data-list article {
     align-items: stretch;
     flex-direction: column;

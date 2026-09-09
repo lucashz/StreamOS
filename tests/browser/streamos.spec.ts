@@ -158,6 +158,25 @@ test('todas as telas administrativas preservam layout e responsividade', async (
     expect(visual.font, route).not.toMatch(/Times New Roman/i);
     expect(visual.background, route).not.toBe('rgba(0, 0, 0, 0)');
     await expectNoHorizontalOverflow(page);
+    if (['/conta', '/plataforma'].includes(route)) {
+      const alignment = await page.locator('main').evaluate((main) => {
+        const elements = [...main.children].filter((element) =>
+          element.matches('header, nav, section'),
+        );
+        const centers = elements.map((element) => {
+          const rect = element.getBoundingClientRect();
+          return rect.left + rect.width / 2;
+        });
+        return {
+          centers,
+          spread: Math.max(...centers) - Math.min(...centers),
+        };
+      });
+      expect(
+        alignment.spread,
+        `${route}: ${JSON.stringify(alignment)}`,
+      ).toBeLessThanOrEqual(1);
+    }
   }
 });
 
