@@ -7,6 +7,13 @@ const money = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
     v / 100,
   );
+const campaignStatusLabels: Record<string, string> = {
+  DRAFT: 'Rascunho',
+  PUBLISHED: 'Publicada',
+  CLOSED: 'Encerrada',
+};
+const campaignProgress = (current: number, target: number) =>
+  target > 0 ? Math.min(100, Math.max(0, (current / target) * 100)) : 0;
 type Campaign = {
   id: string;
   slug: string;
@@ -314,21 +321,54 @@ export default function CampaignsPage() {
           {items.map((item) => (
             <article className="feature-card" key={item.id}>
               <div className="campaign-summary">
-                <strong>{item.title}</strong>
-                <small>
-                  {item.status} · {money(item.currentInCents)} de{' '}
-                  {money(item.targetInCents)} · {item.contributions.length}{' '}
-                  contribuições{' '}
-                  {item.endsAt
-                    ? `· até ${new Date(item.endsAt).toLocaleDateString('pt-BR')}`
-                    : ''}
-                </small>
-                <div className="progress">
+                <div className="campaign-card-heading">
+                  <div>
+                    <h3>{item.title}</h3>
+                    {item.description ? <p>{item.description}</p> : null}
+                  </div>
+                  <span
+                    className={`campaign-status status-${item.status.toLowerCase()}`}
+                  >
+                    {campaignStatusLabels[item.status] ?? item.status}
+                  </span>
+                </div>
+                <div className="campaign-card-values">
+                  <span>
+                    Arrecadado <strong>{money(item.currentInCents)}</strong>
+                  </span>
+                  <span>
+                    Meta <strong>{money(item.targetInCents)}</strong>
+                  </span>
+                  <strong>
+                    {campaignProgress(
+                      item.currentInCents,
+                      item.targetInCents,
+                    ).toFixed(0)}
+                    %
+                  </strong>
+                </div>
+                <div
+                  className="progress"
+                  aria-label={`${campaignProgress(item.currentInCents, item.targetInCents).toFixed(0)}% da meta`}
+                >
                   <i
                     style={{
-                      width: `${Math.min(100, (item.currentInCents / item.targetInCents) * 100)}%`,
+                      width: `${campaignProgress(item.currentInCents, item.targetInCents)}%`,
                     }}
                   />
+                </div>
+                <div className="campaign-card-meta">
+                  <span>
+                    {item.contributions.length}{' '}
+                    {item.contributions.length === 1
+                      ? 'contribuição'
+                      : 'contribuições'}
+                  </span>
+                  <span>
+                    {item.endsAt
+                      ? `Até ${new Date(item.endsAt).toLocaleDateString('pt-BR')}`
+                      : 'Sem prazo definido'}
+                  </span>
                 </div>
                 {item.rewards.map((r) => (
                   <div key={r.id} className="campaign-reward-row">
