@@ -6218,6 +6218,165 @@ a {
   }
 }
 
+/* Acabamento final de alinhamento das configurações. */
+.feature-page.settings-page {
+  gap: 16px;
+}
+
+.settings-page > .settings-page-header:not(.operations-header) {
+  display: grid;
+  justify-content: start;
+  gap: 6px;
+}
+
+.settings-page > .settings-page-header:not(.operations-header) h1,
+.settings-page > .settings-page-header:not(.operations-header) p {
+  margin: 0;
+}
+
+.settings-page > .settings-page-header:not(.operations-header) p {
+  max-width: 720px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.settings-page > .settings-local-nav {
+  margin: 0;
+}
+
+.account-settings-page {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.account-settings-page > #perfil {
+  grid-column: 1;
+}
+
+.account-settings-page > #seguranca {
+  grid-column: 2;
+}
+
+.account-settings-page > :is(#perfil, #seguranca) {
+  align-self: stretch;
+  margin: 0;
+  padding: 20px;
+}
+
+.account-settings-page > :is(.settings-sessions-card, #organizacao) {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.account-settings-page .settings-form {
+  align-content: start;
+  gap: 14px;
+}
+
+.account-settings-page .settings-form textarea {
+  min-height: 92px;
+}
+
+.account-settings-page .settings-form > .primary-button {
+  align-self: end;
+  margin-top: auto;
+}
+
+.account-settings-page .danger-zone label > span {
+  display: inline;
+}
+
+.account-settings-page .danger-zone label > span strong {
+  display: inline;
+}
+
+.platform-settings-page > .settings-page-header {
+  order: 1;
+}
+
+.platform-settings-page > .settings-local-nav {
+  order: 2;
+}
+
+.platform-settings-page > #equipe {
+  order: 3;
+}
+
+.platform-settings-page > #integracoes {
+  order: 4;
+}
+
+.platform-settings-page > #api {
+  order: 5;
+}
+
+.platform-settings-page > #webhooks {
+  order: 6;
+}
+
+.platform-settings-page > .feature-card {
+  margin: 0;
+  padding: 20px;
+}
+
+.platform-settings-page .integration-grid {
+  align-items: stretch;
+}
+
+.platform-settings-page .integration-grid article {
+  grid-template-rows: auto auto 1fr auto;
+  height: 100%;
+  padding: 16px;
+}
+
+.platform-settings-page .integration-grid .compact-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-self: end;
+  width: 100%;
+}
+
+.platform-settings-page .integration-grid .compact-actions button {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 8px;
+  font-size: 11px;
+}
+
+.platform-settings-page .role-explanation {
+  margin: 0;
+}
+
+.operations-page > .operations-header {
+  margin-bottom: 2px;
+}
+
+@media (max-width: 900px) {
+  .account-settings-page {
+    grid-template-columns: 1fr;
+  }
+
+  .account-settings-page > :is(#perfil, #seguranca) {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 520px) {
+  .settings-page > .settings-local-nav {
+    margin-inline: -4px;
+  }
+
+  .account-settings-page > :is(#perfil, #seguranca),
+  .platform-settings-page > .feature-card {
+    padding: 16px;
+  }
+
+  .platform-settings-page .integration-grid .compact-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Organização comum das páginas do menu Configurações. */
 .settings-page {
   align-content: start;

@@ -291,7 +291,9 @@ export default function AccountPage() {
                 serão encerradas. Os registros financeiros serão preservados.
               </p>
               <label>
-                Digite <strong>{organizationName}</strong> para confirmar
+                <span>
+                  Digite <strong>{organizationName}</strong> para confirmar
+                </span>
                 <input
                   value={deactivationConfirmation}
                   onChange={(event) =>
