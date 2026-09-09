@@ -196,9 +196,9 @@ const groups: ReadonlyArray<{
     roles: ['OWNER', 'ADMIN', 'MODERATOR', 'VIEWER'],
     items: [
       ['Central da Live', '/central-da-live', 'activity'],
-      ['Alertas', '/alertas', 'monitor'],
+      ['Alertas e variações', '/alertas', 'monitor'],
       ['Widgets', '/widgets', 'widgets'],
-      ['Aparência', '/aparencia', 'settings'],
+      ['Tema global', '/aparencia', 'settings'],
     ],
   },
   {

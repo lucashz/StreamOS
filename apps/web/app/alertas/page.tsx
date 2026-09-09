@@ -10,10 +10,10 @@ export default function AlertsPage() {
         <header className="feature-header">
           <div>
             <span className="section-kicker">Transmissão</span>
-            <h1>Alertas</h1>
+            <h1>Alertas e variações</h1>
             <p>
-              Personalize os alertas temporários exibidos pela fonte única do
-              OBS.
+              Defina quando cada alerta aparece e personalize suas variações na
+              fonte única do OBS.
             </p>
           </div>
           <div className="feature-header-actions">
@@ -36,12 +36,12 @@ export default function AlertsPage() {
         <section
           className="alert-customization"
           id="aparencia"
-          aria-label="Aparência da transmissão"
+          aria-label="Configuração de alertas e variações"
         >
           <div className="section-heading">
             <div>
               <span className="section-kicker">Personalização</span>
-              <h2>Configure seus alertas</h2>
+              <h2>Configure alertas e variações</h2>
               <p>
                 Crie variações, escolha um template e acompanhe o resultado na
                 prévia do OBS.

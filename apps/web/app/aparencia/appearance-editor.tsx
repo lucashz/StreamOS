@@ -97,7 +97,7 @@ const templates: Array<{
 export function AppearanceEditor() {
   const [theme, setTheme] = useState<Theme>(fallback);
   const [applyToExisting, setApplyToExisting] = useState(false);
-  const [status, setStatus] = useState('Carregando aparência…');
+  const [status, setStatus] = useState('Carregando tema global…');
   const [saving, setSaving] = useState(false);
   useEffect(() => {
     void fetch(`${api}/dashboard/alerts/appearance`, {
@@ -105,10 +105,10 @@ export function AppearanceEditor() {
       cache: 'no-store',
     }).then(async (response) => {
       if (!response.ok)
-        return setStatus('Entre na sua conta para editar a aparência.');
+        return setStatus('Entre na sua conta para editar o tema global.');
       const body = (await response.json()) as { theme: Theme };
       setTheme({ ...fallback, ...body.theme });
-      setStatus('Aparência sincronizada.');
+      setStatus('Tema global sincronizado.');
     });
   }, []);
   function update<K extends keyof Theme>(key: K, value: Theme[K]) {
@@ -133,19 +133,21 @@ export function AppearanceEditor() {
       const body = (await response.json().catch(() => ({}))) as {
         message?: string;
       };
-      return setStatus(body.message ?? 'Não foi possível salvar a aparência.');
+      return setStatus(
+        body.message ?? 'Não foi possível salvar o tema global.',
+      );
     }
     setStatus(
       applyToExisting
-        ? 'Aparência salva e aplicada às variações existentes.'
-        : 'Aparência salva como padrão para novos alertas.',
+        ? 'Tema global salvo e aplicado às variações existentes.'
+        : 'Tema global salvo como padrão para novas variações.',
     );
   }
   return (
     <div className="appearance-editor">
       <section className="appearance-form" aria-labelledby="global-theme-title">
         <div className="appearance-section-heading">
-          <span className="section-kicker">Padrão global</span>
+          <span className="section-kicker">Tema global</span>
           <h2 id="global-theme-title">Visual do canal</h2>
           <p>Escolha um ponto de partida consistente para os alertas.</p>
         </div>
@@ -268,7 +270,7 @@ export function AppearanceEditor() {
             disabled={saving}
             onClick={() => void save()}
           >
-            {saving ? 'Salvando…' : 'Salvar aparência'}
+            {saving ? 'Salvando…' : 'Salvar tema global'}
           </button>
           <span role="status">{status}</span>
         </div>
@@ -297,8 +299,8 @@ export function AppearanceEditor() {
           </article>
         </div>
         <p>
-          Variações individuais continuam podendo substituir este padrão no
-          editor de alertas.
+          Variações individuais podem substituir este tema em Alertas e
+          variações.
         </p>
       </aside>
     </div>

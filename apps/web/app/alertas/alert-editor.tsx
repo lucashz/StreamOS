@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import NextImage from 'next/image';
+import Link from 'next/link';
 type Asset = {
   id: string;
   name: string;
@@ -53,6 +54,29 @@ type Editor = {
   variations: Variation[];
   assets: Asset[];
 };
+const defaultGlobalTheme: Required<GlobalTheme> = {
+  template: 'neon-pulse',
+  accent: '#a98cff',
+  textColor: '#ffffff',
+  fontFamily: 'Inter',
+  fontSize: 32,
+  textAlign: 'center',
+  position: 'center',
+};
+
+function usesGlobalTheme(variation: Variation, theme: GlobalTheme) {
+  const globalTheme = { ...defaultGlobalTheme, ...theme };
+  return (
+    variation.template === globalTheme.template &&
+    variation.accent.toLowerCase() === globalTheme.accent.toLowerCase() &&
+    variation.textColor.toLowerCase() === globalTheme.textColor.toLowerCase() &&
+    variation.fontFamily === globalTheme.fontFamily &&
+    variation.fontSize === globalTheme.fontSize &&
+    variation.textAlign === globalTheme.textAlign &&
+    (variation.layout.position ?? 'center') === globalTheme.position
+  );
+}
+
 const api = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 export function AlertEditor() {
   const [editor, setEditor] = useState<Editor>({ variations: [], assets: [] });
@@ -145,6 +169,23 @@ export function AlertEditor() {
     };
     setSelected({ ...selected, template, ...(presets[template] ?? {}) });
     setStatus('Template aplicado. Salve para atualizar o OBS.');
+  }
+  function restoreGlobalTheme() {
+    if (!selected) return;
+    const theme = { ...defaultGlobalTheme, ...editor.config?.theme };
+    setSelected({
+      ...selected,
+      template: theme.template,
+      accent: theme.accent,
+      textColor: theme.textColor,
+      fontFamily: theme.fontFamily,
+      fontSize: theme.fontSize,
+      textAlign: theme.textAlign,
+      layout: { ...selected.layout, position: theme.position },
+    });
+    setStatus(
+      'Tema global restaurado nesta variação. Salve para atualizar o OBS.',
+    );
   }
   function errorMessage(body: unknown, fallback: string) {
     return body && typeof body === 'object' && 'message' in body
@@ -342,6 +383,10 @@ export function AlertEditor() {
     typeof selected.layout.position === 'string'
       ? selected.layout.position
       : 'center';
+  const selectedUsesGlobalTheme = usesGlobalTheme(
+    selected,
+    editor.config?.theme ?? defaultGlobalTheme,
+  );
   return (
     <div className="advanced-alert-editor">
       <section className="alert-widget-state-card">
@@ -370,6 +415,44 @@ export function AlertEditor() {
               ? 'Ativo'
               : 'Ativar widget'}
         </button>
+      </section>
+      <section className="variation-list" aria-labelledby="variation-title">
+        <div className="variation-list-head">
+          <div>
+            <span className="section-kicker">Variações</span>
+            <h2 id="variation-title">Escolha um alerta</h2>
+          </div>
+          <Link className="secondary-button button-link" href="/aparencia">
+            Editar tema global
+          </Link>
+        </div>
+        <div className="variation-selector-grid">
+          {editor.variations.map((variation) => {
+            const currentVariation =
+              variation.id === selected.id ? selected : variation;
+            const followsGlobal = usesGlobalTheme(
+              currentVariation,
+              editor.config?.theme ?? defaultGlobalTheme,
+            );
+            return (
+              <button
+                className={`variation-row ${selected.id === variation.id ? 'selected' : ''}`}
+                key={variation.id}
+                onClick={() => setSelected(variation)}
+                type="button"
+              >
+                <strong>{variation.name}</strong>
+                <span
+                  className={`theme-source-badge ${followsGlobal ? 'global' : 'custom'}`}
+                >
+                  {followsGlobal
+                    ? 'Usando tema global'
+                    : 'Personalização própria'}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </section>
       <section className="alert-editor-form alert-editor-form-full">
         <nav className="alert-editor-steps" aria-label="Etapas de configuração">
@@ -404,6 +487,16 @@ export function AlertEditor() {
             Variação ativa
           </label>
           <div>
+            <button
+              className="secondary-button"
+              disabled={selectedUsesGlobalTheme}
+              onClick={restoreGlobalTheme}
+              type="button"
+            >
+              {selectedUsesGlobalTheme
+                ? 'Usando tema global'
+                : 'Restaurar tema global'}
+            </button>
             <button
               className="secondary-button"
               onClick={() => void action('test')}

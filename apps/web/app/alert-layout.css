@@ -31,9 +31,14 @@
   gap: 14px 16px;
 }
 
-.alert-customization .variation-list {
+.alert-customization .alert-widget-state-card {
   grid-column: 1 / -1;
   grid-row: 1;
+}
+
+.alert-customization .variation-list {
+  grid-column: 1 / -1;
+  grid-row: 2;
   padding: 16px;
 }
 
@@ -41,20 +46,55 @@
   align-items: center;
 }
 
-.alert-customization .variation-list-head > .primary-button {
+.alert-customization .variation-list-head > .button-link {
   min-width: 96px;
   min-height: 40px;
 }
 
+.alert-customization .variation-selector-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px;
+}
+
+.alert-customization .theme-source-badge {
+  width: fit-content;
+  margin-top: 3px;
+  padding: 4px 7px;
+  border: 1px solid #455064;
+  border-radius: 999px;
+  color: #aeb7c7;
+  font-size: 9px;
+  line-height: 1;
+}
+
+.alert-customization .theme-source-badge.global {
+  border-color: rgb(52 211 153 / 35%);
+  background: rgb(52 211 153 / 8%);
+  color: #83dbb7;
+}
+
+.alert-customization .theme-source-badge.custom {
+  border-color: rgb(169 140 255 / 35%);
+  background: rgb(169 140 255 / 8%);
+  color: #c8b6f6;
+}
+
 .alert-customization .alert-editor-steps {
   grid-column: 1 / -1;
-  grid-row: 2;
+  grid-row: 3;
   position: static;
+}
+
+.alert-customization .editor-toolbar {
+  grid-column: 1 / -1;
+  grid-row: 4;
 }
 
 .alert-customization .alert-template-picker {
   grid-column: 1 / -1;
-  grid-row: 3;
+  grid-row: 5;
   padding: 16px;
 }
 
@@ -72,12 +112,12 @@
 
 .alert-customization .livepix-customize-card {
   grid-column: 1;
-  grid-row: 4;
+  grid-row: 6;
 }
 
 .alert-customization .alert-live-preview {
   grid-column: 2;
-  grid-row: 4 / span 8;
+  grid-row: 6 / span 8;
   position: sticky;
   top: 16px;
   z-index: 1;
@@ -150,38 +190,38 @@
 
 .alert-customization .livepix-config-heading {
   grid-column: 1;
-  grid-row: 5;
+  grid-row: 7;
   margin: 2px 0 -2px;
 }
 
 .alert-customization .livepix-duration-card {
   grid-column: 1;
-  grid-row: 6;
+  grid-row: 8;
 }
 
 .alert-customization .livepix-sound-card {
   grid-column: 1;
-  grid-row: 7;
+  grid-row: 9;
 }
 
 .alert-customization .livepix-tts-card {
   grid-column: 1;
-  grid-row: 8;
+  grid-row: 10;
 }
 
 .alert-customization .livepix-info-card {
   grid-column: 1;
-  grid-row: 9;
+  grid-row: 11;
 }
 
 .alert-customization .livepix-advanced-card {
   grid-column: 1;
-  grid-row: 10;
+  grid-row: 12;
 }
 
 .alert-customization .editor-actions {
   grid-column: 1;
-  grid-row: 11;
+  grid-row: 13;
   margin: 0;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
@@ -221,7 +261,7 @@
 
 .alert-customization .alert-editor-form > p[role='status'] {
   grid-column: 1;
-  grid-row: 12;
+  grid-row: 14;
   margin: 0;
 }
 
@@ -241,7 +281,9 @@
     grid-template-columns: 1fr;
   }
 
+  .alert-customization .alert-widget-state-card,
   .alert-customization .variation-list,
+  .alert-customization .editor-toolbar,
   .alert-customization .alert-editor-steps,
   .alert-customization .alert-template-picker,
   .alert-customization .livepix-customize-card,

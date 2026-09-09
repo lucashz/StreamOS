@@ -460,7 +460,7 @@ export default function WidgetsPage() {
                 Como adicionar ao OBS
               </button>
               <Link className="secondary-button button-link" href="/alertas">
-                Alertas
+                Alertas e variações
               </Link>
               <Link
                 className="primary-button button-link"
@@ -503,7 +503,7 @@ export default function WidgetsPage() {
             </p>
           </div>
           <Link className="primary-button button-link" href="/alertas">
-            Configurar alertas
+            Editar alertas e variações
           </Link>
         </section>
         {loadingWidgets ? (
