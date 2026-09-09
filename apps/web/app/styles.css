@@ -9279,6 +9279,9 @@ a {
   justify-content: center;
   gap: 8px;
   padding: 0 16px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
   line-height: 1.15;
   text-align: center;
 }
@@ -9329,8 +9332,55 @@ a {
   justify-content: center;
   margin: 0;
   padding: 0 16px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
   line-height: 1.15;
   text-align: center;
+}
+
+/* Cards gerenciados mantem conteudo e rodape na mesma linha visual. */
+.feature-page .widget-card-grid {
+  align-items: stretch;
+}
+
+.feature-page .managed-widget-card {
+  grid-template-rows: 150px auto auto minmax(42px, auto) auto auto;
+  height: 100%;
+}
+
+.feature-page .managed-widget-card > .widget-card-title {
+  min-height: 92px;
+}
+
+.feature-page .managed-widget-card > .obs-status {
+  min-height: 42px;
+  align-content: center;
+}
+
+.feature-page .managed-widget-card > .widget-updated {
+  min-height: 15px;
+}
+
+.feature-page .managed-widget-card > .widget-card-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  align-self: end;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.feature-page .managed-widget-card > .widget-card-actions > button {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 14px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .feature-page

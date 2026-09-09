@@ -578,8 +578,9 @@ export default function WidgetsPage() {
                     ? 'horário indisponível'
                     : new Date(widget.updatedAt).toLocaleDateString('pt-BR')}
                 </small>
-                <div className="compact-actions">
+                <div className="compact-actions widget-card-actions">
                   <button
+                    className="primary-button"
                     onClick={(event) => {
                       event.stopPropagation();
                       void action('test', widget);
