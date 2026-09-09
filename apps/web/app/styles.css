@@ -3662,20 +3662,20 @@ a {
 }
 .wallet-page .wallet-grid > .feature-card {
   align-content: start;
-  min-height: 390px;
-  padding: 22px;
+  min-height: 354px;
+  padding: 18px;
 }
 .wallet-page .wallet-settings-card {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 .wallet-page .wallet-settings-card > h2 {
   margin: 0;
 }
 .wallet-card-overview,
 .wallet-settings-card > .limit-list {
-  min-height: 72px;
+  min-height: 60px;
 }
 .wallet-card-overview {
   display: flex;
@@ -3694,11 +3694,11 @@ a {
 .wallet-settings-card input,
 .wallet-settings-card select {
   width: 100%;
-  height: 46px;
+  height: 44px;
 }
 .wallet-settings-card > button:not(.danger-button) {
   width: 100%;
-  min-height: 46px;
+  min-height: 44px;
   margin-top: auto;
   border-radius: 10px;
   font-weight: 700;
