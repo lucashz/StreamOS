@@ -5157,6 +5157,42 @@ a {
 .widget-drawer-header-actions .primary-button {
   min-height: 36px;
 }
+.widget-drawer-header-actions > button {
+  display: inline-flex;
+  height: 40px;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  line-height: 1;
+}
+.widget-drawer-header-actions > .primary-button {
+  min-width: 132px;
+  padding: 0 16px;
+}
+.widget-drawer-header-actions > .icon-button {
+  width: 40px;
+  min-width: 40px;
+  padding: 0;
+  font-size: 20px;
+}
+.widget-preview-actions {
+  align-items: stretch;
+  gap: 8px;
+}
+.widget-preview-actions > button {
+  display: inline-flex;
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
 
 /* SongPix: tema e fila em blocos operacionais legíveis. */
 .song-session-panel {
@@ -5401,6 +5437,22 @@ a {
 .widget-drawer footer > span {
   margin-right: auto;
 }
+.widget-drawer footer > button {
+  display: inline-flex;
+  height: 46px;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 18px;
+  line-height: 1;
+}
+.widget-drawer footer > .danger-button {
+  min-width: 92px;
+}
+.widget-drawer footer > button:last-child {
+  min-width: 158px;
+}
 @media (max-width: 780px) {
   .widget-drawer-body {
     grid-template-columns: 1fr;
@@ -5410,6 +5462,24 @@ a {
   }
   .widget-general-row {
     grid-template-columns: 1fr;
+  }
+  .widget-drawer footer {
+    flex-wrap: wrap;
+  }
+  .widget-drawer footer > span {
+    flex-basis: 100%;
+  }
+}
+@media (max-width: 520px) {
+  .widget-drawer-header-actions > .primary-button {
+    display: none;
+  }
+  .widget-preview-actions {
+    grid-template-columns: 1fr;
+  }
+  .widget-drawer footer > button {
+    flex: 1;
+    min-width: 0;
   }
 }
 .obs-guide-backdrop {
