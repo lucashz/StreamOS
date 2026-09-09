@@ -1125,7 +1125,9 @@ export function OverlayClient() {
           </div>
         </section>
       ) : (widget?.type === 'GOAL' || widget?.type === 'CAMPAIGN') && goal ? (
-        <section className="widget-card goal-widget">
+        <section
+          className={`widget-card goal-widget format-${typeof config.format === 'string' ? config.format : 'horizontal'}`}
+        >
           <span>{widget?.type === 'CAMPAIGN' ? 'Vaquinha' : 'Meta'}</span>
           <strong>{goal.title}</strong>
           <>
