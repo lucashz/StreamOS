@@ -326,11 +326,6 @@ export default function CampaignsPage() {
                     <h3>{item.title}</h3>
                     {item.description ? <p>{item.description}</p> : null}
                   </div>
-                  <span
-                    className={`campaign-status status-${item.status.toLowerCase()}`}
-                  >
-                    {campaignStatusLabels[item.status] ?? item.status}
-                  </span>
                 </div>
                 <div className="campaign-card-values">
                   <span>
@@ -401,24 +396,33 @@ export default function CampaignsPage() {
                 ))}
               </div>
               <div className="campaign-actions">
-                <button
-                  onClick={() =>
-                    void changeStatus(
-                      item.id,
-                      item.status === 'PUBLISHED' ? 'CLOSED' : 'PUBLISHED',
-                    )
-                  }
+                <span
+                  className={`campaign-status status-${item.status.toLowerCase()}`}
                 >
-                  {item.status === 'PUBLISHED' ? 'Encerrar' : 'Publicar'}
-                </button>
-                <button
-                  className="secondary-button"
-                  onClick={() =>
-                    setRewardCampaign(rewardCampaign === item.id ? '' : item.id)
-                  }
-                >
-                  Nova recompensa
-                </button>
+                  {campaignStatusLabels[item.status] ?? item.status}
+                </span>
+                <div className="campaign-action-buttons">
+                  <button
+                    onClick={() =>
+                      void changeStatus(
+                        item.id,
+                        item.status === 'PUBLISHED' ? 'CLOSED' : 'PUBLISHED',
+                      )
+                    }
+                  >
+                    {item.status === 'PUBLISHED' ? 'Encerrar' : 'Publicar'}
+                  </button>
+                  <button
+                    className="secondary-button"
+                    onClick={() =>
+                      setRewardCampaign(
+                        rewardCampaign === item.id ? '' : item.id,
+                      )
+                    }
+                  >
+                    Nova recompensa
+                  </button>
+                </div>
               </div>
               {rewardCampaign === item.id && (
                 <div className="inline-reward-form">

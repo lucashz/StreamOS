@@ -8233,7 +8233,6 @@ a {
 .campaign-card-heading {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
   gap: 18px;
 }
 .campaign-card-heading > div {
@@ -8321,11 +8320,22 @@ a {
   color: #4d5668;
 }
 .campaign-list .campaign-actions {
+  display: flex;
+  min-height: 100%;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-direction: column;
+  gap: 16px;
+  padding-left: 20px;
+  border-left: 1px solid var(--border);
+}
+.campaign-action-buttons {
   display: grid;
+  width: 100%;
   grid-template-columns: repeat(2, minmax(120px, 1fr));
   gap: 8px;
 }
-.campaign-list .campaign-actions > button {
+.campaign-action-buttons > button {
   width: 100%;
   min-height: 42px;
   padding-inline: 12px;
@@ -8344,11 +8354,15 @@ a {
   }
   .campaign-list .campaign-actions {
     width: 100%;
+    padding-top: 16px;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    border-left: 0;
   }
 }
 @media (max-width: 560px) {
   .campaign-field-grid,
-  .campaign-list .campaign-actions {
+  .campaign-action-buttons {
     grid-template-columns: 1fr;
   }
   .campaign-preview-media,
@@ -8360,12 +8374,11 @@ a {
     flex-direction: column;
     gap: 8px;
   }
-  .campaign-card-heading {
-    align-items: flex-start;
-    flex-direction: column-reverse;
-  }
   .campaign-card-heading p {
     white-space: normal;
+  }
+  .campaign-list .campaign-actions {
+    align-items: flex-start;
   }
   .campaign-card-values {
     grid-template-columns: repeat(2, minmax(0, 1fr));
