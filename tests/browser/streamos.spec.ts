@@ -264,6 +264,34 @@ test('assinaturas criam e publicam um plano com retorno visível', async ({
   await expect(plan.getByText('Publicado')).toBeVisible();
 });
 
+test('meta valida e salva as informações exibidas no progresso', async ({
+  page,
+}) => {
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const registration = await page.request.post(`${api}/auth/register`, {
+    data: {
+      email: `goal-${suffix}@streamos.local`,
+      password: 'StreamOS-Goal-123!',
+      displayName: 'Meta E2E',
+      acceptTerms: true,
+    },
+  });
+  expect(registration.ok()).toBeTruthy();
+
+  await page.goto('/metas');
+  await page.getByLabel('Título').fill('Setup novo');
+  await page.getByLabel('Objetivo em R$').fill('2500');
+  await page.getByLabel('Mensagem de conclusão').fill('Meta alcançada!');
+  await page.getByRole('button', { name: 'Salvar meta' }).click();
+  await expect(page.getByRole('status')).toContainText('Meta atualizada');
+  await expect(page.getByText(/R\$ 0\.00 de R\$ 2500\.00/)).toBeVisible();
+
+  await page.getByLabel('Objetivo em R$').fill('0');
+  await expect(
+    page.getByRole('button', { name: 'Salvar meta' }),
+  ).toBeDisabled();
+});
+
 test('alerta percorre a fila e desaparece automaticamente', async ({
   page,
 }, testInfo) => {

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PanelShell } from '../panel-shell';
+import { PageHeader } from '../ui';
 const api = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 type Summary = {
   goal: {
@@ -23,13 +24,20 @@ export default function GoalsPage() {
   const [color, setColor] = useState('#7c5cff');
   const [imageUrl, setImageUrl] = useState('');
   const [completionMessage, setCompletionMessage] = useState('Meta concluída!');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   useEffect(() => {
     async function load() {
       try {
         const response = await fetch(`${api}/dashboard/summary`, {
           credentials: 'include',
+          cache: 'no-store',
         });
-        const data = (await response.json()) as Summary;
+        const data = (await response.json().catch(() => ({}))) as Summary & {
+          message?: string;
+        };
+        if (!response.ok)
+          throw new Error(data.message ?? 'Não foi possível carregar a meta.');
         if (data.goal) {
           setTitle(data.goal.title);
           setTarget(String(data.goal.targetInCents / 100));
@@ -37,49 +45,80 @@ export default function GoalsPage() {
           setDeadline(data.goal.deadline?.slice(0, 10) ?? '');
           setColor(data.goal.color ?? '#7c5cff');
           setImageUrl(data.goal.imageUrl ?? '');
-          setCompletionMessage(data.goal.completionMessage ?? 'Meta concluída!');
+          setCompletionMessage(
+            data.goal.completionMessage ?? 'Meta concluída!',
+          );
         }
-      } catch {
-        setStatus('Não foi possível carregar a meta.');
+      } catch (error) {
+        setStatus(
+          error instanceof Error
+            ? error.message
+            : 'Não foi possível carregar a meta.',
+        );
+      } finally {
+        setLoading(false);
       }
     }
     void load();
   }, []);
   async function save() {
-    const r = await fetch(`${api}/dashboard/goal`, {
-      method: 'PUT',
-      credentials: 'include',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        title,
-        targetInCents: Math.round(Number(target.replace(',', '.')) * 100),
-        active: true,
-        deadline: deadline || null,
-        color,
-        imageUrl: imageUrl || null,
-        completionMessage: completionMessage || null,
-      }),
-    });
-    setStatus(r.ok ? 'Meta atualizada.' : 'Confira o título e o valor.');
+    if (
+      saving ||
+      !title.trim() ||
+      !Number.isFinite(targetCents) ||
+      targetCents <= 0
+    )
+      return;
+    setSaving(true);
+    setStatus('Salvando meta…');
+    try {
+      const response = await fetch(`${api}/dashboard/goal`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          title: title.trim(),
+          targetInCents: targetCents,
+          active: true,
+          deadline: deadline || null,
+          color,
+          imageUrl: imageUrl.trim() || null,
+          completionMessage: completionMessage.trim() || null,
+        }),
+      });
+      const body = (await response.json().catch(() => ({}))) as {
+        message?: string;
+      };
+      setStatus(
+        response.ok
+          ? 'Meta atualizada.'
+          : (body.message ?? 'Confira o título e o valor.'),
+      );
+    } catch {
+      setStatus('Não foi possível conectar ao servidor.');
+    } finally {
+      setSaving(false);
+    }
   }
-  const targetCents = Math.max(
-    1,
-    Math.round(Number(target.replace(',', '.')) * 100),
+  const parsedTarget = Number(target.replace(',', '.')) * 100;
+  const targetCents = Math.round(parsedTarget);
+  const safeTargetCents =
+    Number.isFinite(targetCents) && targetCents > 0 ? targetCents : 1;
+  const progress = Math.min(
+    100,
+    Math.max(0, Math.round((current / safeTargetCents) * 100)),
   );
-  const progress = Math.min(100, Math.round((current / targetCents) * 100));
   return (
     <PanelShell>
       <main className="feature-page">
         <Link href="/" className="back-link">
           ← Visão geral
         </Link>
-        <header>
-          <span className="section-kicker">Engajamento</span>
-          <h1>Meta da live</h1>
-          <p>
-            Os pagamentos confirmados atualizam o progresso automaticamente.
-          </p>
-        </header>
+        <PageHeader
+          eyebrow="Engajamento"
+          title="Meta da live"
+          description="Os pagamentos confirmados atualizam o progresso automaticamente."
+        />
         <section className="feature-card goal-editor">
           <div className="goal-preview">
             <strong>{progress}%</strong>
@@ -88,7 +127,7 @@ export default function GoalsPage() {
             </div>
             <small>
               R$ {(current / 100).toFixed(2)} de R${' '}
-              {(targetCents / 100).toFixed(2)}
+              {(safeTargetCents / 100).toFixed(2)}
             </small>
           </div>
           <label>
@@ -104,17 +143,71 @@ export default function GoalsPage() {
             />
           </label>
           <div className="form-grid two-columns">
-            <label>Prazo opcional<input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} /></label>
-            <label>Cor do progresso<input type="color" value={color} onChange={(e) => setColor(e.target.value)} /></label>
+            <label>
+              Prazo opcional
+              <input
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+              />
+            </label>
+            <label>
+              Cor do progresso
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+              />
+            </label>
           </div>
-          <label>Imagem da meta<input type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." /><small>Use uma imagem hospedada em HTTPS.</small></label>
-          <label>Mensagem de conclusão<input value={completionMessage} onChange={(e) => setCompletionMessage(e.target.value)} maxLength={160} /></label>
-          <button className="primary-button" onClick={() => void save()}>
-            Salvar meta
+          <label>
+            Imagem da meta
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://..."
+            />
+            <small>Use uma imagem hospedada em HTTPS.</small>
+          </label>
+          <label>
+            Mensagem de conclusão
+            <input
+              value={completionMessage}
+              onChange={(e) => setCompletionMessage(e.target.value)}
+              maxLength={160}
+            />
+          </label>
+          <button
+            className="primary-button"
+            disabled={
+              loading ||
+              saving ||
+              !title.trim() ||
+              !Number.isFinite(targetCents) ||
+              targetCents <= 0
+            }
+            onClick={() => void save()}
+          >
+            {saving ? 'Salvando…' : 'Salvar meta'}
           </button>
           {status ? <p role="status">{status}</p> : null}
         </section>
-        <section className="feature-card"><div className="panel-heading"><div><span className="section-kicker">Widget para OBS</span><h2>Progresso da meta</h2></div><Link className="secondary-button" href="/widgets/create?type=GOAL">Editar aparência e copiar URL</Link></div><p>O widget recebe atualizações automaticamente após cada contribuição confirmada.</p></section>
+        <section className="feature-card">
+          <div className="panel-heading">
+            <div>
+              <span className="section-kicker">Widget para OBS</span>
+              <h2>Progresso da meta</h2>
+            </div>
+            <Link className="secondary-button" href="/widgets/create?type=GOAL">
+              Editar aparência e copiar URL
+            </Link>
+          </div>
+          <p>
+            O widget recebe atualizações automaticamente após cada contribuição
+            confirmada.
+          </p>
+        </section>
       </main>
     </PanelShell>
   );
