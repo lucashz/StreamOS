@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { PanelShell } from '../panel-shell';
+import { PageHeader } from '../ui';
 const api = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 type Delivery = {
   id: string;
@@ -81,14 +82,15 @@ export default function Page() {
   return (
     <PanelShell>
       <main className="feature-page settings-page platform-settings-page">
-        <header className="settings-page-header">
-          <span className="section-kicker">Configurações</span>
-          <h1>Organização e integrações</h1>
-          <p>
-            Controle acessos, credenciais e entregas externas da organização.
-          </p>
-        </header>
-        <nav className="settings-local-nav" aria-label="Seções da plataforma">
+        <PageHeader
+          eyebrow="Configurações"
+          title="Organização e integrações"
+          description="Controle acessos, credenciais e entregas externas da organização."
+        />
+        <nav
+          className="ui-tabs settings-tabs"
+          aria-label="Seções da plataforma"
+        >
           <a href="#equipe">Equipe</a>
           <a href="#integracoes">Integrações</a>
           <a href="#api">API</a>

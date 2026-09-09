@@ -1,8 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { PanelShell } from '../panel-shell';
+import { PageHeader } from '../ui';
 
 const api = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 type Viewer = {
@@ -141,15 +141,12 @@ export default function AccountPage() {
   return (
     <PanelShell>
       <main className="feature-page settings-page account-settings-page">
-        <Link href="/" className="back-link">
-          ← Visão geral
-        </Link>
-        <header className="settings-page-header">
-          <span className="section-kicker">Configurações</span>
-          <h1>Conta e segurança</h1>
-          <p>Gerencie seu perfil público, senha, sessões e organização.</p>
-        </header>
-        <nav className="settings-local-nav" aria-label="Seções da conta">
+        <PageHeader
+          eyebrow="Configurações"
+          title="Conta e segurança"
+          description="Gerencie seu perfil público, senha, sessões e organização."
+        />
+        <nav className="ui-tabs settings-tabs" aria-label="Seções da conta">
           <a href="#perfil">Perfil</a>
           <a href="#seguranca">Senha e sessões</a>
           <a href="#organizacao">Organização</a>

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { PanelShell } from '../panel-shell';
+import { PageHeader } from '../ui';
 
 const api = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -111,16 +112,16 @@ export default function HealthPage() {
   return (
     <PanelShell>
       <main className="feature-page operations-page">
-        <header className="operations-header settings-page-header">
-          <div>
-            <span className="section-kicker">Configurações · Operação</span>
-            <h1>Saúde do sistema</h1>
-            <p>Pagamentos, alertas e integrações nas últimas 24 horas.</p>
-          </div>
-          <button className="secondary-button" onClick={() => void load()}>
-            Atualizar
-          </button>
-        </header>
+        <PageHeader
+          eyebrow="Configurações · Operação"
+          title="Saúde do sistema"
+          description="Pagamentos, alertas e integrações nas últimas 24 horas."
+          actions={
+            <button className="secondary-button" onClick={() => void load()}>
+              Atualizar
+            </button>
+          }
+        />
 
         {loading && !data ? (
           <div className="feature-card">Carregando...</div>

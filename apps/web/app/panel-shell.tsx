@@ -218,11 +218,11 @@ const groups: ReadonlyArray<{
     icon: 'settings',
     roles: ['OWNER', 'ADMIN', 'MODERATOR', 'FINANCE', 'VIEWER'],
     items: [
-      ['Conta e segurança', '/conta', 'users'],
+      ['Conta', '/conta', 'users'],
       ['Equipe', '/plataforma#equipe', 'users', ['OWNER', 'ADMIN']],
       ['Integrações', '/plataforma#integracoes', 'plug', ['OWNER', 'ADMIN']],
-      ['API e webhooks', '/plataforma#api', 'settings', ['OWNER', 'ADMIN']],
-      ['Saúde do sistema', '/saude', 'activity', ['OWNER', 'ADMIN']],
+      ['API e Webhooks', '/plataforma#api', 'settings', ['OWNER', 'ADMIN']],
+      ['Saúde', '/saude', 'activity', ['OWNER', 'ADMIN']],
     ],
   },
 ];

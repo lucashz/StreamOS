@@ -2462,6 +2462,12 @@ a {
 .nav-item.submenu-item svg {
   flex: none;
 }
+.nav-item.submenu-item span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .nav-submenu .nav-item.active::before {
   height: 16px;
 }
@@ -6223,24 +6229,7 @@ a {
   gap: 16px;
 }
 
-.settings-page > .settings-page-header:not(.operations-header) {
-  display: grid;
-  justify-content: start;
-  gap: 6px;
-}
-
-.settings-page > .settings-page-header:not(.operations-header) h1,
-.settings-page > .settings-page-header:not(.operations-header) p {
-  margin: 0;
-}
-
-.settings-page > .settings-page-header:not(.operations-header) p {
-  max-width: 720px;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-.settings-page > .settings-local-nav {
+.settings-page > .settings-tabs {
   margin: 0;
 }
 
@@ -6290,11 +6279,11 @@ a {
   display: inline;
 }
 
-.platform-settings-page > .settings-page-header {
+.platform-settings-page > .page-header {
   order: 1;
 }
 
-.platform-settings-page > .settings-local-nav {
+.platform-settings-page > .settings-tabs {
   order: 2;
 }
 
@@ -6363,7 +6352,7 @@ a {
 }
 
 @media (max-width: 520px) {
-  .settings-page > .settings-local-nav {
+  .settings-page > .settings-tabs {
     margin-inline: -4px;
   }
 
@@ -6382,29 +6371,12 @@ a {
   align-content: start;
 }
 
-.settings-page > :is(.back-link, .settings-page-header, .settings-local-nav),
+.settings-page > :is(.back-link, .page-header, .settings-tabs),
 .account-settings-page > :is(.settings-sessions-card, #organizacao) {
   grid-column: 1 / -1;
 }
 
-.settings-page-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.settings-page-header > div,
-.settings-page-header:not(.operations-header) {
-  min-width: 0;
-}
-
-.settings-page-header h1,
-.settings-page-header p {
-  margin-bottom: 0;
-}
-
-.settings-local-nav {
+.settings-tabs {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -6416,7 +6388,7 @@ a {
   scrollbar-width: thin;
 }
 
-.settings-local-nav a {
+.settings-tabs a {
   display: inline-flex;
   min-height: 38px;
   align-items: center;
@@ -6430,8 +6402,8 @@ a {
   white-space: nowrap;
 }
 
-.settings-local-nav a:hover,
-.settings-local-nav a:focus-visible {
+.settings-tabs a:hover,
+.settings-tabs a:focus-visible {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   color: var(--text);
   outline: none;
@@ -6506,7 +6478,6 @@ a {
     grid-template-columns: 1fr;
   }
 
-  .settings-page-header,
   .settings-sessions-card .data-list article {
     align-items: stretch;
     flex-direction: column;
