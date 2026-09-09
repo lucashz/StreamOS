@@ -6400,6 +6400,63 @@ a {
   margin: 0;
 }
 
+.settings-feedback {
+  box-sizing: border-box;
+  width: min(100%, 1080px);
+  margin: -6px auto 0;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.generated-secret {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.generated-secret > small {
+  grid-column: 1 / -1;
+}
+
+.generated-secret > code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.generated-secret > button {
+  min-width: 118px;
+  margin: 0;
+}
+
+.subscription-member-row > span {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  flex: 1;
+}
+
+.subscription-member-row > span small {
+  color: var(--muted);
+}
+
+.feature-page button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+@media (max-width: 560px) {
+  .generated-secret {
+    grid-template-columns: 1fr;
+  }
+
+  .generated-secret > button {
+    width: 100%;
+  }
+}
+
 .settings-section-heading p {
   color: var(--muted);
   font-size: 13px;

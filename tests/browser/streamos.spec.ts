@@ -180,6 +180,58 @@ test('todas as telas administrativas preservam layout e responsividade', async (
   }
 });
 
+test('configurações executam os fluxos principais com retorno visível', async ({
+  page,
+}) => {
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const registration = await page.request.post(`${api}/auth/register`, {
+    data: {
+      email: `settings-${suffix}@streamos.local`,
+      password: 'StreamOS-Settings-123!',
+      displayName: 'Configurações E2E',
+      acceptTerms: true,
+    },
+  });
+  expect(registration.ok()).toBeTruthy();
+
+  await page.goto('/conta');
+  await page.getByLabel('Nome público').fill('Perfil atualizado E2E');
+  await page.getByRole('button', { name: 'Salvar perfil' }).click();
+  await expect(page.getByRole('status')).toContainText('Perfil atualizado');
+
+  await page.goto('/plataforma');
+  const team = page.locator('#equipe');
+  await team.getByLabel('E-mail').fill(`invite-${suffix}@streamos.local`);
+  await team.getByRole('button', { name: 'Gerar convite' }).click();
+  await expect(
+    team.getByRole('button', { name: 'Copiar convite' }),
+  ).toBeVisible();
+
+  const apiSection = page.locator('#api');
+  await apiSection.getByLabel('Nome').fill('Teste E2E');
+  await apiSection.getByRole('button', { name: 'Criar token' }).click();
+  await expect(
+    apiSection.getByRole('button', { name: 'Copiar token' }),
+  ).toBeVisible();
+
+  const webhooks = page.locator('#webhooks');
+  await webhooks.getByLabel('URL').fill('http://localhost:4567/streamos');
+  await webhooks.getByRole('button', { name: 'Adicionar endpoint' }).click();
+  await expect(
+    webhooks.getByRole('button', { name: 'Copiar segredo' }),
+  ).toBeVisible();
+
+  const twitch = page
+    .locator('#integracoes article')
+    .filter({ hasText: 'Twitch' });
+  await twitch.getByRole('button', { name: 'Conectar', exact: true }).click();
+  await expect(twitch.getByText('Conectado', { exact: true })).toBeVisible();
+  await expect(twitch.getByRole('button', { name: 'Testar' })).toBeEnabled();
+
+  await page.goto('/saude');
+  await expect(page.getByText('Gate do beta')).toBeVisible();
+});
+
 test('alerta percorre a fila e desaparece automaticamente', async ({
   page,
 }, testInfo) => {

@@ -9,29 +9,50 @@ type Delivery = {
   status: string;
   attempts: number;
   lastError?: string;
+  createdAt: string;
 };
 type Overview = {
-  members: Array<{ id: string; role: string; user: { email: string } }>;
+  members: Array<{
+    id: string;
+    role: string;
+    createdAt: string;
+    user: { email: string };
+  }>;
   invites: Array<{
     id: string;
     email: string;
     role: string;
     acceptedAt: string | null;
     revokedAt: string | null;
+    expiresAt: string;
+    createdAt: string;
   }>;
   tokens: Array<{
     id: string;
     name: string;
     tokenPrefix: string;
+    scopes: string[];
+    expiresAt: string | null;
+    lastUsedAt: string | null;
+    createdAt: string;
     revokedAt: string | null;
   }>;
   webhooks: Array<{
     id: string;
     url: string;
     enabled: boolean;
+    events: string[];
+    createdAt: string;
     deliveries: Delivery[];
   }>;
-  integrations: Array<{ id: string; provider: string; status: string }>;
+  integrations: Array<{
+    id: string;
+    provider: string;
+    status: string;
+    displayName: string | null;
+    connectedAt: string;
+    revokedAt: string | null;
+  }>;
   roles: string[];
   scopes: string[];
   webhookEvents: string[];
@@ -51,33 +72,71 @@ export default function Page() {
   const [token, setToken] = useState('');
   const [tokenName, setTokenName] = useState('Automação');
   const [inviteToken, setInviteToken] = useState('');
+  const [status, setStatus] = useState('Carregando configurações…');
+  const [busy, setBusy] = useState(false);
   const load = useCallback(async () => {
-    const r = await fetch(`${api}/dashboard/platform`, {
-      credentials: 'include',
-    });
-    if (r.ok) setData((await r.json()) as Overview);
+    try {
+      const r = await fetch(`${api}/dashboard/platform`, {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      const body = (await r.json().catch(() => ({}))) as Overview & {
+        message?: string;
+      };
+      if (!r.ok)
+        throw new Error(
+          body.message ?? 'Não foi possível carregar as configurações.',
+        );
+      setData(body);
+      setStatus('Configurações sincronizadas.');
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível carregar as configurações.',
+      );
+    }
   }, []);
   useEffect(() => {
     void load();
   }, [load]);
+  async function copySensitive(value: string, label: string) {
+    try {
+      await navigator.clipboard.writeText(value);
+      setStatus(`${label} copiado.`);
+    } catch {
+      setStatus(`Não foi possível copiar ${label.toLowerCase()}.`);
+    }
+  }
   const mutate = async <
     T extends Record<string, unknown> = Record<string, unknown>,
   >(
     path: string,
     method = 'POST',
     body?: unknown,
-  ): Promise<T> => {
-    const r = await fetch(`${api}${path}`, {
-      method,
-      credentials: 'include',
-      headers: { 'content-type': 'application/json' },
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
-    const result: unknown = await r.json().catch(() => ({}));
-    const value = result as T & { message?: string };
-    if (!r.ok) throw new Error(value.message ?? 'Falha na operação');
-    await load();
-    return value;
+  ): Promise<T | null> => {
+    if (busy) return null;
+    setBusy(true);
+    setStatus('Processando…');
+    try {
+      const r = await fetch(`${api}${path}`, {
+        method,
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      const result: unknown = await r.json().catch(() => ({}));
+      const value = result as T & { message?: string };
+      if (!r.ok) throw new Error(value.message ?? 'Falha na operação');
+      await load();
+      setStatus('Operação concluída.');
+      return value;
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Falha na operação.');
+      return null;
+    } finally {
+      setBusy(false);
+    }
   };
   return (
     <PanelShell>
@@ -96,6 +155,9 @@ export default function Page() {
           <a href="#api">API</a>
           <a href="#webhooks">Webhooks</a>
         </nav>
+        <p className="settings-feedback" role="status">
+          {status}
+        </p>
         <section id="equipe" className="feature-card settings-form">
           <div className="settings-section-heading">
             <h2>Equipe</h2>
@@ -106,7 +168,11 @@ export default function Page() {
           <div className="inline-fields">
             <label>
               E-mail
-              <input value={email} onChange={(e) => setEmail(e.target.value)} />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </label>
             <label>
               Papel
@@ -121,7 +187,7 @@ export default function Page() {
           </div>
           <button
             className="primary-button"
-            disabled={!email}
+            disabled={busy || !email.includes('@')}
             onClick={() =>
               void (async () => {
                 const b = await mutate<{ inviteToken: string }>(
@@ -132,7 +198,10 @@ export default function Page() {
                     role,
                   },
                 );
-                setInviteToken(b.inviteToken);
+                if (b) {
+                  setInviteToken(b.inviteToken);
+                  setEmail('');
+                }
               })()
             }
           >
@@ -143,16 +212,28 @@ export default function Page() {
           </p>
           {inviteToken && (
             <div className="generated-secret">
-              <small>Convite gerado — copie agora</small>
+              <small>Convite válido por 7 dias — copie agora</small>
               <code>{inviteToken}</code>
+              <button
+                className="secondary-button"
+                onClick={() => void copySensitive(inviteToken, 'Convite')}
+              >
+                Copiar convite
+              </button>
             </div>
           )}
           {data?.members.map((m) => (
             <div className="subscription-member-row" key={m.id}>
-              <span>{m.user.email}</span>
+              <span>
+                <strong>{m.user.email}</strong>
+                <small>
+                  Membro desde{' '}
+                  {new Date(m.createdAt).toLocaleDateString('pt-BR')}
+                </small>
+              </span>
               <select
                 value={m.role}
-                disabled={m.role === 'OWNER'}
+                disabled={busy || m.role === 'OWNER'}
                 onChange={(e) =>
                   void mutate(`/dashboard/team/members/${m.id}`, 'PATCH', {
                     role: e.target.value,
@@ -180,7 +261,11 @@ export default function Page() {
             .map((i) => (
               <div className="subscription-member-row" key={i.id}>
                 <span>
-                  Convite: {i.email} · {i.role}
+                  <strong>Convite para {i.email}</strong>
+                  <small>
+                    {i.role} · expira em{' '}
+                    {new Date(i.expiresAt).toLocaleDateString('pt-BR')}
+                  </small>
                 </span>
                 <button
                   className="secondary-button"
@@ -209,6 +294,7 @@ export default function Page() {
           </label>
           <button
             className="primary-button"
+            disabled={busy || !tokenName.trim()}
             onClick={() =>
               void (async () => {
                 const b = await mutate<{ token: string }>(
@@ -219,7 +305,7 @@ export default function Page() {
                     scopes: data?.scopes ?? [],
                   },
                 );
-                setToken(b.token);
+                if (b) setToken(b.token);
               })()
             }
           >
@@ -229,13 +315,27 @@ export default function Page() {
             <div className="generated-secret">
               <small>Token exibido uma única vez</small>
               <code>{token}</code>
+              <button
+                className="secondary-button"
+                onClick={() => void copySensitive(token, 'Token')}
+              >
+                Copiar token
+              </button>
             </div>
           )}
           {data?.tokens.map((t) => (
             <div className="subscription-member-row" key={t.id}>
               <span>
-                {t.name} · {t.tokenPrefix} ·{' '}
-                {t.revokedAt ? 'revogado' : 'ativo'}
+                <strong>{t.name}</strong>
+                <small>
+                  {t.tokenPrefix}… · {t.revokedAt ? 'revogado' : 'ativo'} ·{' '}
+                  {t.scopes.length} escopos
+                </small>
+                <small>
+                  {t.lastUsedAt
+                    ? `Último uso ${new Date(t.lastUsedAt).toLocaleString('pt-BR')}`
+                    : 'Nunca utilizado'}
+                </small>
               </span>
               {!t.revokedAt && (
                 <>
@@ -246,7 +346,7 @@ export default function Page() {
                         const b = await mutate<{ token: string }>(
                           `/dashboard/api-tokens/${t.id}/rotate`,
                         );
-                        setToken(b.token);
+                        if (b) setToken(b.token);
                       })()
                     }
                   >
@@ -273,6 +373,7 @@ export default function Page() {
           <label>
             URL
             <input
+              type="url"
               placeholder="https://..."
               value={url}
               onChange={(e) => setUrl(e.target.value)}
@@ -280,7 +381,7 @@ export default function Page() {
           </label>
           <button
             className="primary-button"
-            disabled={!url}
+            disabled={busy || !/^https?:\/\//i.test(url)}
             onClick={() =>
               void (async () => {
                 const b = await mutate<{ signingSecret: string }>(
@@ -291,7 +392,10 @@ export default function Page() {
                     events: data?.webhookEvents ?? ['payment.confirmed.v1'],
                   },
                 );
-                setSecret(b.signingSecret);
+                if (b) {
+                  setSecret(b.signingSecret);
+                  setUrl('');
+                }
               })()
             }
           >
@@ -301,13 +405,24 @@ export default function Page() {
             <div className="generated-secret">
               <small>Segredo de assinatura — copie agora</small>
               <code>{secret}</code>
+              <button
+                className="secondary-button"
+                onClick={() => void copySensitive(secret, 'Segredo')}
+              >
+                Copiar segredo
+              </button>
             </div>
           )}
           {data?.webhooks.map((w) => (
             <div key={w.id}>
               <div className="subscription-member-row">
                 <span>
-                  {w.url} · {w.enabled ? 'ativo' : 'pausado'}
+                  <strong>{w.url}</strong>
+                  <small>
+                    {w.enabled ? 'Ativo' : 'Pausado'} · {w.events.length}{' '}
+                    eventos · criado em{' '}
+                    {new Date(w.createdAt).toLocaleDateString('pt-BR')}
+                  </small>
                 </span>
                 <button
                   className="secondary-button"
@@ -328,7 +443,7 @@ export default function Page() {
                       const b = await mutate<{ signingSecret: string }>(
                         `/dashboard/webhook-endpoints/${w.id}/rotate-secret`,
                       );
-                      setSecret(b.signingSecret);
+                      if (b) setSecret(b.signingSecret);
                     })()
                   }
                 >
@@ -367,55 +482,63 @@ export default function Page() {
             </p>
           </div>
           <div className="integration-grid">
-            {['twitch', 'youtube', 'discord'].map((p) => (
-              <article key={p}>
-                <strong>
-                  {p[0]?.toUpperCase()}
-                  {p.slice(1)}
-                </strong>
-                <small>
-                  {data?.integrations.find(
-                    (item) => item.provider === p.toUpperCase(),
-                  )?.status ?? 'Desconectado'}
-                </small>
-                <span>Permissões básicas de conta e eventos.</span>
-                <div className="compact-actions">
-                  <button
-                    onClick={() =>
-                      void mutate(
-                        `/dashboard/integrations/${p}/connect`,
-                        'POST',
-                        {},
-                      )
-                    }
-                  >
-                    Conectar
-                  </button>
-                  <button
-                    className="secondary-button"
-                    onClick={() =>
-                      void mutate(`/dashboard/integrations/${p}/test`)
-                    }
-                  >
-                    Testar
-                  </button>
-                  <button
-                    className="secondary-button"
-                    onClick={() =>
-                      void mutate(`/dashboard/integrations/${p}/disconnect`)
-                    }
-                  >
-                    Desconectar
-                  </button>
-                </div>
-              </article>
-            ))}
+            {['twitch', 'youtube', 'discord'].map((p) => {
+              const connection = data?.integrations.find(
+                (item) => item.provider === p.toUpperCase(),
+              );
+              const connected = Boolean(
+                connection &&
+                !connection.revokedAt &&
+                connection.status !== 'DISCONNECTED',
+              );
+              return (
+                <article key={p}>
+                  <strong>
+                    {p[0]?.toUpperCase()}
+                    {p.slice(1)}
+                  </strong>
+                  <small>{connected ? 'Conectado' : 'Desconectado'}</small>
+                  <span>
+                    {connected && connection
+                      ? `Conectado em ${new Date(connection.connectedAt).toLocaleString('pt-BR')}`
+                      : 'Permissões básicas de conta e eventos.'}
+                  </span>
+                  <div className="compact-actions">
+                    <button
+                      disabled={busy || connected}
+                      onClick={() =>
+                        void mutate(
+                          `/dashboard/integrations/${p}/connect`,
+                          'POST',
+                          {},
+                        )
+                      }
+                    >
+                      Conectar
+                    </button>
+                    <button
+                      className="secondary-button"
+                      disabled={busy || !connected}
+                      onClick={() =>
+                        void mutate(`/dashboard/integrations/${p}/test`)
+                      }
+                    >
+                      Testar
+                    </button>
+                    <button
+                      className="secondary-button"
+                      disabled={busy || !connected}
+                      onClick={() =>
+                        void mutate(`/dashboard/integrations/${p}/disconnect`)
+                      }
+                    >
+                      Desconectar
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
-          {data?.integrations.map((i) => (
-            <p key={i.id}>
-              {i.provider} · {i.status}
-            </p>
-          ))}
         </section>
       </main>
     </PanelShell>

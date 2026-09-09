@@ -42,11 +42,17 @@ export default function AccountPage() {
   const [organizationSlug, setOrganizationSlug] = useState('');
   const [role, setRole] = useState('');
   const [deactivationConfirmation, setDeactivationConfirmation] = useState('');
+  const [busy, setBusy] = useState(false);
   async function load() {
-    const [meResponse, sessionsResponse] = await Promise.all([
+    const responses = await Promise.all([
       fetch(`${api}/auth/me`, { credentials: 'include' }),
       fetch(`${api}/auth/account/sessions`, { credentials: 'include' }),
-    ]);
+    ]).catch(() => null);
+    if (!responses) {
+      setStatus('Não foi possível carregar os dados da conta.');
+      return;
+    }
+    const [meResponse, sessionsResponse] = responses;
     if (!meResponse.ok) {
       setStatus('Entre na sua conta para continuar.');
       return;
@@ -69,27 +75,54 @@ export default function AccountPage() {
     void load();
   }, []);
   async function saveProfile() {
-    const response = await fetch(`${api}/auth/account/profile`, {
-      method: 'PUT',
-      credentials: 'include',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email, displayName, bio, avatarUrl }),
-    });
-    const body = (await response.json()) as { message?: string };
-    setStatus(
-      response.ok
-        ? 'Perfil atualizado.'
-        : (body.message ?? 'Não foi possível atualizar.'),
-    );
+    if (busy) return;
+    setBusy(true);
+    setStatus('Salvando perfil…');
+    try {
+      const response = await fetch(`${api}/auth/account/profile`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          displayName: displayName.trim(),
+          bio: bio.trim(),
+          avatarUrl: avatarUrl.trim(),
+        }),
+      });
+      const body = (await response.json().catch(() => ({}))) as {
+        message?: string;
+      };
+      setStatus(
+        response.ok
+          ? 'Perfil atualizado.'
+          : (body.message ?? 'Não foi possível atualizar.'),
+      );
+      if (response.ok) await load();
+    } catch {
+      setStatus('Não foi possível conectar ao servidor.');
+    } finally {
+      setBusy(false);
+    }
   }
   async function changePassword() {
+    if (busy) return;
+    setBusy(true);
+    setStatus('Alterando senha…');
     const response = await fetch(`${api}/auth/account/password`, {
       method: 'PUT',
       credentials: 'include',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ currentPassword, newPassword }),
-    });
-    const body = (await response.json()) as { message?: string };
+    }).catch(() => null);
+    if (!response) {
+      setStatus('Não foi possível conectar ao servidor.');
+      setBusy(false);
+      return;
+    }
+    const body = (await response.json().catch(() => ({}))) as {
+      message?: string;
+    };
     setStatus(
       response.ok
         ? 'Senha alterada e outras sessões encerradas.'
@@ -100,29 +133,47 @@ export default function AccountPage() {
       setNewPassword('');
       await load();
     }
+    setBusy(false);
   }
   async function revoke(id: string) {
+    if (busy) return;
+    setBusy(true);
     const response = await fetch(`${api}/auth/account/sessions/${id}`, {
       method: 'DELETE',
       credentials: 'include',
-    });
-    if (response.ok) {
+    }).catch(() => null);
+    if (response?.ok) {
       const body = (await response.json()) as { current: boolean };
       if (body.current) {
         window.location.href = '/entrar';
         return;
       }
       await load();
+      setStatus('Sessão encerrada.');
+    } else {
+      setStatus('Não foi possível encerrar a sessão.');
     }
+    setBusy(false);
   }
   async function logoutAll() {
-    await fetch(`${api}/auth/account/logout-all`, {
+    if (busy) return;
+    setBusy(true);
+    setStatus('Encerrando sessões…');
+    const response = await fetch(`${api}/auth/account/logout-all`, {
       method: 'POST',
       credentials: 'include',
-    });
-    window.location.href = '/entrar';
+    }).catch(() => null);
+    if (response?.ok) {
+      window.location.href = '/entrar';
+      return;
+    }
+    setStatus('Não foi possível encerrar as sessões.');
+    setBusy(false);
   }
   async function deactivateOrganization() {
+    if (busy) return;
+    setBusy(true);
+    setStatus('Desativando organização…');
     const response = await fetch(
       `${api}/auth/account/deactivate-organization`,
       {
@@ -131,11 +182,14 @@ export default function AccountPage() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ confirmation: deactivationConfirmation }),
       },
-    );
-    if (response.ok) window.location.href = '/entrar';
+    ).catch(() => null);
+    if (response?.ok) window.location.href = '/entrar';
     else {
-      const body = (await response.json()) as { message?: string };
+      const body = (await response?.json().catch(() => ({}))) as {
+        message?: string;
+      };
       setStatus(body.message ?? 'Não foi possível desativar a organização.');
+      setBusy(false);
     }
   }
   return (
@@ -178,6 +232,7 @@ export default function AccountPage() {
               onChange={(e) => setBio(e.target.value)}
               maxLength={500}
             />
+            <small>{bio.length}/500 caracteres</small>
           </label>
           <label>
             Avatar
@@ -188,8 +243,12 @@ export default function AccountPage() {
               placeholder="https://..."
             />
           </label>
-          <button className="primary-button" onClick={() => void saveProfile()}>
-            Salvar perfil
+          <button
+            className="primary-button"
+            disabled={busy || !displayName.trim() || !email.includes('@')}
+            onClick={() => void saveProfile()}
+          >
+            {busy ? 'Salvando…' : 'Salvar perfil'}
           </button>
         </section>
         <section id="seguranca" className="feature-card settings-form">
@@ -221,9 +280,12 @@ export default function AccountPage() {
           </label>
           <button
             className="primary-button"
+            disabled={
+              busy || currentPassword.length < 1 || newPassword.length < 10
+            }
             onClick={() => void changePassword()}
           >
-            Alterar senha
+            {busy ? 'Processando…' : 'Alterar senha'}
           </button>
         </section>
         <section className="feature-card settings-sessions-card">
@@ -249,6 +311,7 @@ export default function AccountPage() {
                 </div>
                 <button
                   className="secondary-button"
+                  disabled={busy}
                   onClick={() => void revoke(session.id)}
                 >
                   Encerrar
@@ -256,7 +319,11 @@ export default function AccountPage() {
               </article>
             ))}
           </div>
-          <button className="danger-button" onClick={() => void logoutAll()}>
+          <button
+            className="danger-button"
+            disabled={busy}
+            onClick={() => void logoutAll()}
+          >
             Sair de todos os dispositivos
           </button>
         </section>
@@ -300,7 +367,7 @@ export default function AccountPage() {
               </label>
               <button
                 className="danger-button"
-                disabled={deactivationConfirmation !== organizationName}
+                disabled={busy || deactivationConfirmation !== organizationName}
                 onClick={() => void deactivateOrganization()}
               >
                 Desativar organização
