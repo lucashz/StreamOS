@@ -9268,3 +9268,140 @@ a {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Geometria compartilhada das acoes do painel. */
+.feature-page
+  :is(.primary-button, .secondary-button, .danger-button, .button-link) {
+  box-sizing: border-box;
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.feature-page
+  :is(
+    .page-actions,
+    .compact-actions,
+    .feature-header-actions,
+    .form-actions,
+    .editor-actions,
+    .videopix-footer-actions,
+    .preset-actions,
+    .song-session-actions,
+    .overlay-actions,
+    .overlay-embed-actions,
+    .live-actions,
+    .queue-actions,
+    .campaign-editor-actions,
+    .campaign-action-buttons
+  ) {
+  align-items: center;
+  gap: 8px;
+}
+
+.feature-page
+  :is(
+    .page-actions,
+    .compact-actions,
+    .feature-header-actions,
+    .form-actions,
+    .editor-actions,
+    .videopix-footer-actions,
+    .preset-actions,
+    .song-session-actions,
+    .overlay-actions,
+    .overlay-embed-actions,
+    .live-actions,
+    .queue-actions,
+    .campaign-editor-actions,
+    .campaign-action-buttons
+  )
+  > :is(button, .button-link) {
+  box-sizing: border-box;
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 16px;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.feature-page
+  :is(
+    .form-actions,
+    .editor-actions,
+    .videopix-footer-actions,
+    .campaign-editor-actions
+  )
+  > :is(button, .button-link) {
+  min-height: 44px;
+}
+
+.feature-page
+  :is(
+    .page-actions,
+    .compact-actions,
+    .feature-header-actions,
+    .form-actions,
+    .editor-actions,
+    .videopix-footer-actions,
+    .preset-actions,
+    .song-session-actions,
+    .overlay-actions,
+    .overlay-embed-actions,
+    .live-actions,
+    .queue-actions,
+    .campaign-editor-actions,
+    .campaign-action-buttons
+  )
+  > .icon-button {
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  min-height: 42px;
+  padding: 0;
+}
+
+.feature-page .danger-button:is(:only-child, :last-child) {
+  margin-top: 0;
+}
+
+@media (max-width: 560px) {
+  .feature-page
+    :is(
+      .page-actions,
+      .feature-header-actions,
+      .form-actions,
+      .editor-actions,
+      .videopix-footer-actions,
+      .overlay-actions,
+      .overlay-embed-actions,
+      .campaign-editor-actions,
+      .campaign-action-buttons
+    ) {
+    width: 100%;
+  }
+
+  .feature-page
+    :is(
+      .page-actions,
+      .feature-header-actions,
+      .form-actions,
+      .editor-actions,
+      .videopix-footer-actions,
+      .overlay-actions,
+      .overlay-embed-actions,
+      .campaign-editor-actions,
+      .campaign-action-buttons
+    )
+    > :is(button, .button-link):not(.icon-button) {
+    width: 100%;
+  }
+}
