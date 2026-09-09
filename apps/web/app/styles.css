@@ -2464,8 +2464,6 @@ a {
 }
 .nav-item.submenu-item span {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 .nav-submenu .nav-item.active::before {
@@ -6377,7 +6375,8 @@ a {
 }
 
 .settings-tabs {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   align-items: center;
   gap: 6px;
   overflow-x: auto;
@@ -6441,7 +6440,34 @@ a {
 }
 
 .account-settings-page {
+  display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.platform-settings-page {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.platform-settings-page
+  > :is(.page-header, .settings-tabs, #equipe, #integracoes) {
+  grid-column: 1 / -1;
+}
+
+.platform-settings-page > #api {
+  grid-column: 1;
+  align-self: stretch;
+}
+
+.platform-settings-page > #webhooks {
+  grid-column: 2;
+  align-self: stretch;
+}
+
+.platform-settings-page > :is(#api, #webhooks) > .primary-button {
+  align-self: end;
+  margin-top: auto;
 }
 
 .account-settings-page > .settings-form > .primary-button,
@@ -6474,8 +6500,13 @@ a {
 }
 
 @media (max-width: 760px) {
-  .account-settings-page {
+  .account-settings-page,
+  .platform-settings-page {
     grid-template-columns: 1fr;
+  }
+
+  .platform-settings-page > :is(#api, #webhooks) {
+    grid-column: 1;
   }
 
   .settings-sessions-card .data-list article {
