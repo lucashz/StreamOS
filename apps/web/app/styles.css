@@ -8073,6 +8073,61 @@ a {
 .campaign-editor-form textarea {
   min-height: 96px;
 }
+.campaign-cover-upload {
+  display: grid !important;
+  min-height: 148px;
+  place-items: center;
+  align-content: center;
+  overflow: hidden;
+  gap: 5px !important;
+  border: 1px dashed #657084;
+  border-radius: 10px;
+  background:
+    linear-gradient(rgba(9, 12, 20, 0.7), rgba(9, 12, 20, 0.7)), #0b0f18;
+  background-position: center;
+  background-size: cover;
+  color: #cbb8fb;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease;
+}
+.campaign-cover-upload:hover {
+  border-color: var(--accent);
+  background-color: #151126;
+}
+.campaign-cover-upload.uploading {
+  cursor: wait;
+  opacity: 0.7;
+}
+.campaign-cover-upload > b {
+  font-size: 28px;
+  font-weight: 400;
+}
+.campaign-cover-upload > span {
+  font-weight: 700;
+}
+.campaign-cover-upload > small {
+  color: var(--muted);
+}
+.campaign-cover-upload.has-image {
+  align-content: end;
+  min-height: 180px;
+  padding: 16px;
+  border-style: solid;
+  color: #fff;
+}
+.campaign-cover-upload.has-image > span,
+.campaign-cover-upload.has-image > small {
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(5, 7, 12, 0.82);
+}
+.campaign-remove-cover {
+  width: 100% !important;
+  min-height: 40px !important;
+}
 .campaign-field-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -8340,6 +8395,10 @@ a {
   font-size: 12px;
   font-weight: 700;
   line-height: 1;
+}
+.campaign-action-buttons .campaign-close-button {
+  border-color: #75404b;
+  color: #f2a0b1;
 }
 @media (max-width: 920px) {
   .campaign-editor-layout {

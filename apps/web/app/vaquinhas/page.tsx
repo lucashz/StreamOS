@@ -46,6 +46,7 @@ export default function CampaignsPage() {
   const [target, setTarget] = useState('1000');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [endsAt, setEndsAt] = useState('');
   const [status, setStatus] = useState('');
   const [rewardCampaign, setRewardCampaign] = useState('');
@@ -100,6 +101,43 @@ export default function CampaignsPage() {
       setEndsAt('');
       await load();
     }
+  }
+  async function uploadCover(file: File | undefined) {
+    if (!file) return;
+    if (
+      !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(
+        file.type,
+      )
+    ) {
+      setStatus('Use uma imagem PNG, JPG, WebP ou GIF.');
+      return;
+    }
+    if (file.size > 10_000_000) {
+      setStatus('A imagem deve ter no máximo 10 MB.');
+      return;
+    }
+    const form = new FormData();
+    form.set('file', file);
+    form.set('name', file.name);
+    setUploadingCover(true);
+    setStatus('Enviando imagem de capa…');
+    const response = await fetch(`${api}/dashboard/alerts/assets/upload`, {
+      method: 'POST',
+      credentials: 'include',
+      body: form,
+    }).catch(() => null);
+    if (!response?.ok) {
+      const body = response
+        ? ((await response.json().catch(() => ({}))) as { message?: string })
+        : {};
+      setStatus(body.message ?? 'Não foi possível enviar a imagem.');
+      setUploadingCover(false);
+      return;
+    }
+    const asset = (await response.json()) as { url: string };
+    setImageUrl(asset.url);
+    setUploadingCover(false);
+    setStatus('Imagem de capa enviada.');
   }
   async function changeStatus(id: string, value: string) {
     await fetch(`${api}/dashboard/campaigns/${id}/status`, {
@@ -231,16 +269,44 @@ export default function CampaignsPage() {
                   <h2>Imagem de capa</h2>
                   <p>Adicione uma imagem que represente sua campanha.</p>
                 </div>
-                <label>
-                  <strong>Endereço da imagem</strong>
-                  <small>Use uma URL pública em HTTPS.</small>
+                <label
+                  className={`campaign-cover-upload${uploadingCover ? ' uploading' : ''}${imageUrl ? ' has-image' : ''}`}
+                  style={
+                    imageUrl
+                      ? { backgroundImage: `url("${imageUrl}")` }
+                      : undefined
+                  }
+                >
+                  {!imageUrl ? <b aria-hidden="true">＋</b> : null}
+                  <span>
+                    {uploadingCover
+                      ? 'Enviando…'
+                      : imageUrl
+                        ? 'Trocar imagem'
+                        : 'Enviar imagem'}
+                  </span>
+                  <small>PNG, JPG, WebP ou GIF · até 10 MB</small>
                   <input
-                    type="url"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="https://..."
+                    hidden
+                    type="file"
+                    disabled={uploadingCover}
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      event.target.value = '';
+                      void uploadCover(file);
+                    }}
                   />
                 </label>
+                {imageUrl ? (
+                  <button
+                    type="button"
+                    className="secondary-button campaign-remove-cover"
+                    onClick={() => setImageUrl('')}
+                  >
+                    Remover imagem
+                  </button>
+                ) : null}
               </section>
 
               <div className="campaign-editor-actions">
@@ -403,6 +469,23 @@ export default function CampaignsPage() {
               <div className="campaign-actions">
                 <div className="campaign-action-buttons">
                   <button
+                    className={
+                      item.status === 'PUBLISHED' ? '' : 'secondary-button'
+                    }
+                    onClick={() =>
+                      setRewardCampaign(
+                        rewardCampaign === item.id ? '' : item.id,
+                      )
+                    }
+                  >
+                    Nova recompensa
+                  </button>
+                  <button
+                    className={
+                      item.status === 'PUBLISHED'
+                        ? 'secondary-button campaign-close-button'
+                        : ''
+                    }
                     onClick={() =>
                       void changeStatus(
                         item.id,
@@ -411,16 +494,6 @@ export default function CampaignsPage() {
                     }
                   >
                     {item.status === 'PUBLISHED' ? 'Encerrar' : 'Publicar'}
-                  </button>
-                  <button
-                    className="secondary-button"
-                    onClick={() =>
-                      setRewardCampaign(
-                        rewardCampaign === item.id ? '' : item.id,
-                      )
-                    }
-                  >
-                    Nova recompensa
                   </button>
                 </div>
               </div>

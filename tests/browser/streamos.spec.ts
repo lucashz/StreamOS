@@ -500,3 +500,38 @@ test('agenda e extrato funcionam como menus expansíveis da carteira', async ({
   await expect(page.getByLabel('Tipo de movimentação')).toBeVisible();
   await expectNoHorizontalOverflow(page);
 });
+
+test('imagem de capa da vaquinha pode ser enviada e removida', async ({
+  page,
+}) => {
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const registration = await page.request.post(`${api}/auth/register`, {
+    data: {
+      email: `campaign-cover-${suffix}@streamos.local`,
+      password: 'StreamOS-Campaign-Cover-123!',
+      displayName: 'Vaquinha Capa E2E',
+      acceptTerms: true,
+    },
+  });
+  expect(registration.ok()).toBeTruthy();
+
+  await page.goto('/vaquinhas');
+  await page
+    .locator('.campaign-cover-upload input[type="file"]')
+    .setInputFiles({
+      name: 'capa.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+3MxZ5wAAAABJRU5ErkJggg==',
+        'base64',
+      ),
+    });
+  await expect(page.getByText('Imagem de capa enviada.')).toBeVisible();
+  await expect(page.locator('.campaign-cover-upload')).toHaveClass(/has-image/);
+
+  await page.getByRole('button', { name: 'Remover imagem' }).click();
+  await expect(page.locator('.campaign-cover-upload')).not.toHaveClass(
+    /has-image/,
+  );
+  await expectNoHorizontalOverflow(page);
+});
