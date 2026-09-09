@@ -326,6 +326,11 @@ export default function CampaignsPage() {
                     <h3>{item.title}</h3>
                     {item.description ? <p>{item.description}</p> : null}
                   </div>
+                  <span
+                    className={`campaign-status status-${item.status.toLowerCase()}`}
+                  >
+                    {campaignStatusLabels[item.status] ?? item.status}
+                  </span>
                 </div>
                 <div className="campaign-card-values">
                   <span>
@@ -396,11 +401,6 @@ export default function CampaignsPage() {
                 ))}
               </div>
               <div className="campaign-actions">
-                <span
-                  className={`campaign-status status-${item.status.toLowerCase()}`}
-                >
-                  {campaignStatusLabels[item.status] ?? item.status}
-                </span>
                 <div className="campaign-action-buttons">
                   <button
                     onClick={() =>

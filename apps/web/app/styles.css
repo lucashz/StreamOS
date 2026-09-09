@@ -8218,7 +8218,7 @@ a {
 }
 .campaign-list > article {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 272px;
+  grid-template-columns: minmax(0, 1fr) 288px;
   align-items: center;
   width: 100%;
   gap: 24px;
@@ -8233,6 +8233,7 @@ a {
 .campaign-card-heading {
   display: flex;
   align-items: flex-start;
+  justify-content: space-between;
   gap: 18px;
 }
 .campaign-card-heading > div {
@@ -8321,18 +8322,13 @@ a {
 }
 .campaign-list .campaign-actions {
   display: flex;
-  min-height: 100%;
-  align-items: flex-end;
-  justify-content: space-between;
-  flex-direction: column;
-  gap: 16px;
-  padding-left: 20px;
-  border-left: 1px solid var(--border);
+  align-self: end;
+  align-items: center;
+  justify-content: flex-end;
 }
 .campaign-action-buttons {
   display: grid;
-  width: 100%;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, 140px);
   gap: 8px;
 }
 .campaign-action-buttons > button {
@@ -8357,16 +8353,14 @@ a {
   }
   .campaign-list .campaign-actions {
     width: 100%;
-    padding-top: 16px;
-    padding-left: 0;
-    border-top: 1px solid var(--border);
-    border-left: 0;
+    justify-content: flex-start;
   }
 }
 @media (max-width: 560px) {
   .campaign-field-grid,
   .campaign-action-buttons {
     grid-template-columns: 1fr;
+    width: 100%;
   }
   .campaign-preview-media,
   .campaign-preview-media.has-image {
@@ -8379,6 +8373,10 @@ a {
   }
   .campaign-card-heading p {
     white-space: normal;
+  }
+  .campaign-card-heading {
+    align-items: flex-start;
+    flex-direction: column-reverse;
   }
   .campaign-list .campaign-actions {
     align-items: flex-start;
