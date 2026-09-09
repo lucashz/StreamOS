@@ -46,6 +46,10 @@ export default function CampaignsPage() {
   const [rewardMinimum, setRewardMinimum] = useState('10');
   const [rewardDescription, setRewardDescription] = useState('');
   const [rewardQuantity, setRewardQuantity] = useState('');
+  const targetPreview = Math.max(
+    0,
+    Math.round(Number(target.replace(',', '.')) * 100) || 0,
+  );
   async function load() {
     const r = await fetch(`${api}/dashboard/campaigns`, {
       credentials: 'include',
@@ -139,64 +143,177 @@ export default function CampaignsPage() {
   }
   return (
     <PanelShell>
-      <main className="feature-page">
-        <header>
-          <span className="section-kicker">Incentivos</span>
-          <h1>Vaquinhas e recompensas</h1>
-          <p>
-            Crie objetivos para a comunidade sem separar o saldo das
-            contribuições.
-          </p>
-        </header>
-        <section className="feature-card settings-form compact-create-card">
-          <h2>Nova vaquinha</h2>
-          <label>
-            Título
-            <input value={title} onChange={(e) => setTitle(e.target.value)} />
-          </label>
-          <label>
-            Meta em reais
-            <input
-              value={target}
-              onChange={(e) => setTarget(e.target.value)}
-              inputMode="decimal"
-            />
-          </label>
-          <label>
-            Descrição
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              maxLength={2000}
-            />
-          </label>
-          <div className="form-grid two-columns">
-            <label>
-              Imagem
-              <input
-                type="url"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://..."
-              />
-            </label>
-            <label>
-              Prazo
-              <input
-                type="date"
-                value={endsAt}
-                onChange={(e) => setEndsAt(e.target.value)}
-              />
-            </label>
+      <main className="feature-page campaign-editor-page">
+        <header className="feature-header">
+          <div>
+            <span className="section-kicker">Incentivos</span>
+            <h1>Vaquinhas e recompensas</h1>
+            <p>
+              Crie objetivos para a comunidade sem separar o saldo das
+              contribuições.
+            </p>
           </div>
-          <button disabled={!title} onClick={() => void create()}>
-            Criar rascunho
-          </button>
+        </header>
+        <section
+          className="campaign-customization"
+          aria-labelledby="campaign-editor-title"
+        >
+          <div className="section-heading">
+            <div>
+              <span className="section-kicker">Personalização</span>
+              <h2 id="campaign-editor-title">Configure sua vaquinha</h2>
+              <p>Preencha as informações e acompanhe a página na prévia.</p>
+            </div>
+          </div>
+
+          <div className="campaign-editor-layout">
+            <div className="campaign-editor-form">
+              <section className="livepix-setting-card campaign-info-card">
+                <div className="livepix-card-heading">
+                  <h2>Informações</h2>
+                  <p>Explique com clareza o objetivo da arrecadação.</p>
+                </div>
+                <label>
+                  <strong>Título</strong>
+                  <small>Use um título curto e fácil de reconhecer.</small>
+                  <input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Ex.: Novo computador para as lives"
+                  />
+                </label>
+                <label>
+                  <strong>Descrição</strong>
+                  <small>{description.length} de 2.000 caracteres</small>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    maxLength={2000}
+                    placeholder="Conte à comunidade como o valor será usado."
+                  />
+                </label>
+              </section>
+
+              <section className="livepix-setting-card campaign-goal-card">
+                <div className="livepix-card-heading">
+                  <h2>Meta e período</h2>
+                  <p>Defina o valor desejado e, se quiser, uma data final.</p>
+                </div>
+                <div className="campaign-field-grid">
+                  <label>
+                    <strong>Meta em reais</strong>
+                    <input
+                      value={target}
+                      onChange={(e) => setTarget(e.target.value)}
+                      inputMode="decimal"
+                    />
+                  </label>
+                  <label>
+                    <strong>Prazo</strong>
+                    <input
+                      type="date"
+                      value={endsAt}
+                      onChange={(e) => setEndsAt(e.target.value)}
+                    />
+                  </label>
+                </div>
+              </section>
+
+              <section className="livepix-setting-card campaign-image-card">
+                <div className="livepix-card-heading">
+                  <h2>Imagem de capa</h2>
+                  <p>Adicione uma imagem que represente sua campanha.</p>
+                </div>
+                <label>
+                  <strong>Endereço da imagem</strong>
+                  <small>Use uma URL pública em HTTPS.</small>
+                  <input
+                    type="url"
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                    placeholder="https://..."
+                  />
+                </label>
+              </section>
+
+              <div className="campaign-editor-actions">
+                <button disabled={!title} onClick={() => void create()}>
+                  Criar rascunho
+                </button>
+              </div>
+            </div>
+
+            <aside
+              className="campaign-live-preview"
+              aria-label="Prévia da vaquinha"
+            >
+              <div className="campaign-preview-heading">
+                <div>
+                  <span className="section-kicker">Prévia pública</span>
+                  <strong>Como sua vaquinha será exibida</strong>
+                </div>
+                <span>Rascunho</span>
+              </div>
+              <div
+                className={`campaign-preview-media${imageUrl ? ' has-image' : ''}`}
+                style={
+                  imageUrl
+                    ? { backgroundImage: `url("${imageUrl}")` }
+                    : undefined
+                }
+                role="img"
+                aria-label={
+                  imageUrl
+                    ? 'Imagem de capa informada'
+                    : 'Prévia sem imagem de capa'
+                }
+              >
+                {!imageUrl ? <span aria-hidden="true">◎</span> : null}
+              </div>
+              <div className="campaign-preview-body">
+                <span className="section-kicker">Vaquinha</span>
+                <h3>{title || 'Título da sua vaquinha'}</h3>
+                <p>
+                  {description ||
+                    'Sua descrição aparecerá aqui para explicar o objetivo à comunidade.'}
+                </p>
+                <div
+                  className="campaign-preview-progress"
+                  aria-label="Progresso inicial em zero por cento"
+                >
+                  <i />
+                </div>
+                <div className="campaign-preview-values">
+                  <span>
+                    Arrecadado <strong>{money(0)}</strong>
+                  </span>
+                  <span>
+                    Meta <strong>{money(targetPreview)}</strong>
+                  </span>
+                </div>
+                <small>
+                  {endsAt
+                    ? `Recebimentos até ${new Date(`${endsAt}T12:00:00`).toLocaleDateString('pt-BR')}`
+                    : 'Sem prazo definido'}
+                </small>
+              </div>
+            </aside>
+          </div>
         </section>
-        <section id="recompensas" className="data-list polished-list">
+
+        <div className="campaign-list-heading" id="recompensas">
+          <div>
+            <span className="section-kicker">Gerenciamento</span>
+            <h2>Suas vaquinhas</h2>
+          </div>
+          <span>
+            {items.length} {items.length === 1 ? 'campanha' : 'campanhas'}
+          </span>
+        </div>
+        <section className="data-list polished-list campaign-list">
           {items.map((item) => (
             <article className="feature-card" key={item.id}>
-              <div>
+              <div className="campaign-summary">
                 <strong>{item.title}</strong>
                 <small>
                   {item.status} · {money(item.currentInCents)} de{' '}
@@ -243,7 +360,7 @@ export default function CampaignsPage() {
                   </div>
                 ))}
               </div>
-              <div>
+              <div className="campaign-actions">
                 <button
                   onClick={() =>
                     void changeStatus(
