@@ -292,6 +292,42 @@ test('meta valida e salva as informações exibidas no progresso', async ({
   ).toBeDisabled();
 });
 
+test('contribuições informam falha de carregamento e permitem tentar novamente', async ({
+  page,
+}) => {
+  let requests = 0;
+  await page.route('**/dashboard/contributions', async (route) => {
+    requests += 1;
+    if (requests === 1) {
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          message: 'Serviço temporariamente indisponível.',
+        }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: '[]',
+    });
+  });
+
+  await page.goto('/contribuicoes');
+  await expect(
+    page.getByRole('heading', { name: 'Não foi possível carregar' }),
+  ).toBeVisible();
+  await expect(
+    page.getByText('Serviço temporariamente indisponível.'),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Tentar novamente' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Nenhuma contribuição encontrada' }),
+  ).toBeVisible();
+});
+
 test('alerta percorre a fila e desaparece automaticamente', async ({
   page,
 }, testInfo) => {

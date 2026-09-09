@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PanelShell } from '../panel-shell';
 import { EmptyState, PageHeader, StatusBadge } from '../ui';
 
@@ -72,18 +72,41 @@ const statusLabel: Record<string, string> = {
 export default function ContributionsPage() {
   const [items, setItems] = useState<Contribution[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [query, setQuery] = useState('');
   const [type, setType] = useState('ALL');
   const [status, setStatus] = useState('ALL');
   const [selected, setSelected] = useState<Contribution>();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    void fetch(`${api}/dashboard/contributions`, { credentials: 'include' })
-      .then(async (r) => {
-        if (r.ok) setItems((await r.json()) as Contribution[]);
-      })
-      .finally(() => setLoading(false));
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError('');
+    try {
+      const response = await fetch(`${api}/dashboard/contributions`, {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      const body = (await response.json().catch(() => [])) as Contribution[] & {
+        message?: string;
+      };
+      if (!response.ok)
+        throw new Error(
+          body.message ?? 'Não foi possível carregar as contribuições.',
+        );
+      setItems(body);
+    } catch (error) {
+      setLoadError(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível carregar as contribuições.',
+      );
+    } finally {
+      setLoading(false);
+    }
   }, []);
+  useEffect(() => {
+    void load();
+  }, [load]);
   useEffect(() => {
     if (!selected) return;
     const previousFocus = document.activeElement as HTMLElement | null;
@@ -166,6 +189,16 @@ export default function ContributionsPage() {
           ) : null}
           {loading ? (
             <p>Carregando contribuições…</p>
+          ) : loadError ? (
+            <EmptyState
+              title="Não foi possível carregar"
+              description={loadError}
+              action={
+                <button type="button" onClick={() => void load()}>
+                  Tentar novamente
+                </button>
+              }
+            />
           ) : filtered.length ? (
             filtered.map((item) => (
               <button
