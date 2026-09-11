@@ -212,7 +212,10 @@ export default function WalletPage() {
         <header>
           <span className="section-kicker">Financeiro</span>
           <h1>Carteira operacional</h1>
-          <p>Saldo, recebíveis e saques explicados pelo ledger do StreamOS.</p>
+          <p>
+            Consulte saldos, recebíveis, saques e lançamentos registrados no
+            ledger do StreamOS.
+          </p>
         </header>
 
         {wallet ? (
@@ -241,10 +244,10 @@ export default function WalletPage() {
                 <h2>Destino Pix</h2>
                 {settings && !settings.legalProfileCompleted ? (
                   <div className="wallet-prerequisite" role="alert">
-                    <strong>Conclua seus dados financeiros</strong>
+                    <strong>Dados financeiros pendentes</strong>
                     <p>
-                      Antes de criar a subconta, informe o nome legal, CPF ou
-                      CNPJ e aceite os termos financeiros.
+                      Informe o nome legal e o CPF ou CNPJ, depois aceite os
+                      termos financeiros para criar a subconta.
                     </p>
                     <Link
                       className="secondary-button button-link"
@@ -437,7 +440,7 @@ export default function WalletPage() {
                     <div className="wallet-history-empty">
                       <strong>Nenhum recebível agendado</strong>
                       <span>
-                        As contribuições confirmadas aparecerão aqui com a data
+                        Cada contribuição confirmada aparecerá aqui com sua data
                         de disponibilidade.
                       </span>
                     </div>
@@ -490,8 +493,8 @@ export default function WalletPage() {
                   <div className="wallet-history-empty">
                     <strong>Nenhum saque realizado</strong>
                     <span>
-                      Suas solicitações aparecerão aqui com o destino e o
-                      estado.
+                      Quando você solicitar um saque, o destino e o estado
+                      aparecerão aqui.
                     </span>
                   </div>
                 )}
@@ -527,7 +530,7 @@ export default function WalletPage() {
                 <div className="statement-toolbar">
                   <div>
                     <strong>Filtrar movimentações</strong>
-                    <small>Refine o período ou tipo de lançamento.</small>
+                    <small>Escolha o tipo de lançamento e o período.</small>
                   </div>
                   <a className="secondary-button" href={exportUrl}>
                     Exportar CSV
