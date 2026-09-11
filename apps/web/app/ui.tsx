@@ -15,7 +15,7 @@ export function PageHeader({
 }) {
   return (
     <header className="page-header">
-      <div>
+      <div className="page-header-copy">
         {eyebrow ? <span className="section-kicker">{eyebrow}</span> : null}
         <h1>{title}</h1>
         {description ? <p>{description}</p> : null}

@@ -136,12 +136,15 @@ function NavLink({
     ? `?${href.split('?')[1]?.split('#')[0]}`
     : '';
   const targetPath = basePath(href);
+  const hashMatches = targetHash
+    ? hash === targetHash || (targetHash === '#api' && hash === '#webhooks')
+    : !hash || targetPath === '/conta';
   const pathMatches =
     pathname === targetPath ||
     (targetPath !== '/' && pathname.startsWith(`${targetPath}/`));
   const active =
     pathMatches &&
-    (targetHash ? hash === targetHash : !hash) &&
+    hashMatches &&
     (targetSearch ? search === targetSearch : !search);
   return (
     <Link
