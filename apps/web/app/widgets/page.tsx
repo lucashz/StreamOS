@@ -272,7 +272,6 @@ export default function WidgetsPage() {
     (widget) => !unifiedAlertTypes.has(widget.type),
   );
   const activeCount = widgets.filter((widget) => widget.enabled).length;
-  const connectedCount = widgets.filter((widget) => widget.obsConnected).length;
   function updateSelectedConfig(key: string, value: unknown) {
     if (!selected) return;
     setSelected({ ...selected, config: { ...selected.config, [key]: value } });
@@ -480,17 +479,6 @@ export default function WidgetsPage() {
             <span>Ativos</span>
             <strong>{activeCount}</strong>
             <small className="summary-dot active" />
-          </div>
-          <div>
-            <span>Conectados ao OBS</span>
-            <strong>{connectedCount}</strong>
-            <small
-              className={`summary-dot ${connectedCount ? 'connected' : ''}`}
-            />
-          </div>
-          <div>
-            <span>Precisam de atenção</span>
-            <strong>{widgets.length - activeCount}</strong>
           </div>
         </section>
         <section className="widget-kind-guide" id="instalar-obs">
