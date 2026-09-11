@@ -6,7 +6,8 @@ import './alert-layout.css';
 
 export const metadata: Metadata = {
   title: 'Painel | StreamOS',
-  description: 'Painel de monetização e experiências ao vivo do StreamOS.',
+  description:
+    'Painel para contribuições, alertas, widgets e controle de transmissões.',
 };
 
 export default function RootLayout({

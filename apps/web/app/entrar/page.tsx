@@ -9,11 +9,11 @@ export default function LoginPage() {
           <span>◇</span> StreamOS
         </Link>
         <div>
-          <span className="section-kicker">Seu estúdio de monetização</span>
-          <h2>Tudo da sua live em um só lugar.</h2>
+          <span className="section-kicker">Painel do criador</span>
+          <h2>Contribuições, alertas e transmissão no mesmo painel.</h2>
           <p>
-            Receba contribuições, controle alertas, filas e comunidade usando
-            uma plataforma feita para streamers.
+            Acompanhe pagamentos, organize as filas e controle o que aparece no
+            OBS.
           </p>
           <ul>
             <li>Pix, carteira e recebíveis</li>
@@ -21,7 +21,7 @@ export default function LoginPage() {
             <li>Moderação e controle para OBS</li>
           </ul>
         </div>
-        <small>Ambiente local seguro · StreamOS Beta</small>
+        <small>Ambiente local · StreamOS Beta</small>
       </aside>
       <section className="auth-card">
         <Link className="auth-brand" href="/">

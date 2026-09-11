@@ -295,8 +295,8 @@ export default function Page() {
           <section className="feature-empty">
             <div className="empty-art">◇</div>
             <div>
-              <h2>Transforme apoiadores em membros</h2>
-              <p>Crie seu primeiro plano com preço e benefícios exclusivos.</p>
+              <h2>Crie seu primeiro plano</h2>
+              <p>Defina o preço e informe o que cada membro recebe.</p>
             </div>
           </section>
         )}

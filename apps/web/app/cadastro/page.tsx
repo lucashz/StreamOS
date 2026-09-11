@@ -9,11 +9,10 @@ export default function RegisterPage() {
           <span>◇</span> StreamOS
         </Link>
         <div>
-          <span className="section-kicker">Comece gratuitamente</span>
-          <h2>Transforme sua comunidade em experiências ao vivo.</h2>
+          <span className="section-kicker">Crie sua conta sem custo</span>
+          <h2>Receba contribuições e organize sua live.</h2>
           <p>
-            Configure sua página, conecte o OBS e teste toda a jornada
-            localmente.
+            Crie sua página, conecte o OBS e faça um teste antes de transmitir.
           </p>
           <ul>
             <li>Conta e página do criador</li>
@@ -21,7 +20,9 @@ export default function RegisterPage() {
             <li>Vaquinhas, recompensas e assinaturas</li>
           </ul>
         </div>
-        <small>Sem 2FA nesta fase · pagamentos em modo sandbox</small>
+        <small>
+          2FA ainda não disponível · pagamentos em ambiente de teste
+        </small>
       </aside>
       <section className="auth-card">
         <Link className="auth-brand" href="/">

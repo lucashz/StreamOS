@@ -52,7 +52,7 @@ const voiceProfiles = [
   {
     id: 'character-cheerful',
     name: 'Torcida',
-    detail: 'Animada e vibrante',
+    detail: 'Movimento intenso',
     avatar: '⚽',
   },
   {
