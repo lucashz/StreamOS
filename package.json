@@ -54,8 +54,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
-    "@next/eslint-plugin-next": "^15.5.23",
-    "@playwright/test": "1.55.0",
+    "@next/eslint-plugin-next": "^15.5.24",
+    "@playwright/test": "1.55.1",
     "@types/node": "^24.3.0",
     "dotenv-cli": "^10.0.0",
     "eslint": "^9.33.0",
@@ -68,5 +68,14 @@
     "typescript-eslint": "^8.40.0",
     "vitest": "^3.2.4",
     "wrangler": "^4.129.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "deepmerge-ts": "8.0.2",
+      "multer": "2.3.0",
+      "postcss": "8.5.28",
+      "qs": "6.16.0",
+      "sharp": "0.35.4"
+    }
   }
 }

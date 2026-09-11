@@ -132,12 +132,17 @@ export default function GoalsPage() {
           </div>
           <label>
             Título
-            <input value={title} onChange={(e) => setTitle(e.target.value)} />
+            <input
+              value={title}
+              disabled={loading || saving}
+              onChange={(e) => setTitle(e.target.value)}
+            />
           </label>
           <label>
             Objetivo em R$
             <input
               value={target}
+              disabled={loading || saving}
               onChange={(e) => setTarget(e.target.value)}
               inputMode="decimal"
             />
@@ -148,6 +153,7 @@ export default function GoalsPage() {
               <input
                 type="date"
                 value={deadline}
+                disabled={loading || saving}
                 onChange={(e) => setDeadline(e.target.value)}
               />
             </label>
@@ -156,6 +162,7 @@ export default function GoalsPage() {
               <input
                 type="color"
                 value={color}
+                disabled={loading || saving}
                 onChange={(e) => setColor(e.target.value)}
               />
             </label>
@@ -165,6 +172,7 @@ export default function GoalsPage() {
             <input
               type="url"
               value={imageUrl}
+              disabled={loading || saving}
               onChange={(e) => setImageUrl(e.target.value)}
               placeholder="https://..."
             />
@@ -174,6 +182,7 @@ export default function GoalsPage() {
             Mensagem de conclusão
             <input
               value={completionMessage}
+              disabled={loading || saving}
               onChange={(e) => setCompletionMessage(e.target.value)}
               maxLength={160}
             />
