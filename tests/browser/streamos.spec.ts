@@ -70,6 +70,12 @@ test('autenticação e painel são responsivos', async ({ page }) => {
   });
   expect(response.ok()).toBeTruthy();
 
+  await page.goto('/');
+  const performancePeriod = page.getByLabel('Período do gráfico');
+  await performancePeriod.selectOption('7');
+  await expect(page.getByText('Sem receita nos últimos 7 dias')).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+
   await page.goto('/central-da-live');
   await expect(
     page.getByRole('heading', { name: 'Central da Live' }),
@@ -197,7 +203,14 @@ test('configurações executam os fluxos principais com retorno visível', async
   await page.goto('/conta');
   await page.getByLabel('Nome público').fill('Perfil atualizado E2E');
   await page.getByRole('button', { name: 'Salvar perfil' }).click();
-  await expect(page.getByRole('status')).toContainText('Perfil atualizado');
+  const savedStatus = page.getByRole('status');
+  await expect(savedStatus).toContainText('Perfil atualizado');
+  const statusBounds = await savedStatus.boundingBox();
+  expect(statusBounds).not.toBeNull();
+  expect(statusBounds!.x).toBeGreaterThanOrEqual(0);
+  expect(statusBounds!.x + statusBounds!.width).toBeLessThanOrEqual(
+    page.viewportSize()!.width,
+  );
 
   const browserSource = page.locator('#browser-source');
   const generateUrl = browserSource.getByRole('button', {

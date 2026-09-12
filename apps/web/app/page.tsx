@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { PanelSidebar } from './panel-shell';
+import { PerformancePanel, type PerformancePoint } from './performance-panel';
 
 const navigation = [
   { icon: 'grid', label: 'Visão geral', href: '/', active: true },
@@ -67,10 +68,6 @@ const activity: Array<{
   time: string;
   tone: string;
 }> = [];
-
-const chart = [
-  42, 56, 44, 64, 59, 72, 62, 78, 70, 84, 77, 92, 86, 100,
-] as const;
 
 function Icon({ name, size = 20 }: Readonly<{ name: string; size?: number }>) {
   const paths: Record<string, ReactNode> = {
@@ -189,6 +186,7 @@ interface DashboardSummary {
   blockedInCents: number;
   averageTicketInCents: number;
   contributions: number;
+  performance: PerformancePoint[];
   goal: {
     title: string;
     currentInCents: number;
@@ -405,66 +403,7 @@ export default async function HomePage() {
         </section>
 
         <section className="dashboard-grid">
-          <article className="panel revenue-panel">
-            <div className="panel-heading">
-              <div>
-                <span className="section-kicker">Performance</span>
-                <h2>Receita por live</h2>
-              </div>
-              <select aria-label="Período do gráfico" defaultValue="30">
-                <option value="30">Últimos 30 dias</option>
-                <option value="7">Últimos 7 dias</option>
-              </select>
-            </div>
-            {summary?.contributions ? (
-              <>
-                <div className="chart-summary">
-                  <strong>{money(summary.revenueInCents)}</strong>
-                  <span>{summary.contributions} contribuições confirmadas</span>
-                </div>
-                <div
-                  className="chart"
-                  aria-label="Volume confirmado no período"
-                >
-                  <div className="chart-lines">
-                    <i />
-                    <i />
-                    <i />
-                    <i />
-                  </div>
-                  <div className="bars">
-                    {chart.map((height, index) => (
-                      <div
-                        className={
-                          index === chart.length - 3 ? 'bar highlighted' : 'bar'
-                        }
-                        style={{ height: `${height}%` }}
-                        key={`${height}-${index}`}
-                      >
-                        <span>
-                          {index === chart.length - 3 ? 'R$ 684' : ''}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="chart-labels">
-                  <span>18 jul</span>
-                  <span>25 jul</span>
-                  <span>01 ago</span>
-                  <span>08 ago</span>
-                  <span>Hoje</span>
-                </div>
-              </>
-            ) : (
-              <div className="dashboard-empty">
-                <strong>Sem receita no período</strong>
-                <span>
-                  O gráfico aparecerá após a primeira contribuição confirmada.
-                </span>
-              </div>
-            )}
-          </article>
+          <PerformancePanel data={summary?.performance ?? []} />
 
           <article className="panel goal-panel">
             <div className="panel-heading">

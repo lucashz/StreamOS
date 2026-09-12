@@ -67,6 +67,41 @@ body {
   }
 }
 
+.feature-page.contributions-page
+  .compact-contribution-list.feature-card
+  > button {
+  background: transparent;
+  color: var(--text);
+  box-shadow: none;
+}
+
+.feature-page.contributions-page
+  .compact-contribution-list.feature-card
+  > button:hover {
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  box-shadow: none;
+}
+
+.feature-page .account-status {
+  z-index: 100;
+  display: inline-flex;
+  width: min(420px, calc(100vw - 32px));
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  text-align: center;
+  line-height: 1.35;
+  box-shadow: 0 16px 44px rgb(0 0 0 / 40%);
+}
+
+@media (max-width: 560px) {
+  .feature-page .account-status {
+    right: 16px;
+    bottom: 16px;
+  }
+}
+
 .feature-page :is(.page-header, .feature-header) h1 {
   margin: var(--space-1) 0 var(--space-2);
   font-family: Manrope, sans-serif;

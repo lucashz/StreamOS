@@ -82,6 +82,12 @@ test('revisão visual com widgets e recebíveis reais, conteúdo longo e modal',
     ).ok(),
   ).toBeTruthy();
 
+  await page.goto('/');
+  await expect(page.getByLabel('Período do gráfico')).toBeVisible();
+  await capture(page, info.project.name, 'performance');
+  await page.getByLabel('Período do gráfico').selectOption('7');
+  await expect(page.getByLabel('Receita dos últimos 7 dias')).toBeVisible();
+
   await page.goto('/widgets');
   await expect(page.locator('.managed-widget-card')).toHaveCount(2);
   await capture(page, info.project.name, 'widgets');
@@ -110,7 +116,11 @@ test('revisão visual com widgets e recebíveis reais, conteúdo longo e modal',
   );
   await expect(page.locator('#browser-source')).toBeVisible();
   await capture(page, info.project.name, 'configuracoes');
+  await page.getByRole('button', { name: 'Salvar perfil' }).click();
+  await expect(page.getByRole('status')).toContainText('Perfil atualizado');
+  await capture(page, info.project.name, 'salvamento', false);
   await page.goto('/contribuicoes');
+  await capture(page, info.project.name, 'contribuicoes');
   await page
     .getByRole('button', {
       name: /Abrir contribuição de Comunidade de apoiadores da transmissão/,

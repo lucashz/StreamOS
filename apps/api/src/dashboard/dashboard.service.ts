@@ -264,43 +264,56 @@ export class DashboardService {
   }
 
   async summary(organizationId: string) {
-    const [payments, goal, recent, balanceAccounts] = await Promise.all([
-      this.prisma.payment.aggregate({
-        where: {
-          organizationId,
-          status: { in: ['CONFIRMED', 'SETTLED', 'AVAILABLE'] },
-        },
-        _sum: { amountInCents: true },
-        _avg: { amountInCents: true },
-        _count: true,
-      }),
-      this.prisma.goal.findFirst({
-        where: { organizationId, active: true },
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.paymentIntent.findMany({
-        where: { organizationId, payment: { isNot: null } },
-        orderBy: { createdAt: 'desc' },
-        take: 5,
-        select: {
-          id: true,
-          supporterName: true,
-          anonymous: true,
-          amountInCents: true,
-          createdAt: true,
-          status: true,
-        },
-      }),
-      this.prisma.ledgerAccount.findMany({
-        where: {
-          organizationId,
-          code: {
-            in: ['creator_pending', 'creator_available', 'creator_blocked'],
+    const performanceStart = new Date();
+    performanceStart.setUTCHours(0, 0, 0, 0);
+    performanceStart.setUTCDate(performanceStart.getUTCDate() - 29);
+    const [payments, goal, recent, balanceAccounts, performancePayments] =
+      await Promise.all([
+        this.prisma.payment.aggregate({
+          where: {
+            organizationId,
+            status: { in: ['CONFIRMED', 'SETTLED', 'AVAILABLE'] },
           },
-        },
-        include: { postings: true },
-      }),
-    ]);
+          _sum: { amountInCents: true },
+          _avg: { amountInCents: true },
+          _count: true,
+        }),
+        this.prisma.goal.findFirst({
+          where: { organizationId, active: true },
+          orderBy: { createdAt: 'desc' },
+        }),
+        this.prisma.paymentIntent.findMany({
+          where: { organizationId, payment: { isNot: null } },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          select: {
+            id: true,
+            supporterName: true,
+            anonymous: true,
+            amountInCents: true,
+            createdAt: true,
+            status: true,
+          },
+        }),
+        this.prisma.ledgerAccount.findMany({
+          where: {
+            organizationId,
+            code: {
+              in: ['creator_pending', 'creator_available', 'creator_blocked'],
+            },
+          },
+          include: { postings: true },
+        }),
+        this.prisma.payment.findMany({
+          where: {
+            organizationId,
+            status: { in: ['CONFIRMED', 'SETTLED', 'AVAILABLE'] },
+            createdAt: { gte: performanceStart },
+          },
+          select: { amountInCents: true, confirmedAt: true, createdAt: true },
+          orderBy: { createdAt: 'asc' },
+        }),
+      ]);
     const balance = (code: string) =>
       balanceAccounts
         .filter((account) => account.code === code)
@@ -313,6 +326,25 @@ export class DashboardService {
               : -posting.amountInCents),
           0n,
         );
+    const performance = Array.from({ length: 30 }, (_, index) => {
+      const date = new Date(performanceStart);
+      date.setUTCDate(date.getUTCDate() + index);
+      const key = date.toISOString().slice(0, 10);
+      const daily = performancePayments.filter(
+        (payment) =>
+          (payment.confirmedAt ?? payment.createdAt)
+            .toISOString()
+            .slice(0, 10) === key,
+      );
+      return {
+        date: key,
+        revenueInCents: daily.reduce(
+          (total, payment) => total + Number(payment.amountInCents),
+          0,
+        ),
+        contributions: daily.length,
+      };
+    });
     return {
       revenueInCents: Number(payments._sum.amountInCents ?? 0n),
       averageTicketInCents: Number(payments._avg.amountInCents ?? 0),
@@ -320,6 +352,7 @@ export class DashboardService {
       pendingInCents: Number(balance('creator_pending')),
       availableInCents: Number(balance('creator_available')),
       blockedInCents: Number(balance('creator_blocked')),
+      performance,
       goal: goal
         ? {
             title: goal.title,

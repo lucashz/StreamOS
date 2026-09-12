@@ -4,7 +4,7 @@ Atualizado em: 12/09/2026
 
 ## Ciclo atual
 
-Validação técnica anterior ao staging concluída. Aprovação visual humana pendente.
+Ciclo corretivo de painel, Contribuições e avisos concluído. Aprovação visual humana pendente.
 
 ## Decisões vigentes
 
@@ -48,6 +48,9 @@ Validação técnica anterior ao staging concluída. Aprovação visual humana p
 - Fluxo vaquinha → contribuição → progresso: checkout público, atualização em tempo real, recompensa e isolamento aprovados.
 - Build completo do monorepo: aprovado.
 - Suíte ampla do navegador: 58 testes aprovados, 6 ignorados por condições previstas e nenhuma falha.
+- Performance: gráfico alimentado pelos pagamentos confirmados dos últimos 30 dias, com seleção funcional de 7/30 dias, totais e datas reais.
+- Contribuições: linhas do extrato com fundo neutro, hover discreto e versão mobile em card.
+- Salvamento: aviso da Conta alinhado, centralizado e contido na viewport em desktop e mobile.
 
 ## Próxima ação
 
