@@ -4,7 +4,7 @@ Atualizado em: 12/09/2026
 
 ## Ciclo atual
 
-Ciclo de Configurações fechado. Próxima etapa: fechamento antes de staging.
+Validação técnica anterior ao staging concluída. Aprovação visual humana pendente.
 
 ## Decisões vigentes
 
@@ -42,10 +42,15 @@ Ciclo de Configurações fechado. Próxima etapa: fechamento antes de staging.
 - Configurações: Conta, Equipe, Integrações, API/Webhooks e Saúde aprovados em 360 e 1366 px.
 - Browser Source: geração da URL protegida validada dentro de Configurações; envio de teste fica habilitado após a configuração.
 - Layout das telas administrativas validado sem overflow horizontal nos dois tamanhos do ciclo.
+- Fechamento responsivo: revisão visual aprovada automaticamente em 360, 768, 1366 e 1920 px.
+- Fluxo contribuição → pagamento mock → evento/reprodução do alerta: aprovado com reconciliação.
+- Fluxo carteira → recebível: aprovado; saque segue não executado com `PAYOUTS_ENABLED=false` e bloqueio confirmado.
+- Fluxo vaquinha → contribuição → progresso: checkout público, atualização em tempo real, recompensa e isolamento aprovados.
+- Build completo do monorepo: aprovado.
+- Suíte ampla do navegador: 58 testes aprovados, 6 ignorados por condições previstas e nenhuma falha.
 
 ## Próxima ação
 
-1. Validar 360, 768, 1366 e 1920 px.
-2. Executar os três fluxos completos do lote.
-3. Rodar build e a suíte ampla apropriada antes de staging.
-4. Entregar relatório e capturas para aprovação visual humana.
+1. Obter aprovação visual humana das capturas de Widgets, Carteira e Configurações.
+2. Decidir se o staging manterá saques desativados ou terá um ambiente controlado com `PAYOUTS_ENABLED=true`.
+3. Após aprovação, executar o procedimento específico de staging.
