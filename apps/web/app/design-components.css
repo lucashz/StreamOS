@@ -61,6 +61,12 @@ body {
   flex-shrink: 0;
 }
 
+@media (max-width: 520px) {
+  .feature-page .widget-drawer-header-actions > .primary-button {
+    display: none;
+  }
+}
+
 .feature-page :is(.page-header, .feature-header) h1 {
   margin: var(--space-1) 0 var(--space-2);
   font-family: Manrope, sans-serif;

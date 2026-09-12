@@ -4,7 +4,7 @@ Atualizado em: 12/09/2026
 
 ## Ciclo atual
 
-Lote visual anterior fechado. O próximo ciclo de produto deve tratar somente **Widgets**.
+Ciclo de Widgets fechado. O próximo ciclo deve tratar somente **Carteira**.
 
 ## Decisões vigentes
 
@@ -33,10 +33,13 @@ Lote visual anterior fechado. O próximo ciclo de produto deve tratar somente **
 - Build do frontend: aprovado em 12/09/2026.
 - Revisão visual automatizada final: Widgets, Carteira e Configurações aprovados em 360 e 1366 px, com inspeção das capturas.
 - Revisão complementar anterior: 768 e 1920 px aprovados antes dos últimos ajustes menores.
+- Widgets: cards, catálogo, estados e editor aprovados em 360 e 1366 px.
+- Widgets/OBS: catálogo completo, ativação, configuração versionada, teste com mídia, entrega em tempo real, QR público, rotação de token, duplicação, exclusão e isolamento entre organizações aprovados.
+- Editor mobile: removida a ação duplicada do cabeçalho para preservar a leitura de títulos longos; a ação permanece no rodapé fixo.
 
 ## Próxima ação
 
-1. Iniciar um ciclo exclusivo para Widgets.
-2. Definir o problema visual ou funcional específico do ciclo.
-3. Alterar e testar somente Widgets e seu fluxo com OBS.
+1. Iniciar um ciclo exclusivo para Carteira.
+2. Revisar recebíveis, extrato, saque, históricos e modais.
+3. Testar recebimento e saque mock, respeitando `PAYOUTS_ENABLED`.
 4. Entregar capturas em 1366 e 360 px e criar um commit próprio.
