@@ -4,7 +4,7 @@ Atualizado em: 12/09/2026
 
 ## Ciclo atual
 
-Ciclo de Widgets fechado. O próximo ciclo deve tratar somente **Carteira**.
+Ciclo de Carteira fechado. O próximo ciclo deve tratar somente **Configurações**.
 
 ## Decisões vigentes
 
@@ -36,10 +36,13 @@ Ciclo de Widgets fechado. O próximo ciclo deve tratar somente **Carteira**.
 - Widgets: cards, catálogo, estados e editor aprovados em 360 e 1366 px.
 - Widgets/OBS: catálogo completo, ativação, configuração versionada, teste com mídia, entrega em tempo real, QR público, rotação de token, duplicação, exclusão e isolamento entre organizações aprovados.
 - Editor mobile: removida a ação duplicada do cabeçalho para preservar a leitura de títulos longos; a ação permanece no rodapé fixo.
+- Carteira: recebíveis, extrato, histórico e controles expansíveis aprovados em 360 e 1366 px.
+- Carteira: chave Pix protegida e recebível mock de R$ 200,00 conciliado em R$ 188,40 líquidos.
+- Saque mock não executado porque `PAYOUTS_ENABLED=false`; o teste confirmou que o kill switch bloqueia a operação.
 
 ## Próxima ação
 
-1. Iniciar um ciclo exclusivo para Carteira.
-2. Revisar recebíveis, extrato, saque, históricos e modais.
-3. Testar recebimento e saque mock, respeitando `PAYOUTS_ENABLED`.
-4. Entregar capturas em 1366 e 360 px e criar um commit próprio.
+1. Iniciar um ciclo exclusivo para Configurações.
+2. Revisar Conta, Equipe, Integrações, API/Webhooks, Saúde e Browser Source.
+3. Validar formulários, estados de erro e ações em 360 e 1366 px.
+4. Criar um commit próprio antes do fechamento para staging.
