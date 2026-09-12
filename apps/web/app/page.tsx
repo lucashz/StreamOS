@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
-import { OverlayLinkCard } from './overlay-link-card';
 import { PanelSidebar } from './panel-shell';
 
 const navigation = [
@@ -60,7 +59,14 @@ const metrics = [
   },
 ] as const;
 
-const activity: Array<{ avatar: string; name: string; type: string; value: string; time: string; tone: string }> = [];
+const activity: Array<{
+  avatar: string;
+  name: string;
+  type: string;
+  value: string;
+  time: string;
+  tone: string;
+}> = [];
 
 const chart = [
   42, 56, 44, 64, 59, 72, 62, 78, 70, 84, 77, 92, 86, 100,
@@ -263,7 +269,11 @@ export default async function HomePage() {
           value: money(summary.averageTicketInCents),
           detail: 'média confirmada',
         },
-        { ...metrics[3], value: String(summary.contributions), detail: 'confirmadas neste mês' },
+        {
+          ...metrics[3],
+          value: String(summary.contributions),
+          detail: 'confirmadas neste mês',
+        },
       ]
     : metrics;
   const displayedActivity = summary?.recent.length
@@ -287,7 +297,8 @@ export default async function HomePage() {
   const goalTarget = goal?.targetInCents ?? 0;
   const now = new Date();
   const hour = now.getHours();
-  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
+  const greeting =
+    hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
   return (
     <div className="app-shell">
       <div className="legacy-home-sidebar">
@@ -334,7 +345,13 @@ export default async function HomePage() {
       <main className="dashboard">
         <header className="topbar">
           <div>
-            <p>{now.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+            <p>
+              {now.toLocaleDateString('pt-BR', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+              })}
+            </p>
             <h1>
               {greeting}, {firstName} <span>✦</span>
             </h1>
@@ -388,7 +405,6 @@ export default async function HomePage() {
         </section>
 
         <section className="dashboard-grid">
-          {viewer ? <OverlayLinkCard /> : null}
           <article className="panel revenue-panel">
             <div className="panel-heading">
               <div>
@@ -400,37 +416,54 @@ export default async function HomePage() {
                 <option value="7">Últimos 7 dias</option>
               </select>
             </div>
-            {summary?.contributions ? <><div className="chart-summary">
-              <strong>{money(summary.revenueInCents)}</strong>
-              <span>{summary.contributions} contribuições confirmadas</span>
-            </div><div className="chart" aria-label="Volume confirmado no período">
-              <div className="chart-lines">
-                <i />
-                <i />
-                <i />
-                <i />
-              </div>
-              <div className="bars">
-                {chart.map((height, index) => (
-                  <div
-                    className={
-                      index === chart.length - 3 ? 'bar highlighted' : 'bar'
-                    }
-                    style={{ height: `${height}%` }}
-                    key={`${height}-${index}`}
-                  >
-                    <span>{index === chart.length - 3 ? 'R$ 684' : ''}</span>
+            {summary?.contributions ? (
+              <>
+                <div className="chart-summary">
+                  <strong>{money(summary.revenueInCents)}</strong>
+                  <span>{summary.contributions} contribuições confirmadas</span>
+                </div>
+                <div
+                  className="chart"
+                  aria-label="Volume confirmado no período"
+                >
+                  <div className="chart-lines">
+                    <i />
+                    <i />
+                    <i />
+                    <i />
                   </div>
-                ))}
+                  <div className="bars">
+                    {chart.map((height, index) => (
+                      <div
+                        className={
+                          index === chart.length - 3 ? 'bar highlighted' : 'bar'
+                        }
+                        style={{ height: `${height}%` }}
+                        key={`${height}-${index}`}
+                      >
+                        <span>
+                          {index === chart.length - 3 ? 'R$ 684' : ''}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="chart-labels">
+                  <span>18 jul</span>
+                  <span>25 jul</span>
+                  <span>01 ago</span>
+                  <span>08 ago</span>
+                  <span>Hoje</span>
+                </div>
+              </>
+            ) : (
+              <div className="dashboard-empty">
+                <strong>Sem receita no período</strong>
+                <span>
+                  O gráfico aparecerá após a primeira contribuição confirmada.
+                </span>
               </div>
-            </div>
-            <div className="chart-labels">
-              <span>18 jul</span>
-              <span>25 jul</span>
-              <span>01 ago</span>
-              <span>08 ago</span>
-              <span>Hoje</span>
-            </div></> : <div className="dashboard-empty"><strong>Sem receita no período</strong><span>O gráfico aparecerá após a primeira contribuição confirmada.</span></div>}
+            )}
           </article>
 
           <article className="panel goal-panel">
@@ -451,15 +484,31 @@ export default async function HomePage() {
             </div>
             <div className="goal-values">
               <strong>{money(goalCurrent)}</strong>
-              <span>{goal ? `de ${money(goalTarget)}` : 'Crie uma meta para acompanhar o progresso'}</span>
+              <span>
+                {goal
+                  ? `de ${money(goalTarget)}`
+                  : 'Crie uma meta para acompanhar o progresso'}
+              </span>
             </div>
             <div className="progress">
               <i style={{ width: `${goalPercent}%` }} />
             </div>
             <p>
-              {goal ? <>Faltam <strong>{money(Math.max(0, goalTarget - goalCurrent))}</strong> para concluir a meta.</> : 'Metas ajudam sua comunidade a acompanhar um objetivo.'}
+              {goal ? (
+                <>
+                  Faltam{' '}
+                  <strong>
+                    {money(Math.max(0, goalTarget - goalCurrent))}
+                  </strong>{' '}
+                  para concluir a meta.
+                </>
+              ) : (
+                'Metas ajudam sua comunidade a acompanhar um objetivo.'
+              )}
             </p>
-            <Link className="secondary-button" href="/metas">{goal ? 'Editar meta' : 'Criar meta'}</Link>
+            <Link className="secondary-button" href="/metas">
+              {goal ? 'Editar meta' : 'Criar meta'}
+            </Link>
           </article>
 
           <article className="panel activity-panel">
@@ -473,20 +522,30 @@ export default async function HomePage() {
               </a>
             </div>
             <div className="activity-list">
-              {displayedActivity.length ? displayedActivity.map((item) => (
-                <div className="activity-row" key={`${item.name}-${item.time}`}>
-                  <div className={`activity-avatar ${item.tone}`}>
-                    {item.avatar}
+              {displayedActivity.length ? (
+                displayedActivity.map((item) => (
+                  <div
+                    className="activity-row"
+                    key={`${item.name}-${item.time}`}
+                  >
+                    <div className={`activity-avatar ${item.tone}`}>
+                      {item.avatar}
+                    </div>
+                    <div className="activity-person">
+                      <strong>{item.name}</strong>
+                      <span>
+                        {item.type} · {item.time}
+                      </span>
+                    </div>
+                    <strong className="activity-value">{item.value}</strong>
                   </div>
-                  <div className="activity-person">
-                    <strong>{item.name}</strong>
-                    <span>
-                      {item.type} · {item.time}
-                    </span>
-                  </div>
-                  <strong className="activity-value">{item.value}</strong>
+                ))
+              ) : (
+                <div className="dashboard-empty">
+                  <strong>Nenhuma contribuição recente</strong>
+                  <span>As confirmações aparecerão aqui em tempo real.</span>
                 </div>
-              )) : <div className="dashboard-empty"><strong>Nenhuma contribuição recente</strong><span>As confirmações aparecerão aqui em tempo real.</span></div>}
+              )}
             </div>
           </article>
         </section>

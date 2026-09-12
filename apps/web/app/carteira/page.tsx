@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { PanelShell } from '../panel-shell';
+import { PageHeader } from '../ui';
 
 const api = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 const money = (value: number | null | undefined) =>
@@ -209,14 +210,11 @@ export default function WalletPage() {
         <Link href="/" className="back-link">
           ← Visão geral
         </Link>
-        <header>
-          <span className="section-kicker">Financeiro</span>
-          <h1>Carteira operacional</h1>
-          <p>
-            Consulte saldos, recebíveis, saques e lançamentos registrados no
-            ledger do StreamOS.
-          </p>
-        </header>
+        <PageHeader
+          eyebrow="Financeiro"
+          title="Carteira operacional"
+          description="Consulte saldos, recebíveis, saques e lançamentos registrados no ledger do StreamOS."
+        />
 
         {wallet ? (
           <>

@@ -1,0 +1,30 @@
+/* StreamOS design system: foundations and shared component contracts. */
+:root {
+  --color-canvas: #080a0f;
+  --color-surface: #101319;
+  --color-surface-raised: #121622;
+  --color-surface-subtle: #0c0f16;
+  --color-border: #252b38;
+  --color-border-strong: #343d50;
+  --color-text: #f4f5f8;
+  --color-text-muted: #9aa4b6;
+  --color-text-subtle: #737d8f;
+  --color-action: #8357ed;
+  --color-action-hover: #946df4;
+  --color-focus: #b39aff;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius-control: 10px;
+  --radius-card: 16px;
+  --control-height: 44px;
+  --content-max: 1280px;
+  --border: var(--color-border);
+  --surface: var(--color-surface);
+  --muted: var(--color-text-muted);
+  --purple: var(--color-action);
+}

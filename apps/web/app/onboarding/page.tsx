@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { PanelShell } from '../panel-shell';
 import { replaceZeroMoneyValue, selectZeroMoneyValue } from '../money-input';
-import { OverlayLinkCard } from '../overlay-link-card';
 import { PageHeader } from '../ui';
 
 const api = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -317,7 +316,13 @@ export default function OnboardingPage() {
             </section>
             <section aria-labelledby="obs-step">
               <span className="section-kicker">Etapa 4 · OBS</span>
-              <OverlayLinkCard />
+              <h2 id="obs-step">Configurar Browser Source</h2>
+              <Link
+                className="secondary-button button-link"
+                href="/conta#browser-source"
+              >
+                Abrir configurações do OBS
+              </Link>
             </section>
             <section
               className="feature-card onboarding-finish"

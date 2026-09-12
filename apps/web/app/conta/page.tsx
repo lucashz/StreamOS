@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { PanelShell } from '../panel-shell';
 import { PageHeader } from '../ui';
+import { OverlayLinkCard } from '../overlay-link-card';
 
 const api = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 type Viewer = {
@@ -204,6 +205,7 @@ export default function AccountPage() {
           <a href="#perfil">Perfil</a>
           <a href="#seguranca">Senha e sessões</a>
           <a href="#organizacao">Organização</a>
+          <a href="#browser-source">Browser Source</a>
         </nav>
         <section id="perfil" className="feature-card settings-form">
           <div className="settings-section-heading">
@@ -374,6 +376,9 @@ export default function AccountPage() {
               </button>
             </div>
           ) : null}
+        </section>
+        <section id="browser-source" aria-label="Browser Source">
+          <OverlayLinkCard />
         </section>
         {status ? (
           <p className="account-status" role="status">

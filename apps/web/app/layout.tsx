@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 
 import './styles.css';
 import './alert-layout.css';
+import './design-foundations.css';
+import './design-components.css';
 
 export const metadata: Metadata = {
   title: 'Painel | StreamOS',

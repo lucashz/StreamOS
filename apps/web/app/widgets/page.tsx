@@ -249,7 +249,11 @@ export default function WidgetsPage() {
         credentials: 'include',
       });
       if (!response.ok)
-        throw new Error('Entre na sua conta para gerenciar os widgets.');
+        throw new Error(
+          response.status === 401
+            ? 'Entre na sua conta para gerenciar os widgets.'
+            : 'Não foi possível carregar os widgets. Tente novamente.',
+        );
       setWidgets((await response.json()) as Widget[]);
       setStatus('');
     } catch (error) {
@@ -686,6 +690,9 @@ export default function WidgetsPage() {
           >
             <aside
               className="widget-drawer"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="widget-editor-title"
               onMouseDown={(event) => event.stopPropagation()}
             >
               <header>
@@ -693,7 +700,7 @@ export default function WidgetsPage() {
                   <span className="section-kicker">
                     {names[selected.type] ?? selected.type}
                   </span>
-                  <h2>{selected.name}</h2>
+                  <h2 id="widget-editor-title">{selected.name}</h2>
                 </div>
                 <div className="widget-drawer-header-actions">
                   <button
