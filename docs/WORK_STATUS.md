@@ -4,7 +4,7 @@ Atualizado em: 12/09/2026
 
 ## Ciclo atual
 
-Ciclo de Carteira fechado. O próximo ciclo deve tratar somente **Configurações**.
+Ciclo de Configurações fechado. Próxima etapa: fechamento antes de staging.
 
 ## Decisões vigentes
 
@@ -39,10 +39,13 @@ Ciclo de Carteira fechado. O próximo ciclo deve tratar somente **Configuraçõe
 - Carteira: recebíveis, extrato, histórico e controles expansíveis aprovados em 360 e 1366 px.
 - Carteira: chave Pix protegida e recebível mock de R$ 200,00 conciliado em R$ 188,40 líquidos.
 - Saque mock não executado porque `PAYOUTS_ENABLED=false`; o teste confirmou que o kill switch bloqueia a operação.
+- Configurações: Conta, Equipe, Integrações, API/Webhooks e Saúde aprovados em 360 e 1366 px.
+- Browser Source: geração da URL protegida validada dentro de Configurações; envio de teste fica habilitado após a configuração.
+- Layout das telas administrativas validado sem overflow horizontal nos dois tamanhos do ciclo.
 
 ## Próxima ação
 
-1. Iniciar um ciclo exclusivo para Configurações.
-2. Revisar Conta, Equipe, Integrações, API/Webhooks, Saúde e Browser Source.
-3. Validar formulários, estados de erro e ações em 360 e 1366 px.
-4. Criar um commit próprio antes do fechamento para staging.
+1. Validar 360, 768, 1366 e 1920 px.
+2. Executar os três fluxos completos do lote.
+3. Rodar build e a suíte ampla apropriada antes de staging.
+4. Entregar relatório e capturas para aprovação visual humana.

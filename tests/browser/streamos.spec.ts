@@ -199,6 +199,20 @@ test('configurações executam os fluxos principais com retorno visível', async
   await page.getByRole('button', { name: 'Salvar perfil' }).click();
   await expect(page.getByRole('status')).toContainText('Perfil atualizado');
 
+  const browserSource = page.locator('#browser-source');
+  const generateUrl = browserSource.getByRole('button', {
+    name: 'Gerar URL',
+    exact: true,
+  });
+  await expect(generateUrl).toBeEnabled();
+  await generateUrl.click();
+  await expect(
+    browserSource.getByLabel('URL secreta do overlay'),
+  ).toBeVisible();
+  await expect(
+    browserSource.getByRole('button', { name: 'Enviar teste' }),
+  ).toBeEnabled();
+
   await page.goto('/plataforma');
   const team = page.locator('#equipe');
   await team.getByLabel('E-mail').fill(`invite-${suffix}@streamos.local`);
