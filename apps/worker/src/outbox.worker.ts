@@ -13,6 +13,11 @@ import {
   createHmac,
   randomUUID,
 } from 'node:crypto';
+import {
+  DEFAULT_ALERT_MAX_AGE_SECONDS,
+  immediatePlaybackTimeoutSeconds,
+  shouldExpireQueuedAlert,
+} from './live-queue.policy';
 
 @Injectable()
 export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
@@ -26,6 +31,9 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
   );
   private timer?: NodeJS.Timeout;
   private flushing = false;
+  private readonly alertMaxAgeSeconds = Number(
+    process.env.MAX_AUTOPLAY_ALERT_AGE_SECONDS ?? DEFAULT_ALERT_MAX_AGE_SECONDS,
+  );
 
   constructor(@Inject(PrismaClient) private readonly prisma: PrismaClient) {}
 
@@ -244,6 +252,12 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
                   payload.alertType === 'AUDIO'
                 ? 'AUDIO'
                 : 'ALERT';
+    const expired = shouldExpireQueuedAlert(
+      kind,
+      event.occurredAt,
+      new Date(),
+      this.alertMaxAgeSeconds,
+    );
     const last = await this.prisma.liveQueueItem.aggregate({
       where: { organizationId: event.organizationId },
       _max: { position: true },
@@ -291,13 +305,30 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
             : null,
         metadata: payload as Prisma.InputJsonValue,
         moderationStatus: 'AUTOMATICALLY_ALLOWED',
-        status: 'QUEUED',
+        status: expired ? 'EXPIRED' : 'QUEUED',
+        finishedAt: expired ? new Date() : null,
+        failureReason: expired ? 'Alerta expirado antes da reprodução' : null,
         createdAt: event.occurredAt,
       },
     });
   }
 
   private async advanceUnifiedQueues() {
+    const now = new Date();
+    await this.prisma.liveQueueItem.updateMany({
+      where: {
+        status: 'QUEUED',
+        kind: { notIn: ['SONG_PIX', 'VIDEO_PIX'] },
+        createdAt: {
+          lt: new Date(now.getTime() - this.alertMaxAgeSeconds * 1_000),
+        },
+      },
+      data: {
+        status: 'EXPIRED',
+        finishedAt: now,
+        failureReason: 'Alerta expirado antes da reprodução',
+      },
+    });
     const candidates = await this.prisma.liveQueueItem.findMany({
       where: { status: 'QUEUED' },
       orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
@@ -381,7 +412,11 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
             status: 'PLAYING',
             startedAt: new Date(),
             playbackDeadline: new Date(
-              Date.now() + (state?.playbackTimeoutSeconds ?? 120) * 1000,
+              Date.now() +
+                immediatePlaybackTimeoutSeconds(
+                  state?.playbackTimeoutSeconds ?? 120,
+                ) *
+                  1000,
             ),
           },
         });

@@ -81,6 +81,12 @@ const environmentSchema = z
       .min(10)
       .max(1000)
       .default(200),
+    MAX_AUTOPLAY_ALERT_AGE_SECONDS: z.coerce
+      .number()
+      .int()
+      .min(15)
+      .max(600)
+      .default(90),
   })
   .superRefine((environment, context) => {
     if (

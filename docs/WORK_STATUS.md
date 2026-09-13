@@ -1,10 +1,10 @@
 # Estado de trabalho do StreamOS
 
-Atualizado em: 12/09/2026
+Atualizado em: 13/09/2026
 
 ## Ciclo atual
 
-Ciclos de Central da Live, Moderação e Página pública concluídos. Aprovação visual humana pendente.
+Correção de confiabilidade dos alertas e do overlay concluída. Aprovação visual humana pendente.
 
 ## Decisões vigentes
 
@@ -56,6 +56,9 @@ Ciclos de Central da Live, Moderação e Página pública concluídos. Aprovaç�
 - Central mobile: cabeçalho do histórico alinhado ao eixo do conteúdo.
 - Latência: entregas de webhooks externos agora são processadas em paralelo e não bloqueiam sequencialmente o ciclo que publica alertas no OBS.
 - Fluxo local completo medido em 4,1 segundos após a correção, sem regressão na fila durável.
+- Alertas imediatos expiram após 90 segundos sem reprodução e não iniciam inesperadamente quando o OBS reconecta; SongPix e VideoPix permanecem duráveis.
+- Watchdog de alertas imediatos limitado a 30 segundos para liberar itens sem recibo final do overlay.
+- Reprodução automática e remoção visual do alerta aprovadas no navegador; controle completo da fila aprovado no teste E2E.
 - Moderação: política automática antes da cobrança e TTS automático aprovados.
 - Voz e TTS: limites de 0 reais e 1–500 caracteres refletidos no formulário; salvamento bloqueia ações concorrentes e informa sucesso ou falha.
 - Políticas: palavras vazias são rejeitadas no cliente e falhas de criação recebem retorno visível.
