@@ -93,6 +93,10 @@ test('revisão visual com widgets e recebíveis reais, conteúdo longo e modal',
     ).ok(),
   ).toBeTruthy();
 
+  await page.goto(`/${slug}`);
+  await expect(page.getByText('Revisão visual', { exact: true })).toBeVisible();
+  await capture(page, info.project.name, 'pagina-publica');
+
   await page.goto('/');
   await expect(page.getByLabel('Período do gráfico')).toBeVisible();
   await capture(page, info.project.name, 'performance');

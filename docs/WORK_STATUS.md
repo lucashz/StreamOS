@@ -4,7 +4,7 @@ Atualizado em: 12/09/2026
 
 ## Ciclo atual
 
-Ciclo de Moderação, Voz e TTS concluído. Próximo ciclo: Página pública.
+Ciclos de Central da Live, Moderação e Página pública concluídos. Aprovação visual humana pendente.
 
 ## Decisões vigentes
 
@@ -59,6 +59,12 @@ Ciclo de Moderação, Voz e TTS concluído. Próximo ciclo: Página pública.
 - Moderação: política automática antes da cobrança e TTS automático aprovados.
 - Voz e TTS: limites de 0 reais e 1–500 caracteres refletidos no formulário; salvamento bloqueia ações concorrentes e informa sucesso ou falha.
 - Políticas: palavras vazias são rejeitadas no cliente e falhas de criação recebem retorno visível.
+- Página pública: contribuição, pagamento mock, confirmação, reconciliação e alerta aprovados.
+- Vaquinha: checkout público, concorrência da última recompensa, progresso em tempo real, entrega e isolamento aprovados.
+- Assinaturas: benefícios, overlay, renovação idempotente, falha, cancelamento, histórico e isolamento aprovados.
+- SongPix: validação de gênero, checkout, fila, reprodução automática e recibo do overlay aprovados.
+- VideoPix: metadados, preço por segundo, checkout, player, indisponibilidade posterior e isolamento aprovados.
+- Página pública aprovada visualmente por automação em 360 e 1366 px com nome e mensagem longos.
 
 ## Próxima ação
 
