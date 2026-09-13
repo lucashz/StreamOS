@@ -20,9 +20,20 @@ async function capture(
     fullPage,
     animations: 'disabled',
   });
-  expect(
-    await page.evaluate(() => document.documentElement.scrollWidth),
-  ).toBeLessThanOrEqual(page.viewportSize()!.width + 1);
+  const overflow = await page.evaluate(() => ({
+    width: document.documentElement.scrollWidth,
+    elements: [...document.querySelectorAll<HTMLElement>('body *')]
+      .map((element) => ({
+        selector: `${element.tagName.toLowerCase()}.${element.className}`,
+        right: Math.round(element.getBoundingClientRect().right),
+        width: Math.round(element.getBoundingClientRect().width),
+      }))
+      .filter((item) => item.right > window.innerWidth + 1)
+      .slice(0, 8),
+  }));
+  expect(overflow.width, JSON.stringify(overflow.elements)).toBeLessThanOrEqual(
+    page.viewportSize()!.width + 1,
+  );
 }
 
 test('revisão visual com widgets e recebíveis reais, conteúdo longo e modal', async ({
@@ -87,6 +98,12 @@ test('revisão visual com widgets e recebíveis reais, conteúdo longo e modal',
   await capture(page, info.project.name, 'performance');
   await page.getByLabel('Período do gráfico').selectOption('7');
   await expect(page.getByLabel('Receita dos últimos 7 dias')).toBeVisible();
+
+  await page.goto('/central-da-live');
+  await expect(
+    page.getByRole('heading', { name: 'Central da Live' }),
+  ).toBeVisible();
+  await capture(page, info.project.name, 'central-da-live');
 
   await page.goto('/widgets');
   await expect(page.locator('.managed-widget-card')).toHaveCount(2);

@@ -4,7 +4,7 @@ Atualizado em: 12/09/2026
 
 ## Ciclo atual
 
-Ciclo corretivo de painel, Contribuições e avisos concluído. Aprovação visual humana pendente.
+Ciclo da Central da Live concluído. Próximo ciclo: Moderação, Voz e TTS.
 
 ## Decisões vigentes
 
@@ -51,6 +51,9 @@ Ciclo corretivo de painel, Contribuições e avisos concluído. Aprovação visu
 - Performance: gráfico alimentado pelos pagamentos confirmados dos últimos 30 dias, com seleção funcional de 7/30 dias, totais e datas reais.
 - Contribuições: linhas do extrato com fundo neutro, hover discreto e versão mobile em card.
 - Salvamento: aviso da Conta alinhado, centralizado e contido na viewport em desktop e mobile.
+- Central da Live: ordenação, movimentação, pausa/retomada, volume, modos de fila, replay, sessões, bloqueio, histórico paginado, CSV e isolamento aprovados.
+- Alertas, SongPix e VideoPix: reprodução e descarte automático aprovados; estado sem OBS mantém a fila persistida.
+- Central mobile: cabeçalho do histórico alinhado ao eixo do conteúdo.
 
 ## Próxima ação
 
