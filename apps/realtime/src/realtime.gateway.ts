@@ -204,6 +204,8 @@ export class RealtimeGateway
           },
         },
         update: {
+          playbackAttemptId: delivery.playbackAttemptId,
+          connectionId: client.id,
           status: body.status!,
           lastSequence: sequence,
           ...(body.status === 'MEDIA_READY' ? { mediaReadyAt: now } : {}),
@@ -217,6 +219,9 @@ export class RealtimeGateway
           organizationId: data.organizationId!,
           overlayChannelId: data.overlayChannelId!,
           eventId: body.eventId!,
+          playbackAttemptId: delivery.playbackAttemptId,
+          connectionId: client.id,
+          sequenceNumber: delivery.sequence,
           status: body.status!,
           lastSequence: sequence,
           ...(body.status === 'MEDIA_READY' ? { mediaReadyAt: now } : {}),
@@ -227,6 +232,38 @@ export class RealtimeGateway
             : {}),
         },
       });
+      if (delivery.playbackAttemptId) {
+        const attemptStatus =
+          body.status === 'RECEIVED'
+            ? 'RECEIVED'
+            : body.status === 'STARTED'
+              ? 'STARTED'
+              : body.status === 'COMPLETED'
+                ? 'COMPLETED'
+                : ['MEDIA_FAILED', 'FAILED'].includes(body.status!)
+                  ? 'FAILED'
+                  : null;
+        if (attemptStatus)
+          await tx.playbackAttempt.updateMany({
+            where: { id: delivery.playbackAttemptId },
+            data: {
+              status: attemptStatus,
+              connectionId: client.id,
+              ...(attemptStatus === 'RECEIVED' ? { receivedAt: now } : {}),
+              ...(attemptStatus === 'STARTED' ? { startedAt: now } : {}),
+              ...(attemptStatus === 'COMPLETED'
+                ? { completedAt: now, nextAttemptAt: null }
+                : {}),
+              ...(attemptStatus === 'FAILED'
+                ? {
+                    failedAt: now,
+                    nextAttemptAt: null,
+                    lastError: body.reason?.slice(0, 300),
+                  }
+                : {}),
+            },
+          });
+      }
       const sourceEvent = await tx.outboxEvent.findUnique({
         where: { id: body.eventId! },
         select: { aggregateId: true, eventType: true, payload: true },
@@ -446,6 +483,10 @@ export class RealtimeGateway
             data: {
               overlayChannelId: channel.id,
               eventId: event.eventId,
+              playbackAttemptId:
+                typeof event.payload.playbackAttemptId === 'string'
+                  ? event.payload.playbackAttemptId
+                  : null,
               sequence: reserved.nextSequence - 1n,
               deliveredAt: new Date(),
             },

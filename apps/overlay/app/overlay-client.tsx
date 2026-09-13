@@ -17,6 +17,28 @@ type StreamEvent = {
     variation?: AlertVariation;
   };
 };
+
+type PersistedPlaybackStatus = 'RECEIVED' | 'STARTED' | 'COMPLETED' | 'FAILED';
+const playbackStorageKey = (attemptId: string) =>
+  `streamos:playback-attempt:${attemptId}`;
+
+function persistedPlaybackStatus(event: StreamEvent) {
+  const attemptId = event.payload.playbackAttemptId;
+  if (typeof window === 'undefined' || typeof attemptId !== 'string')
+    return null;
+  return window.localStorage.getItem(
+    playbackStorageKey(attemptId),
+  ) as PersistedPlaybackStatus | null;
+}
+
+function persistPlaybackStatus(
+  event: StreamEvent,
+  status: PersistedPlaybackStatus,
+) {
+  const attemptId = event.payload.playbackAttemptId;
+  if (typeof window === 'undefined' || typeof attemptId !== 'string') return;
+  window.localStorage.setItem(playbackStorageKey(attemptId), status);
+}
 type MediaAsset = {
   id: string;
   kind: 'IMAGE' | 'GIF' | 'VIDEO' | 'AUDIO';
@@ -374,8 +396,19 @@ export function OverlayClient() {
       },
     );
     socket.on('streamos:event', (incoming: StreamEvent) => {
+      const persistedStatus = persistedPlaybackStatus(incoming);
+      if (persistedStatus) {
+        socket.emit('streamos:playback', {
+          eventId: incoming.eventId,
+          status: persistedStatus,
+        });
+        if (['COMPLETED', 'FAILED'].includes(persistedStatus))
+          socket.emit('streamos:ack', { eventId: incoming.eventId });
+        return;
+      }
       if (seen.current.has(incoming.eventId)) return;
       seen.current.add(incoming.eventId);
+      persistPlaybackStatus(incoming, 'RECEIVED');
       socket.emit('streamos:playback', {
         eventId: incoming.eventId,
         status: 'RECEIVED',
@@ -706,6 +739,7 @@ export function OverlayClient() {
       )
         return;
       finishedPlayback.current.add(completedEvent.eventId);
+      persistPlaybackStatus(completedEvent, failed ? 'FAILED' : 'COMPLETED');
       socketRef.current?.emit('streamos:playback', {
         eventId: completedEvent.eventId,
         status: failed ? 'MEDIA_FAILED' : 'COMPLETED',
@@ -731,6 +765,7 @@ export function OverlayClient() {
   useEffect(() => {
     if (!current || paused) return;
     setMediaFailed(false);
+    persistPlaybackStatus(current, 'STARTED');
     const variation = current.presentation?.variation;
     socketRef.current?.emit('streamos:playback', {
       eventId: current.eventId,
@@ -757,6 +792,7 @@ export function OverlayClient() {
       audioEnded = () => {
         if (finishedPlayback.current.has(current.eventId)) return;
         finishedPlayback.current.add(current.eventId);
+        persistPlaybackStatus(current, 'COMPLETED');
         directAudioPosition.current = null;
         playbackTiming.current = null;
         socketRef.current?.emit('streamos:playback', {
@@ -773,6 +809,7 @@ export function OverlayClient() {
       void audio.play().catch(() => {
         if (finishedPlayback.current.has(current.eventId)) return;
         finishedPlayback.current.add(current.eventId);
+        persistPlaybackStatus(current, 'FAILED');
         directAudioPosition.current = null;
         playbackTiming.current = null;
         socketRef.current?.emit('streamos:playback', {
@@ -872,6 +909,7 @@ export function OverlayClient() {
       () => {
         if (finishedPlayback.current.has(current.eventId)) return;
         finishedPlayback.current.add(current.eventId);
+        persistPlaybackStatus(current, 'COMPLETED');
         directAudioPosition.current = null;
         playbackTiming.current = null;
         socketRef.current?.emit('streamos:playback', {
