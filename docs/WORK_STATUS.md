@@ -58,6 +58,7 @@ Correção de confiabilidade dos alertas e do overlay concluída. Aprovação vi
 - Fluxo local completo medido em 4,1 segundos após a correção, sem regressão na fila durável.
 - Alertas imediatos expiram após 90 segundos sem reprodução e não iniciam inesperadamente quando o OBS reconecta; SongPix e VideoPix permanecem duráveis.
 - Watchdog de alertas imediatos limitado a 30 segundos para liberar itens sem recibo final do overlay.
+- Avanço automático centralizado no worker; o realtime não pode mais ignorar expiração, presença do OBS ou o limite de 30 segundos.
 - Reprodução automática e remoção visual do alerta aprovadas no navegador; controle completo da fila aprovado no teste E2E.
 - Moderação: política automática antes da cobrança e TTS automático aprovados.
 - Voz e TTS: limites de 0 reais e 1–500 caracteres refletidos no formulário; salvamento bloqueia ações concorrentes e informa sucesso ou falha.

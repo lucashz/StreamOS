@@ -14,7 +14,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Prisma, PrismaClient } from '@streamos/database';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import Redis from 'ioredis';
 import type { Server, Socket } from 'socket.io';
 import {
@@ -272,14 +272,13 @@ export class RealtimeGateway
                 : body.status === 'STARTED'
                   ? 'PLAYING'
                   : null;
-        let queueTransitioned = false;
         if (queueStatus) {
           const sourcePayload = sourceEvent.payload as Record<string, unknown>;
           const queueItemId =
             typeof sourcePayload.queueItemId === 'string'
               ? sourcePayload.queueItemId
               : undefined;
-          const queueUpdate = await tx.liveQueueItem.updateMany({
+          await tx.liveQueueItem.updateMany({
             where: {
               organizationId: data.organizationId!,
               OR: [
@@ -301,110 +300,9 @@ export class RealtimeGateway
                   }),
             },
           });
-          queueTransitioned = queueUpdate.count > 0;
         }
-        if (
-          queueTransitioned &&
-          queueStatus &&
-          ['COMPLETED', 'MEDIA_FAILED', 'FAILED'].includes(queueStatus)
-        ) {
-          const state = await tx.liveQueueState.findUnique({
-            where: { organizationId: data.organizationId! },
-          });
-          if (state?.autoAdvance && !state.paused) {
-            const next = await tx.liveQueueItem.findFirst({
-              where: {
-                organizationId: data.organizationId!,
-                status: 'QUEUED',
-              },
-              orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
-            });
-            if (next) {
-              await tx.liveQueueItem.update({
-                where: { id: next.id },
-                data: {
-                  status: 'PLAYING',
-                  startedAt: now,
-                  finishedAt: null,
-                  failureReason: null,
-                  playbackDeadline: new Date(
-                    now.getTime() + state.playbackTimeoutSeconds * 1000,
-                  ),
-                },
-              });
-              await tx.liveQueueAction.create({
-                data: {
-                  organizationId: data.organizationId!,
-                  queueItemId: next.id,
-                  action: 'AUTO_ADVANCE',
-                  origin: 'OVERLAY_RECEIPT',
-                  previousStatus: 'QUEUED',
-                  nextStatus: 'PLAYING',
-                  idempotencyKey: `receipt:${body.eventId}:auto:${next.id}`,
-                  metadata: { completedEventId: body.eventId! },
-                },
-              });
-              let metadata = next.metadata as Record<string, unknown>;
-              if (next.kind === 'SONG_PIX') {
-                const song = await tx.songRequest.findUnique({
-                  where: { id: next.sourceId },
-                  include: { session: { select: { volume: true } } },
-                });
-                if (song)
-                  metadata = {
-                    ...metadata,
-                    requestId: song.id,
-                    externalId: song.externalId,
-                    provider: song.provider,
-                    title: song.title,
-                    artist: song.artist,
-                    durationSeconds: song.durationSeconds,
-                    artworkUrl: song.artworkUrl,
-                    playbackUrl: song.playbackUrl,
-                    supporterName: song.supporterName,
-                    volume: song.session.volume,
-                  };
-                await tx.songRequest.updateMany({
-                  where: { id: next.sourceId },
-                  data: { status: 'PLAYING' },
-                });
-              }
-              if (next.kind === 'VIDEO_PIX')
-                await tx.videoRequest.updateMany({
-                  where: { id: next.sourceId },
-                  data: { status: 'PLAYING' },
-                });
-              await tx.outboxEvent.create({
-                data: {
-                  organizationId: data.organizationId!,
-                  eventType:
-                    next.kind === 'SONG_PIX'
-                      ? 'song.started.v1'
-                      : next.kind === 'VIDEO_PIX'
-                        ? 'video.started.v1'
-                        : 'live.queue.item.playing.v1',
-                  eventVersion: 1,
-                  aggregateId: ['SONG_PIX', 'VIDEO_PIX'].includes(next.kind)
-                    ? next.sourceId
-                    : next.id,
-                  correlationId: randomUUID(),
-                  causationId: body.eventId,
-                  payload: {
-                    ...metadata,
-                    queueItemId: next.id,
-                    kind: next.kind,
-                    supporterName: next.supporterName,
-                    title: next.title,
-                    content: next.content,
-                    amountInCents: next.amountInCents?.toString(),
-                    status: 'PLAYING',
-                  },
-                  occurredAt: now,
-                },
-              });
-            }
-          }
-        }
+        // O worker centraliza o avanço da fila. Assim, idade, presença do
+        // overlay e timeout seguem a mesma política para todos os itens.
       }
       return updatedReceipt;
     });
