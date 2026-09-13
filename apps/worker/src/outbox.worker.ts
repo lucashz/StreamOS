@@ -218,7 +218,10 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
     const payload = event.payload as Record<string, unknown>;
     const sourceId = event.eventType.startsWith('alert.test.')
       ? event.id
-      : event.aggregateId;
+      : event.eventType === 'campaign.contribution.confirmed.v1' &&
+          typeof payload.contributionId === 'string'
+        ? payload.contributionId
+        : event.aggregateId;
     if (
       event.eventType === 'payment.confirmed.v1' &&
       typeof payload.intentId === 'string'
@@ -266,6 +269,11 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
       where: { organizationId: event.organizationId, status: 'ACTIVE' },
       select: { id: true },
     });
+    const sequence = await this.prisma.organization.update({
+      where: { id: event.organizationId },
+      data: { nextLiveQueueSequence: { increment: 1 } },
+      select: { nextLiveQueueSequence: true },
+    });
     await this.prisma.liveQueueItem.upsert({
       where: {
         organizationId_sourceType_sourceId: {
@@ -280,6 +288,9 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
         liveSessionId: activeSession?.id,
         sourceType: event.eventType,
         sourceId,
+        paymentId:
+          event.eventType === 'payment.confirmed.v1' ? event.aggregateId : null,
+        sequenceNumber: sequence.nextLiveQueueSequence - 1n,
         kind,
         position: (last._max.position ?? 0) + 1,
         supporterName:

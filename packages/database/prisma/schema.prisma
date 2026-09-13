@@ -57,6 +57,17 @@ enum LiveQueueStatus {
   SKIPPED
   FAILED
   EXPIRED
+  NEEDS_REVIEW
+}
+
+enum PlaybackAttemptStatus {
+  CREATED
+  DISPATCHED
+  RECEIVED
+  STARTED
+  COMPLETED
+  FAILED
+  NEEDS_REVIEW
 }
 
 model User {
@@ -91,6 +102,7 @@ model Organization {
   name                    String
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
+  nextLiveQueueSequence   BigInt                   @default(1)
   deactivatedAt           DateTime?
   memberships             Membership[]
   creatorProfile          CreatorProfile?
@@ -130,6 +142,7 @@ model Organization {
   alertMediaAssets        AlertMediaAsset[]
   alertVariations         AlertVariation[]
   overlayPlaybackReceipts OverlayPlaybackReceipt[]
+  playbackAttempts        PlaybackAttempt[]
 }
 
 model Membership {
@@ -146,17 +159,17 @@ model Membership {
 }
 
 model Session {
-  id         String    @id @default(uuid()) @db.Uuid
-  userId     String    @db.Uuid
-  tokenHash  String    @unique
-  expiresAt  DateTime
-  createdAt  DateTime  @default(now())
-  lastUsedAt DateTime  @default(now())
-  userAgent  String?
-  ipAddress  String?
-  revokedAt  DateTime?
-  activeOrganizationId String? @db.Uuid
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                   String    @id @default(uuid()) @db.Uuid
+  userId               String    @db.Uuid
+  tokenHash            String    @unique
+  expiresAt            DateTime
+  createdAt            DateTime  @default(now())
+  lastUsedAt           DateTime  @default(now())
+  userAgent            String?
+  ipAddress            String?
+  revokedAt            DateTime?
+  activeOrganizationId String?   @db.Uuid
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, expiresAt])
 }
@@ -252,28 +265,28 @@ model SongSession {
 }
 
 model SongRequest {
-  id              String         @id @default(uuid()) @db.Uuid
-  songSessionId   String         @db.Uuid
-  paymentIntentId String?        @unique @db.Uuid
-  externalId      String
-  provider        String         @default("MOCK")
-  title           String
-  artist          String
-  genre           String
-  durationSeconds Int
-  artworkUrl      String?
-  playbackUrl     String?
-  playbackRestrictions Json      @default("{}")
-  supporterName   String
-  amountInCents   BigInt         @default(500)
-  status          String         @default("AWAITING_PAYMENT")
-  checkoutExpiresAt DateTime
-  position        Int?
-  rejectionReason String?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  session         SongSession    @relation(fields: [songSessionId], references: [id], onDelete: Restrict)
-  paymentIntent   PaymentIntent? @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
+  id                   String         @id @default(uuid()) @db.Uuid
+  songSessionId        String         @db.Uuid
+  paymentIntentId      String?        @unique @db.Uuid
+  externalId           String
+  provider             String         @default("MOCK")
+  title                String
+  artist               String
+  genre                String
+  durationSeconds      Int
+  artworkUrl           String?
+  playbackUrl          String?
+  playbackRestrictions Json           @default("{}")
+  supporterName        String
+  amountInCents        BigInt         @default(500)
+  status               String         @default("AWAITING_PAYMENT")
+  checkoutExpiresAt    DateTime
+  position             Int?
+  rejectionReason      String?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  session              SongSession    @relation(fields: [songSessionId], references: [id], onDelete: Restrict)
+  paymentIntent        PaymentIntent? @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
 
   @@index([songSessionId, status, position])
   @@index([songSessionId, supporterName, createdAt])
@@ -305,44 +318,44 @@ model VideoSession {
 }
 
 model VideoRequest {
-  id               String         @id @default(uuid()) @db.Uuid
-  videoSessionId   String         @db.Uuid
-  paymentIntentId  String?        @unique @db.Uuid
-  provider         String
-  externalId       String
-  url              String
-  title            String
-  channelTitle     String
-  channelId        String         @default("")
-  durationSeconds  Int
-  selectedSeconds  Int
-  startAtSeconds   Int            @default(0)
-  views            Int
-  publishedAt      DateTime
-  thumbnailUrl     String?
-  embeddable       Boolean
-  madeForKids      Boolean        @default(false)
-  broadcastType    String         @default("NONE")
-  supporterName    String
-  amountInCents    BigInt
-  status           String         @default("AWAITING_PAYMENT")
-  moderationReason String?
+  id                String         @id @default(uuid()) @db.Uuid
+  videoSessionId    String         @db.Uuid
+  paymentIntentId   String?        @unique @db.Uuid
+  provider          String
+  externalId        String
+  url               String
+  title             String
+  channelTitle      String
+  channelId         String         @default("")
+  durationSeconds   Int
+  selectedSeconds   Int
+  startAtSeconds    Int            @default(0)
+  views             Int
+  publishedAt       DateTime
+  thumbnailUrl      String?
+  embeddable        Boolean
+  madeForKids       Boolean        @default(false)
+  broadcastType     String         @default("NONE")
+  supporterName     String
+  amountInCents     BigInt
+  status            String         @default("AWAITING_PAYMENT")
+  moderationReason  String?
   checkoutExpiresAt DateTime
-  position         Int?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  session          VideoSession   @relation(fields: [videoSessionId], references: [id], onDelete: Restrict)
-  paymentIntent    PaymentIntent? @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
+  position          Int?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  session           VideoSession   @relation(fields: [videoSessionId], references: [id], onDelete: Restrict)
+  paymentIntent     PaymentIntent? @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
 
   @@index([videoSessionId, status, position])
   @@index([videoSessionId, externalId, createdAt])
 }
 
 model Payment {
-  id                 String        @id @default(uuid()) @db.Uuid
-  organizationId     String        @db.Uuid
-  paymentIntentId    String        @unique @db.Uuid
-  providerReference  String        @unique
+  id                 String          @id @default(uuid()) @db.Uuid
+  organizationId     String          @db.Uuid
+  paymentIntentId    String          @unique @db.Uuid
+  providerReference  String          @unique
   amountInCents      BigInt
   platformFeeInCents BigInt
   providerFeeInCents BigInt
@@ -351,11 +364,12 @@ model Payment {
   confirmedAt        DateTime?
   settledAt          DateTime?
   availableAt        DateTime?
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
-  organization       Organization  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  paymentIntent      PaymentIntent @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  organization       Organization    @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  paymentIntent      PaymentIntent   @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
   refunds            Refund[]
+  liveQueueItems     LiveQueueItem[]
 
   @@index([organizationId, createdAt])
 }
@@ -529,38 +543,46 @@ model Widget {
 }
 
 model OverlayDelivery {
-  id               String         @id @default(uuid()) @db.Uuid
-  overlayChannelId String         @db.Uuid
-  eventId          String         @db.Uuid
-  sequence         BigInt
-  deliveredAt      DateTime?
-  acknowledgedAt   DateTime?
-  overlayChannel   OverlayChannel @relation(fields: [overlayChannelId], references: [id], onDelete: Restrict)
+  id                String           @id @default(uuid()) @db.Uuid
+  overlayChannelId  String           @db.Uuid
+  eventId           String           @db.Uuid
+  sequence          BigInt
+  deliveredAt       DateTime?
+  acknowledgedAt    DateTime?
+  playbackAttemptId String?          @db.Uuid
+  overlayChannel    OverlayChannel   @relation(fields: [overlayChannelId], references: [id], onDelete: Restrict)
+  playbackAttempt   PlaybackAttempt? @relation(fields: [playbackAttemptId], references: [id], onDelete: SetNull)
 
   @@unique([overlayChannelId, eventId])
   @@unique([overlayChannelId, sequence])
+  @@index([playbackAttemptId])
 }
 
 model OverlayPlaybackReceipt {
-  id               String         @id @default(uuid()) @db.Uuid
-  organizationId   String         @db.Uuid
-  overlayChannelId String         @db.Uuid
-  eventId          String         @db.Uuid
-  status           String
-  mediaReadyAt     DateTime?
-  startedAt        DateTime?
-  completedAt      DateTime?
-  failedAt         DateTime?
-  failureReason    String?
-  lastSequence     Int            @default(0)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  organization     Organization   @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  overlayChannel   OverlayChannel @relation(fields: [overlayChannelId], references: [id], onDelete: Restrict)
+  id                String           @id @default(uuid()) @db.Uuid
+  organizationId    String           @db.Uuid
+  overlayChannelId  String           @db.Uuid
+  eventId           String           @db.Uuid
+  playbackAttemptId String?          @db.Uuid
+  connectionId      String?
+  sequenceNumber    BigInt?
+  status            String
+  mediaReadyAt      DateTime?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  failedAt          DateTime?
+  failureReason     String?
+  lastSequence      Int              @default(0)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  organization      Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  overlayChannel    OverlayChannel   @relation(fields: [overlayChannelId], references: [id], onDelete: Restrict)
+  playbackAttempt   PlaybackAttempt? @relation(fields: [playbackAttemptId], references: [id], onDelete: SetNull)
 
   @@unique([overlayChannelId, eventId])
   @@index([organizationId, updatedAt])
   @@index([overlayChannelId, status])
+  @@index([playbackAttemptId])
 }
 
 model AlertConfig {
@@ -643,19 +665,19 @@ model AlertVariation {
 }
 
 model Goal {
-  id             String       @id @default(uuid()) @db.Uuid
-  organizationId String       @db.Uuid
-  title          String
-  targetInCents  BigInt
-  currentInCents BigInt       @default(0)
-  active         Boolean      @default(true)
-  deadline       DateTime?
-  color          String       @default("#7c5cff")
-  imageUrl       String?
+  id                String       @id @default(uuid()) @db.Uuid
+  organizationId    String       @db.Uuid
+  title             String
+  targetInCents     BigInt
+  currentInCents    BigInt       @default(0)
+  active            Boolean      @default(true)
+  deadline          DateTime?
+  color             String       @default("#7c5cff")
+  imageUrl          String?
   completionMessage String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
 
   @@index([organizationId, active])
 }
@@ -896,17 +918,17 @@ model ApiToken {
 }
 
 model WebhookEndpoint {
-  id             String       @id @default(uuid()) @db.Uuid
-  organizationId String       @db.Uuid
-  url            String
-  secretHash     String
+  id               String            @id @default(uuid()) @db.Uuid
+  organizationId   String            @db.Uuid
+  url              String
+  secretHash       String
   secretCiphertext String
-  events         String[]
-  enabled        Boolean      @default(true)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  deliveries     WebhookDelivery[]
+  events           String[]
+  enabled          Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  deliveries       WebhookDelivery[]
 
   @@index([organizationId, enabled])
 }
@@ -983,6 +1005,8 @@ model LiveQueueItem {
   liveSessionId    String?           @db.Uuid
   sourceType       String
   sourceId         String
+  paymentId        String?           @db.Uuid
+  sequenceNumber   BigInt
   kind             String
   supporterName    String?
   amountInCents    BigInt?
@@ -1000,12 +1024,45 @@ model LiveQueueItem {
   updatedAt        DateTime          @updatedAt
   organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   liveSession      LiveSession?      @relation(fields: [liveSessionId], references: [id], onDelete: SetNull)
+  payment          Payment?          @relation(fields: [paymentId], references: [id], onDelete: Restrict)
   actions          LiveQueueAction[]
+  playbackAttempts PlaybackAttempt[]
 
   @@unique([organizationId, sourceType, sourceId])
+  @@unique([organizationId, sequenceNumber])
   @@index([organizationId, status, position])
   @@index([organizationId, createdAt])
+  @@index([paymentId])
   @@index([liveSessionId, createdAt])
+}
+
+model PlaybackAttempt {
+  id             String                   @id @default(uuid()) @db.Uuid
+  organizationId String                   @db.Uuid
+  queueItemId    String                   @db.Uuid
+  sequenceNumber BigInt
+  status         PlaybackAttemptStatus    @default(CREATED)
+  attemptNumber  Int
+  connectionId   String?
+  dispatchedAt   DateTime?
+  receivedAt     DateTime?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  failedAt       DateTime?
+  nextAttemptAt  DateTime?
+  lastAttemptAt  DateTime?
+  lastError      String?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  organization   Organization             @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  queueItem      LiveQueueItem            @relation(fields: [queueItemId], references: [id], onDelete: Restrict)
+  deliveries     OverlayDelivery[]
+  receipts       OverlayPlaybackReceipt[]
+
+  @@unique([queueItemId, attemptNumber])
+  @@unique([organizationId, sequenceNumber])
+  @@index([organizationId, status, nextAttemptAt])
+  @@index([queueItemId, createdAt])
 }
 
 model LiveQueueAction {

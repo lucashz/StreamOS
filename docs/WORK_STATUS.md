@@ -4,7 +4,7 @@ Atualizado em: 13/09/2026
 
 ## Ciclo atual
 
-Correção de confiabilidade dos alertas e do overlay concluída. Aprovação visual humana pendente.
+Migração incremental da fila durável de alertas pagos em andamento. Auditoria e fundação persistente concluídas.
 
 ## Decisões vigentes
 
@@ -59,6 +59,9 @@ Correção de confiabilidade dos alertas e do overlay concluída. Aprovação vi
 - Somente alertas de teste expiram após 90 segundos; todos os alertas vinculados a pagamentos permanecem duráveis enquanto o OBS estiver offline.
 - Watchdog de alertas imediatos limitado a 30 segundos para liberar itens sem recibo final do overlay.
 - Avanço automático centralizado no worker; o realtime não pode mais ignorar expiração, presença do OBS ou o limite de 30 segundos.
+- Auditoria da fila registrada em `docs/ALERT_QUEUE_AUDIT.md`; especificação incorporada ao repositório.
+- `LiveQueueItem` recebeu sequência imutável por organização e vínculo opcional ao pagamento; `PlaybackAttempt` persiste tentativas e backoff sem criar outra fila.
+- Materialização duplicada removida da API; o worker é o único responsável por criar itens a partir da Outbox.
 - Reprodução automática e remoção visual do alerta aprovadas no navegador; controle completo da fila aprovado no teste E2E.
 - Moderação: política automática antes da cobrança e TTS automático aprovados.
 - Voz e TTS: limites de 0 reais e 1–500 caracteres refletidos no formulário; salvamento bloqueia ações concorrentes e informa sucesso ou falha.

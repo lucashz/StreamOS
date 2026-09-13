@@ -13,7 +13,6 @@ import {
   canTransitionLiveQueue,
   LIVE_QUEUE_MODES,
   prioritizedQueue,
-  shouldSuppressGenericPaymentAlert,
   TERMINAL_LIVE_STATUSES,
 } from './live-control.policy';
 
@@ -53,7 +52,6 @@ export class LiveControlService {
   constructor(@Inject(PrismaClient) private readonly prisma: PrismaClient) {}
 
   async snapshot(actor: Actor) {
-    await this.synchronize(actor.organizationId);
     await this.recoverTimeout(actor.organizationId);
     const state = await this.ensureQueueState(actor.organizationId);
     const [
@@ -264,7 +262,6 @@ export class LiveControlService {
         throw new ForbiddenException();
       return this.snapshot(actor);
     }
-    await this.synchronize(actor.organizationId);
     await this.prisma.$transaction(
       async (tx) => {
         await tx.liveQueueState.upsert({
@@ -770,197 +767,6 @@ export class LiveControlService {
     return value;
   }
 
-  private async synchronize(organizationId: string) {
-    const events = await this.prisma.outboxEvent.findMany({
-      where: {
-        organizationId,
-        eventType: {
-          in: [
-            'payment.confirmed.v1',
-            'song.requested.v1',
-            'video.requested.v1',
-            'subscription.created.v1',
-            'campaign.contribution.confirmed.v1',
-            'tts.queued.v1',
-          ],
-        },
-      },
-      orderBy: { occurredAt: 'asc' },
-      take: 500,
-    });
-    if (!events.length) return;
-    const paymentEvents = events.filter(
-      (event) => event.eventType === 'payment.confirmed.v1',
-    );
-    const intentIds = paymentEvents.flatMap((event) => {
-      const payload = event.payload as Record<string, unknown>;
-      return typeof payload.intentId === 'string' ? [payload.intentId] : [];
-    });
-    const specializedIntents = intentIds.length
-      ? await this.prisma.paymentIntent.findMany({
-          where: { id: { in: intentIds } },
-          select: {
-            id: true,
-            songRequest: { select: { id: true } },
-            videoRequest: { select: { id: true } },
-            campaignContribution: { select: { id: true } },
-          },
-        })
-      : [];
-    const specializedIntentIds = new Set(
-      specializedIntents
-        .filter(
-          (intent) =>
-            intent.songRequest ||
-            intent.videoRequest ||
-            intent.campaignContribution,
-        )
-        .map((intent) => intent.id),
-    );
-    const suppressedPaymentIds = new Set(
-      paymentEvents.flatMap((event) => {
-        const payload = event.payload as Record<string, unknown>;
-        return shouldSuppressGenericPaymentAlert(payload, specializedIntentIds)
-          ? [event.aggregateId]
-          : [];
-      }),
-    );
-    if (suppressedPaymentIds.size)
-      await this.prisma.liveQueueItem.updateMany({
-        where: {
-          organizationId,
-          sourceType: 'payment.confirmed.v1',
-          sourceId: { in: [...suppressedPaymentIds] },
-          status: { in: ['QUEUED', 'DISPATCHING', 'PLAYING'] },
-        },
-        data: { status: 'SKIPPED', finishedAt: new Date() },
-      });
-    const maximumQueueItems = Number(process.env.MAX_LIVE_QUEUE_ITEMS ?? 200);
-    let activeQueueItems = await this.prisma.liveQueueItem.count({
-      where: {
-        organizationId,
-        status: { in: ['QUEUED', 'DISPATCHING', 'PLAYING'] },
-      },
-    });
-    if (activeQueueItems >= maximumQueueItems) return;
-    const existing = await this.prisma.liveQueueItem.findMany({
-      where: { organizationId },
-      select: { sourceType: true, sourceId: true },
-    });
-    const keys = new Set(
-      existing.map((item) => `${item.sourceType}:${item.sourceId}`),
-    );
-    let position = await this.nextPosition(organizationId);
-    const activeSession = await this.prisma.liveSession.findFirst({
-      where: { organizationId, status: 'ACTIVE' },
-      select: { id: true },
-    });
-    for (const event of events) {
-      if (activeQueueItems >= maximumQueueItems) break;
-      const sourceId = event.eventType.startsWith('alert.test.')
-        ? event.id
-        : event.aggregateId;
-      const key = `${event.eventType}:${sourceId}`;
-      if (keys.has(key)) continue;
-      const payload = event.payload as Record<string, unknown>;
-      if (
-        event.eventType === 'payment.confirmed.v1' &&
-        suppressedPaymentIds.has(event.aggregateId)
-      )
-        continue;
-      const mapped = this.mapEvent(event.eventType, payload);
-      await this.prisma.liveQueueItem
-        .create({
-          data: {
-            organizationId,
-            liveSessionId: activeSession?.id,
-            sourceType: event.eventType,
-            sourceId,
-            position: position++,
-            kind: mapped.kind,
-            supporterName: this.text(payload.supporterName),
-            amountInCents: this.money(payload.amountInCents),
-            title: mapped.title,
-            content: mapped.content,
-            metadata: payload as Prisma.InputJsonValue,
-            moderationStatus: mapped.moderation,
-            status: mapped.status as any,
-            createdAt: event.occurredAt,
-          },
-        })
-        .catch((error: unknown) => {
-          if (!(
-            error instanceof Prisma.PrismaClientKnownRequestError &&
-            error.code === 'P2002'
-          ))
-            throw error;
-        });
-      keys.add(key);
-      activeQueueItems += 1;
-    }
-  }
-
-  private mapEvent(type: string, payload: Record<string, unknown>) {
-    if (type === 'song.requested.v1')
-      return {
-        kind: 'SONG_PIX',
-        title: `${this.text(payload.title) ?? 'Música'} — ${this.text(payload.artist) ?? ''}`,
-        content: null,
-        status: 'QUEUED',
-        moderation: 'AUTOMATICALLY_ALLOWED',
-      };
-    if (type === 'video.requested.v1')
-      return {
-        kind: 'VIDEO_PIX',
-        title: this.text(payload.title) ?? 'Vídeo',
-        content: this.text(payload.channelTitle),
-        status: 'QUEUED',
-        moderation: 'AUTOMATICALLY_ALLOWED',
-      };
-    if (type === 'subscription.created.v1')
-      return {
-        kind: 'SUBSCRIPTION',
-        title: this.text(payload.planName) ?? 'Nova assinatura',
-        content: null,
-        status: 'QUEUED',
-        moderation: 'AUTOMATICALLY_ALLOWED',
-      };
-    if (type === 'goal.updated.v1')
-      return {
-        kind: 'GOAL',
-        title: this.text(payload.title) ?? 'Meta atualizada',
-        content: null,
-        status: 'QUEUED',
-        moderation: 'AUTOMATICALLY_ALLOWED',
-      };
-    if (type === 'campaign.contribution.confirmed.v1')
-      return {
-        kind: 'CAMPAIGN',
-        title: 'Contribuição para vaquinha',
-        content: null,
-        status: 'QUEUED',
-        moderation: 'AUTOMATICALLY_ALLOWED',
-      };
-    if (type === 'tts.queued.v1')
-      return {
-        kind: 'TTS',
-        title: 'Mensagem por voz',
-        content: this.text(payload.text),
-        status: 'QUEUED',
-        moderation: 'AUTOMATICALLY_ALLOWED',
-      };
-    return {
-      kind: payload.alertType === 'AUDIO' ? 'AUDIO' : 'ALERT',
-      title:
-        payload.alertType === 'AUDIO'
-          ? 'Mensagem de áudio'
-          : 'Nova contribuição',
-      content: this.text(payload.message),
-      status: 'QUEUED',
-      moderation: 'AUTOMATICALLY_ALLOWED',
-    };
-  }
-
   private async recoverTimeout(organizationId: string) {
     const state = await this.prisma.liveQueueState.findUnique({
       where: { organizationId },
@@ -987,14 +793,6 @@ export class LiveControlService {
         },
       );
     }
-  }
-
-  private async nextPosition(organizationId: string) {
-    const result = await this.prisma.liveQueueItem.aggregate({
-      where: { organizationId },
-      _max: { position: true },
-    });
-    return (result._max.position ?? 0) + 1;
   }
 
   private async owned(
