@@ -105,6 +105,12 @@ test('revisão visual com widgets e recebíveis reais, conteúdo longo e modal',
   ).toBeVisible();
   await capture(page, info.project.name, 'central-da-live');
 
+  await page.goto('/moderacao');
+  await expect(page.getByRole('heading', { name: 'Moderação' })).toBeVisible();
+  await capture(page, info.project.name, 'moderacao');
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Configurações salvas');
+
   await page.goto('/widgets');
   await expect(page.locator('.managed-widget-card')).toHaveCount(2);
   await capture(page, info.project.name, 'widgets');

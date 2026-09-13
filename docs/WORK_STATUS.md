@@ -4,7 +4,7 @@ Atualizado em: 12/09/2026
 
 ## Ciclo atual
 
-Correção de latência dos alertas concluída. Próximo ciclo: Moderação, Voz e TTS.
+Ciclo de Moderação, Voz e TTS concluído. Próximo ciclo: Página pública.
 
 ## Decisões vigentes
 
@@ -56,6 +56,9 @@ Correção de latência dos alertas concluída. Próximo ciclo: Moderação, Voz
 - Central mobile: cabeçalho do histórico alinhado ao eixo do conteúdo.
 - Latência: entregas de webhooks externos agora são processadas em paralelo e não bloqueiam sequencialmente o ciclo que publica alertas no OBS.
 - Fluxo local completo medido em 4,1 segundos após a correção, sem regressão na fila durável.
+- Moderação: política automática antes da cobrança e TTS automático aprovados.
+- Voz e TTS: limites de 0 reais e 1–500 caracteres refletidos no formulário; salvamento bloqueia ações concorrentes e informa sucesso ou falha.
+- Políticas: palavras vazias são rejeitadas no cliente e falhas de criação recebem retorno visível.
 
 ## Próxima ação
 

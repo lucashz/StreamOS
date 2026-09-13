@@ -38,6 +38,7 @@ type Overview = {
 export default function ModerationPage() {
   const [data, setData] = useState<Overview>();
   const [status, setStatus] = useState('Carregando…');
+  const [busy, setBusy] = useState(false);
   const [settings, setSettings] = useState({
     moderationEnabled: true,
     ttsEnabled: true,
@@ -69,32 +70,63 @@ export default function ModerationPage() {
     void load();
   }, []);
   async function save() {
-    const r = await fetch(`${api}/dashboard/moderation/settings`, {
-      method: 'PUT',
-      credentials: 'include',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(settings),
-    });
-    if (r.ok) {
+    if (busy) return;
+    setBusy(true);
+    setStatus('Salvando configurações…');
+    try {
+      const r = await fetch(`${api}/dashboard/moderation/settings`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(settings),
+      });
+      const body = (await r.json().catch(() => ({}))) as { message?: string };
+      if (!r.ok) throw new Error(body.message ?? 'Não foi possível salvar.');
       await load();
       setStatus('Configurações salvas.');
+    } catch (error) {
+      setStatus(
+        error instanceof Error ? error.message : 'Não foi possível salvar.',
+      );
+    } finally {
+      setBusy(false);
     }
   }
   async function policy() {
-    const r = await fetch(`${api}/dashboard/moderation/policies`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        name: 'Política principal',
-        blockedWords: words.split(',').map((v) => v.trim()),
-        blockLinks: true,
-        minimumInCents: 100,
-      }),
-    });
-    if (r.ok) {
+    const blockedWords = words
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+    if (!blockedWords.length) {
+      setStatus('Informe ao menos uma palavra bloqueada.');
+      return;
+    }
+    if (busy) return;
+    setBusy(true);
+    setStatus('Adicionando política…');
+    try {
+      const r = await fetch(`${api}/dashboard/moderation/policies`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Política principal',
+          blockedWords,
+          blockLinks: true,
+          minimumInCents: 100,
+        }),
+      });
+      if (!r.ok) throw new Error('Não foi possível criar a política.');
       await load();
       setStatus('Política criada.');
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível criar a política.',
+      );
+    } finally {
+      setBusy(false);
     }
   }
   async function clearFlag(itemId: string) {
@@ -127,6 +159,11 @@ export default function ModerationPage() {
           Bloquear conteúdo impede sua reprodução, mas não devolve a
           contribuição.
         </p>
+        {status ? (
+          <p className="settings-feedback" role="status">
+            {status}
+          </p>
+        ) : null}
         <section id="tts" className="panel" style={{ padding: 24 }}>
           <h2>Configuração</h2>
           <label className="consent-field">
@@ -168,7 +205,7 @@ export default function ModerationPage() {
               <b>R$</b>
               <input
                 type="number"
-                min="1"
+                min="0"
                 step="0.01"
                 inputMode="decimal"
                 aria-label="Valor mínimo do TTS em reais"
@@ -191,6 +228,8 @@ export default function ModerationPage() {
             Máximo de caracteres
             <input
               type="number"
+              min="1"
+              max="500"
               value={settings.maximumCharacters}
               onChange={(e) =>
                 setSettings({
@@ -200,8 +239,12 @@ export default function ModerationPage() {
               }
             />
           </label>
-          <button className="primary-button" onClick={() => void save()}>
-            Salvar
+          <button
+            className="primary-button"
+            disabled={busy}
+            onClick={() => void save()}
+          >
+            {busy ? 'Salvando…' : 'Salvar'}
           </button>
         </section>
         <section
@@ -214,7 +257,9 @@ export default function ModerationPage() {
             Palavras bloqueadas
             <input value={words} onChange={(e) => setWords(e.target.value)} />
           </label>
-          <button onClick={() => void policy()}>Adicionar política</button>
+          <button disabled={busy} onClick={() => void policy()}>
+            Adicionar política
+          </button>
           {data?.policies.map((p) => (
             <p key={p.id}>
               <strong>{p.name}:</strong> {p.blockedWords.join(', ')}
@@ -285,7 +330,6 @@ export default function ModerationPage() {
             </div>
           ))}
         </section>
-        <p>{status}</p>
       </main>
     </PanelShell>
   );
