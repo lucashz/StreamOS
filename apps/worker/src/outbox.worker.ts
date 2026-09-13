@@ -253,7 +253,7 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
                 ? 'AUDIO'
                 : 'ALERT';
     const expired = shouldExpireQueuedAlert(
-      kind,
+      event.eventType,
       event.occurredAt,
       new Date(),
       this.alertMaxAgeSeconds,
@@ -318,7 +318,7 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
     await this.prisma.liveQueueItem.updateMany({
       where: {
         status: 'QUEUED',
-        kind: { notIn: ['SONG_PIX', 'VIDEO_PIX'] },
+        sourceType: { startsWith: 'alert.test.' },
         createdAt: {
           lt: new Date(now.getTime() - this.alertMaxAgeSeconds * 1_000),
         },

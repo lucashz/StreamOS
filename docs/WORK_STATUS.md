@@ -56,7 +56,7 @@ Correção de confiabilidade dos alertas e do overlay concluída. Aprovação vi
 - Central mobile: cabeçalho do histórico alinhado ao eixo do conteúdo.
 - Latência: entregas de webhooks externos agora são processadas em paralelo e não bloqueiam sequencialmente o ciclo que publica alertas no OBS.
 - Fluxo local completo medido em 4,1 segundos após a correção, sem regressão na fila durável.
-- Alertas imediatos expiram após 90 segundos sem reprodução e não iniciam inesperadamente quando o OBS reconecta; SongPix e VideoPix permanecem duráveis.
+- Somente alertas de teste expiram após 90 segundos; todos os alertas vinculados a pagamentos permanecem duráveis enquanto o OBS estiver offline.
 - Watchdog de alertas imediatos limitado a 30 segundos para liberar itens sem recibo final do overlay.
 - Avanço automático centralizado no worker; o realtime não pode mais ignorar expiração, presença do OBS ou o limite de 30 segundos.
 - Reprodução automática e remoção visual do alerta aprovadas no navegador; controle completo da fila aprovado no teste E2E.

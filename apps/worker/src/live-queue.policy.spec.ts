@@ -7,10 +7,10 @@ import {
 describe('live queue playback policy', () => {
   const now = new Date('2026-09-13T12:00:00.000Z');
 
-  it('expires delayed immediate alerts', () => {
+  it('expires delayed test alerts', () => {
     expect(
       shouldExpireQueuedAlert(
-        'ALERT',
+        'alert.test.v2',
         new Date('2026-09-13T11:58:29.000Z'),
         now,
         90,
@@ -18,10 +18,18 @@ describe('live queue playback policy', () => {
     ).toBe(true);
   });
 
-  it('keeps SongPix and VideoPix durable while OBS is offline', () => {
+  it('keeps every paid alert durable while OBS is offline', () => {
     const old = new Date('2026-09-13T10:00:00.000Z');
-    expect(shouldExpireQueuedAlert('SONG_PIX', old, now, 90)).toBe(false);
-    expect(shouldExpireQueuedAlert('VIDEO_PIX', old, now, 90)).toBe(false);
+    expect(shouldExpireQueuedAlert('payment.confirmed.v1', old, now, 90)).toBe(
+      false,
+    );
+    expect(shouldExpireQueuedAlert('tts.queued.v1', old, now, 90)).toBe(false);
+    expect(shouldExpireQueuedAlert('song.requested.v1', old, now, 90)).toBe(
+      false,
+    );
+    expect(shouldExpireQueuedAlert('video.requested.v1', old, now, 90)).toBe(
+      false,
+    );
   });
 
   it('limits the watchdog for an immediate alert', () => {
