@@ -645,107 +645,109 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
       orderBy: { createdAt: 'asc' },
       take: 25,
     });
-    for (const delivery of deliveries) {
-      const claimed = await this.prisma.webhookDelivery.updateMany({
-        where: {
-          id: delivery.id,
-          status: { in: ['PENDING', 'RETRYING'] },
-          nextAttemptAt: { lte: new Date() },
-        },
-        data: { status: 'PROCESSING' },
-      });
-      if (claimed.count !== 1) continue;
-      const event = await this.prisma.outboxEvent.findUnique({
-        where: { id: delivery.outboxEventId },
-      });
-      if (!event || !delivery.endpoint.enabled) {
-        await this.prisma.webhookDelivery.update({
-          where: { id: delivery.id },
-          data: {
-            status: 'FAILED',
-            lastError: event
-              ? 'Endpoint desativado antes da entrega'
-              : 'Evento da outbox não encontrado',
+    await Promise.all(
+      deliveries.map(async (delivery) => {
+        const claimed = await this.prisma.webhookDelivery.updateMany({
+          where: {
+            id: delivery.id,
+            status: { in: ['PENDING', 'RETRYING'] },
+            nextAttemptAt: { lte: new Date() },
           },
+          data: { status: 'PROCESSING' },
         });
-        continue;
-      }
-      const timestamp = Math.floor(Date.now() / 1000).toString();
-      const webhookBody = {
-        id: event.id,
-        type: event.eventType,
-        version: event.eventVersion,
-        occurredAt: event.occurredAt.toISOString(),
-        organizationId: event.organizationId,
-        data: event.payload,
-      } satisfies Prisma.InputJsonObject;
-      const body = JSON.stringify(webhookBody);
-      try {
-        const secret = this.decrypt(delivery.endpoint.secretCiphertext);
-        const signature = createHmac('sha256', secret)
-          .update(`${timestamp}.${body}`)
-          .digest('hex');
-        const response = await fetch(delivery.endpoint.url, {
-          method: 'POST',
-          headers: {
-            'content-type': 'application/json',
-            'user-agent': 'StreamOS-Webhooks/1.0',
-            'x-streamos-event': event.eventType,
-            'x-streamos-delivery': delivery.id,
-            'x-streamos-timestamp': timestamp,
-            'x-streamos-signature': `sha256=${signature}`,
-          },
-          body,
-          signal: AbortSignal.timeout(8000),
+        if (claimed.count !== 1) return;
+        const event = await this.prisma.outboxEvent.findUnique({
+          where: { id: delivery.outboxEventId },
         });
-        const responseText = (await response.text()).slice(0, 1000);
-        if (!response.ok)
-          throw new Error(`HTTP ${response.status}: ${responseText}`);
-        await this.prisma.webhookDelivery.update({
-          where: { id: delivery.id },
-          data: {
-            status: 'DELIVERED',
-            attempts: { increment: 1 },
-            responseStatus: response.status,
-            deliveredAt: new Date(),
-            lastError: null,
-            requestBody: webhookBody,
-            responseBody: responseText,
-          },
-        });
-      } catch (error: unknown) {
-        const attempts = delivery.attempts + 1;
-        await this.prisma.webhookDelivery.update({
-          where: { id: delivery.id },
-          data: {
-            status: attempts >= 5 ? 'FAILED' : 'RETRYING',
-            attempts,
-            nextAttemptAt: new Date(
-              Date.now() + Math.min(60_000, 1000 * 2 ** attempts),
-            ),
-            lastError: (error instanceof Error
-              ? error.message
-              : 'unknown'
-            ).slice(0, 500),
-            requestBody: webhookBody,
-          },
-        });
-        if (attempts >= 5) {
-          const failures = await this.prisma.webhookDelivery.count({
-            where: {
-              endpointId: delivery.endpointId,
+        if (!event || !delivery.endpoint.enabled) {
+          await this.prisma.webhookDelivery.update({
+            where: { id: delivery.id },
+            data: {
               status: 'FAILED',
-              createdAt: { gte: new Date(Date.now() - 86_400_000) },
+              lastError: event
+                ? 'Endpoint desativado antes da entrega'
+                : 'Evento da outbox não encontrado',
             },
           });
-          if (failures >= 3)
-            await this.prisma.webhookEndpoint.update({
-              where: { id: delivery.endpointId },
-              data: { enabled: false },
-            });
+          return;
         }
-      }
-    }
+        const timestamp = Math.floor(Date.now() / 1000).toString();
+        const webhookBody = {
+          id: event.id,
+          type: event.eventType,
+          version: event.eventVersion,
+          occurredAt: event.occurredAt.toISOString(),
+          organizationId: event.organizationId,
+          data: event.payload,
+        } satisfies Prisma.InputJsonObject;
+        const body = JSON.stringify(webhookBody);
+        try {
+          const secret = this.decrypt(delivery.endpoint.secretCiphertext);
+          const signature = createHmac('sha256', secret)
+            .update(`${timestamp}.${body}`)
+            .digest('hex');
+          const response = await fetch(delivery.endpoint.url, {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              'user-agent': 'StreamOS-Webhooks/1.0',
+              'x-streamos-event': event.eventType,
+              'x-streamos-delivery': delivery.id,
+              'x-streamos-timestamp': timestamp,
+              'x-streamos-signature': `sha256=${signature}`,
+            },
+            body,
+            signal: AbortSignal.timeout(8000),
+          });
+          const responseText = (await response.text()).slice(0, 1000);
+          if (!response.ok)
+            throw new Error(`HTTP ${response.status}: ${responseText}`);
+          await this.prisma.webhookDelivery.update({
+            where: { id: delivery.id },
+            data: {
+              status: 'DELIVERED',
+              attempts: { increment: 1 },
+              responseStatus: response.status,
+              deliveredAt: new Date(),
+              lastError: null,
+              requestBody: webhookBody,
+              responseBody: responseText,
+            },
+          });
+        } catch (error: unknown) {
+          const attempts = delivery.attempts + 1;
+          await this.prisma.webhookDelivery.update({
+            where: { id: delivery.id },
+            data: {
+              status: attempts >= 5 ? 'FAILED' : 'RETRYING',
+              attempts,
+              nextAttemptAt: new Date(
+                Date.now() + Math.min(60_000, 1000 * 2 ** attempts),
+              ),
+              lastError: (error instanceof Error
+                ? error.message
+                : 'unknown'
+              ).slice(0, 500),
+              requestBody: webhookBody,
+            },
+          });
+          if (attempts >= 5) {
+            const failures = await this.prisma.webhookDelivery.count({
+              where: {
+                endpointId: delivery.endpointId,
+                status: 'FAILED',
+                createdAt: { gte: new Date(Date.now() - 86_400_000) },
+              },
+            });
+            if (failures >= 3)
+              await this.prisma.webhookEndpoint.update({
+                where: { id: delivery.endpointId },
+                data: { enabled: false },
+              });
+          }
+        }
+      }),
+    );
   }
 
   private decrypt(value: string) {

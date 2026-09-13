@@ -4,7 +4,7 @@ Atualizado em: 12/09/2026
 
 ## Ciclo atual
 
-Ciclo da Central da Live concluído. Próximo ciclo: Moderação, Voz e TTS.
+Correção de latência dos alertas concluída. Próximo ciclo: Moderação, Voz e TTS.
 
 ## Decisões vigentes
 
@@ -54,6 +54,8 @@ Ciclo da Central da Live concluído. Próximo ciclo: Moderação, Voz e TTS.
 - Central da Live: ordenação, movimentação, pausa/retomada, volume, modos de fila, replay, sessões, bloqueio, histórico paginado, CSV e isolamento aprovados.
 - Alertas, SongPix e VideoPix: reprodução e descarte automático aprovados; estado sem OBS mantém a fila persistida.
 - Central mobile: cabeçalho do histórico alinhado ao eixo do conteúdo.
+- Latência: entregas de webhooks externos agora são processadas em paralelo e não bloqueiam sequencialmente o ciclo que publica alertas no OBS.
+- Fluxo local completo medido em 4,1 segundos após a correção, sem regressão na fila durável.
 
 ## Próxima ação
 
