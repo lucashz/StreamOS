@@ -64,6 +64,8 @@ Migração incremental da fila durável de alertas pagos em andamento. Auditoria
 - Materialização duplicada removida da API; o worker é o único responsável por criar itens a partir da Outbox.
 - Worker cria `PlaybackAttempt` atomicamente com o evento de reprodução para alertas, SongPix e VideoPix; Gateway liga entrega e recibos à tentativa.
 - Browser Source persiste o estado por `playbackAttemptId` e não reinicia uma tentativa conhecida após refresh ou reconexão.
+- Carga de 100 pagamentos com concorrência 20: 100 alertas entregues, zero perdidos e zero duplicados; relatório em `docs/LOAD_TEST_PAID_ALERTS.md`.
+- Confirmação financeira concorrente, ordenação dos recibos e starvation causada por backlogs offline foram corrigidas durante a carga.
 - Reprodução automática e remoção visual do alerta aprovadas no navegador; controle completo da fila aprovado no teste E2E.
 - Moderação: política automática antes da cobrança e TTS automático aprovados.
 - Voz e TTS: limites de 0 reais e 1–500 caracteres refletidos no formulário; salvamento bloqueia ações concorrentes e informa sucesso ou falha.

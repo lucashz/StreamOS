@@ -1360,64 +1360,57 @@ export class PaymentsService {
           duplicated: true,
         };
       const fees = calculatePixFees(intent.amountInCents);
-      const accounts = await Promise.all([
-        tx.ledgerAccount.upsert({
-          where: {
-            organizationId_code: {
-              organizationId: intent.organizationId,
-              code: 'provider_clearing',
-            },
-          },
-          update: {},
-          create: {
+      await tx.ledgerAccount.createMany({
+        data: [
+          {
             organizationId: intent.organizationId,
             code: 'provider_clearing',
             name: 'Compensação do provedor',
           },
-        }),
-        tx.ledgerAccount.upsert({
-          where: {
-            organizationId_code: {
-              organizationId: intent.organizationId,
-              code: 'creator_pending',
-            },
-          },
-          update: {},
-          create: {
+          {
             organizationId: intent.organizationId,
             code: 'creator_pending',
             name: 'Saldo pendente do criador',
           },
-        }),
-        tx.ledgerAccount.upsert({
-          where: {
-            organizationId_code: {
-              organizationId: intent.organizationId,
-              code: 'platform_revenue',
-            },
-          },
-          update: {},
-          create: {
+          {
             organizationId: intent.organizationId,
             code: 'platform_revenue',
             name: 'Receita da plataforma',
           },
-        }),
-        tx.ledgerAccount.upsert({
-          where: {
-            organizationId_code: {
-              organizationId: intent.organizationId,
-              code: 'provider_fee',
-            },
-          },
-          update: {},
-          create: {
+          {
             organizationId: intent.organizationId,
             code: 'provider_fee',
             name: 'Tarifa de processamento Pix',
           },
-        }),
-      ]);
+        ],
+        skipDuplicates: true,
+      });
+      const persistedAccounts = await tx.ledgerAccount.findMany({
+        where: {
+          organizationId: intent.organizationId,
+          code: {
+            in: [
+              'provider_clearing',
+              'creator_pending',
+              'platform_revenue',
+              'provider_fee',
+            ],
+          },
+        },
+      });
+      const accountByCode = new Map(
+        persistedAccounts.map((account) => [account.code, account]),
+      );
+      const accounts = [
+        'provider_clearing',
+        'creator_pending',
+        'platform_revenue',
+        'provider_fee',
+      ].map((code) => {
+        const account = accountByCode.get(code);
+        if (!account) throw new Error(`Conta contábil ausente: ${code}`);
+        return account;
+      });
       const now = new Date();
       const payment = await tx.payment.create({
         data: {
@@ -1484,22 +1477,22 @@ export class PaymentsService {
           postings: {
             create: [
               {
-                ledgerAccountId: accounts[0].id,
+                ledgerAccountId: accounts[0]!.id,
                 direction: 'DEBIT',
                 amountInCents: intent.amountInCents,
               },
               {
-                ledgerAccountId: accounts[1].id,
+                ledgerAccountId: accounts[1]!.id,
                 direction: 'CREDIT',
                 amountInCents: fees.creatorNetInCents,
               },
               {
-                ledgerAccountId: accounts[2].id,
+                ledgerAccountId: accounts[2]!.id,
                 direction: 'CREDIT',
                 amountInCents: fees.platformFeeInCents,
               },
               {
-                ledgerAccountId: accounts[3].id,
+                ledgerAccountId: accounts[3]!.id,
                 direction: 'CREDIT',
                 amountInCents: fees.providerFeeInCents,
               },

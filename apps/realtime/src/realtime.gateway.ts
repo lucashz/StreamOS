@@ -182,7 +182,8 @@ export class RealtimeGateway
     });
     if (!delivery) return { accepted: false };
     const now = new Date();
-    const receipt = await this.prisma.$transaction(async (tx) => {
+    const receiptResult = await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${body.eventId!}))`;
       const existing = await tx.overlayPlaybackReceipt.findUnique({
         where: {
           overlayChannelId_eventId: {
@@ -195,7 +196,7 @@ export class RealtimeGateway
         existing &&
         !acceptsPlaybackReceipt(existing.lastSequence, body.status!)
       )
-        return existing;
+        return { receipt: existing, accepted: false };
       const updatedReceipt = await tx.overlayPlaybackReceipt.upsert({
         where: {
           overlayChannelId_eventId: {
@@ -341,8 +342,9 @@ export class RealtimeGateway
         // O worker centraliza o avanço da fila. Assim, idade, presença do
         // overlay e timeout seguem a mesma política para todos os itens.
       }
-      return updatedReceipt;
+      return { receipt: updatedReceipt, accepted: true };
     });
+    const receipt = receiptResult.receipt;
     this.server
       .to(this.adminRoom(data.organizationId))
       .emit('streamos:overlay-playback', {
@@ -352,7 +354,7 @@ export class RealtimeGateway
         reason: receipt.failureReason,
         updatedAt: receipt.updatedAt.toISOString(),
       });
-    return { accepted: true, status: receipt.status };
+    return { accepted: receiptResult.accepted, status: receipt.status };
   }
 
   @SubscribeMessage('streamos:ack')

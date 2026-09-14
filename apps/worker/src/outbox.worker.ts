@@ -341,7 +341,18 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
       },
     });
     const candidates = await this.prisma.liveQueueItem.findMany({
-      where: { status: 'QUEUED' },
+      where: {
+        status: 'QUEUED',
+        organization: {
+          overlayChannels: {
+            some: {
+              widgetId: null,
+              revokedAt: null,
+              lastHeartbeatAt: { gte: new Date(now.getTime() - 45_000) },
+            },
+          },
+        },
+      },
       orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
       take: 100,
     });
