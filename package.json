@@ -25,6 +25,7 @@
     "test:e2e:subscriptions": "dotenv -e .env -- node tools/e2e-subscriptions.mjs",
     "test:e2e:platform": "dotenv -e .env -- node tools/e2e-platform.mjs",
     "test:e2e:live-control": "dotenv -e .env -- node tools/e2e-live-control.mjs",
+    "test:e2e:alert-reliability": "dotenv -e .env -- node tools/e2e-alert-reliability.mjs",
     "test:load:paid-alerts": "dotenv -e .env -- node tools/load-paid-alerts.mjs",
     "test:e2e:alerts": "dotenv -e .env -- node tools/e2e-alert-editor.mjs",
     "test:e2e:browser": "dotenv -e .env -- playwright test",

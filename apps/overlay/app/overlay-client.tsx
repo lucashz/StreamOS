@@ -39,6 +39,24 @@ function persistPlaybackStatus(
   if (typeof window === 'undefined' || typeof attemptId !== 'string') return;
   window.localStorage.setItem(playbackStorageKey(attemptId), status);
 }
+
+function knownPlaybackAttempts() {
+  if (typeof window === 'undefined') return [];
+  const attempts: Array<{
+    playbackAttemptId: string;
+    status: PersistedPlaybackStatus;
+  }> = [];
+  for (let index = 0; index < window.localStorage.length; index += 1) {
+    const key = window.localStorage.key(index);
+    if (!key?.startsWith('streamos:playback-attempt:')) continue;
+    const status = window.localStorage.getItem(key) as PersistedPlaybackStatus;
+    attempts.push({
+      playbackAttemptId: key.slice('streamos:playback-attempt:'.length),
+      status,
+    });
+  }
+  return attempts.slice(-100);
+}
 type MediaAsset = {
   id: string;
   kind: 'IMAGE' | 'GIF' | 'VIDEO' | 'AUDIO';
@@ -376,6 +394,12 @@ export function OverlayClient() {
     });
     socket.on('disconnect', () => setConnected(false));
     socket.on('streamos:error', () => setError('Link inválido ou revogado'));
+    socket.on('streamos:sync-request', () => {
+      socket.emit('streamos:sync-state', {
+        overlayVersion: '1',
+        attempts: knownPlaybackAttempts(),
+      });
+    });
     socket.on(
       'streamos:control',
       (control: { paused?: boolean; masterVolume?: number }) => {

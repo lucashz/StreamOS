@@ -52,7 +52,6 @@ export class LiveControlService {
   constructor(@Inject(PrismaClient) private readonly prisma: PrismaClient) {}
 
   async snapshot(actor: Actor) {
-    await this.recoverTimeout(actor.organizationId);
     const state = await this.ensureQueueState(actor.organizationId);
     const [
       activeItems,
@@ -69,16 +68,35 @@ export class LiveControlService {
         },
         orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
         take: 200,
+        include: {
+          playbackAttempts: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          },
+        },
       }),
       this.prisma.liveQueueItem.findMany({
         where: {
           organizationId: actor.organizationId,
           status: {
-            in: ['COMPLETED', 'MEDIA_FAILED', 'SKIPPED', 'FAILED', 'EXPIRED'],
+            in: [
+              'COMPLETED',
+              'MEDIA_FAILED',
+              'SKIPPED',
+              'FAILED',
+              'EXPIRED',
+              'NEEDS_REVIEW',
+            ],
           },
         },
         orderBy: { createdAt: 'desc' },
         take: 100,
+        include: {
+          playbackAttempts: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          },
+        },
       }),
       this.prisma.liveQueueAction.findMany({
         where: { organizationId: actor.organizationId },
@@ -640,6 +658,14 @@ export class LiveControlService {
               ),
             }
           : {}),
+        ...(target === 'QUEUED'
+          ? {
+              startedAt: null,
+              finishedAt: null,
+              playbackDeadline: null,
+              failureReason: null,
+            }
+          : {}),
         ...(TERMINAL.includes(target)
           ? {
               finishedAt: now,
@@ -757,7 +783,7 @@ export class LiveControlService {
       COMPLETE: 'COMPLETED',
       COMPLETE_AND_NEXT: 'COMPLETED',
       SKIP: 'SKIPPED',
-      REPLAY: 'PLAYING',
+      REPLAY: 'QUEUED',
       CANCEL: 'SKIPPED',
       BLOCK: 'SKIPPED',
       FAIL: 'FAILED',
@@ -765,34 +791,6 @@ export class LiveControlService {
     const value = map[action];
     if (!value) throw new BadRequestException('Ação inválida');
     return value;
-  }
-
-  private async recoverTimeout(organizationId: string) {
-    const state = await this.prisma.liveQueueState.findUnique({
-      where: { organizationId },
-      select: { paused: true },
-    });
-    if (state?.paused) return;
-    const expired = await this.prisma.liveQueueItem.findMany({
-      where: {
-        organizationId,
-        status: 'PLAYING',
-        playbackDeadline: { lt: new Date() },
-      },
-    });
-    for (const item of expired) {
-      const key = `system:timeout:${item.id}:${item.startedAt?.toISOString() ?? 'unknown'}`;
-      await this.command(
-        { organizationId, userId: '', role: 'OWNER' },
-        {
-          action: 'FAIL',
-          itemId: item.id,
-          reason: 'Tempo de reprodução excedido',
-          idempotencyKey: key,
-          origin: 'SYSTEM',
-        },
-      );
-    }
   }
 
   private async owned(

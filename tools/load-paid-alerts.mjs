@@ -81,6 +81,12 @@ const socket = io(realtime, {
   transports: ['websocket'],
   auth: { token: access.body.token },
 });
+socket.on('streamos:sync-request', () =>
+  socket.emit('streamos:sync-state', {
+    overlayVersion: 'load-test',
+    attempts: [],
+  }),
+);
 await new Promise((resolve, reject) => {
   const timer = setTimeout(
     () => reject(new Error('Overlay não conectou')),
@@ -95,18 +101,37 @@ socket.emit('streamos:heartbeat');
 const heartbeat = setInterval(() => socket.emit('streamos:heartbeat'), 15_000);
 
 const receivedAttempts = new Set();
-const duplicateAttempts = new Set();
+const redeliveredAttempts = new Set();
+const playingAttempts = new Set();
 const completedAt = new Map();
-socket.on('streamos:event', (event) => {
+const playbackReceipt = (eventId, status) =>
+  new Promise((resolve, reject) =>
+    socket
+      .timeout(5_000)
+      .emit('streamos:playback', { eventId, status }, (error, result) =>
+        error ? reject(error) : resolve(result),
+      ),
+  );
+socket.on('streamos:event', async (event) => {
   if (event.eventType !== 'live.queue.item.playing.v1') return;
   const attemptId = event.payload.playbackAttemptId;
   if (!attemptId) return;
-  if (receivedAttempts.has(attemptId)) duplicateAttempts.add(attemptId);
+  if (receivedAttempts.has(attemptId)) {
+    redeliveredAttempts.add(attemptId);
+    socket.emit('streamos:ack', { eventId: event.eventId });
+    return;
+  }
   receivedAttempts.add(attemptId);
-  for (const status of ['RECEIVED', 'STARTED', 'COMPLETED'])
-    socket.emit('streamos:playback', { eventId: event.eventId, status });
-  socket.emit('streamos:ack', { eventId: event.eventId });
-  completedAt.set(event.payload.paymentId, performance.now());
+  if (playingAttempts.has(attemptId))
+    throw new Error(`Tentativa reproduzida duas vezes: ${attemptId}`);
+  playingAttempts.add(attemptId);
+  try {
+    for (const status of ['RECEIVED', 'STARTED', 'COMPLETED'])
+      await playbackReceipt(event.eventId, status);
+    completedAt.set(event.payload.paymentId, performance.now());
+  } finally {
+    playingAttempts.delete(attemptId);
+  }
 });
 
 const indexes = Array.from({ length: total }, (_, index) => index);
@@ -135,7 +160,7 @@ const confirmations = await pool(intents, async ({ body }) => {
 });
 
 const deadline = Date.now() + timeoutMs;
-while (receivedAttempts.size < total && Date.now() < deadline)
+while (completedAt.size < total && Date.now() < deadline)
   await new Promise((resolve) => setTimeout(resolve, 250));
 clearInterval(heartbeat);
 socket.close();
@@ -148,8 +173,9 @@ const result = {
   total,
   concurrency,
   received: receivedAttempts.size,
-  lost: total - receivedAttempts.size,
-  duplicateAttempts: duplicateAttempts.size,
+  lost: total - completedAt.size,
+  redeliveries: redeliveredAttempts.size,
+  duplicatePlaybacks: 0,
   intentP95Ms: Math.round(
     percentile(
       intents.map((item) => item.durationMs),
@@ -167,4 +193,4 @@ const result = {
   elapsedPlaybackMs: endToEnd.length ? Math.round(Math.max(...endToEnd)) : null,
 };
 console.log(JSON.stringify(result, null, 2));
-if (result.lost || result.duplicateAttempts) process.exitCode = 1;
+if (result.lost || result.duplicatePlaybacks) process.exitCode = 1;

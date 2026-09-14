@@ -4,6 +4,7 @@ export const TERMINAL_LIVE_STATUSES = [
   'SKIPPED',
   'FAILED',
   'EXPIRED',
+  'NEEDS_REVIEW',
 ] as const;
 
 export const LIVE_OPERATOR_ROLES = ['OWNER', 'ADMIN', 'MODERATOR'] as const;
@@ -11,8 +12,15 @@ export const LIVE_QUEUE_MODES = ['BALANCED', 'VALUE', 'FIFO'] as const;
 export type LiveQueueMode = (typeof LIVE_QUEUE_MODES)[number];
 
 export const LIVE_TRANSITIONS: Readonly<Record<string, readonly string[]>> = {
-  QUEUED: ['COMPLETED', 'MEDIA_FAILED', 'SKIPPED', 'FAILED', 'EXPIRED'],
-  DISPATCHING: ['QUEUED'],
+  QUEUED: [
+    'COMPLETED',
+    'MEDIA_FAILED',
+    'SKIPPED',
+    'FAILED',
+    'EXPIRED',
+    'NEEDS_REVIEW',
+  ],
+  DISPATCHING: ['QUEUED', 'NEEDS_REVIEW'],
   PLAYING: [
     'QUEUED',
     'DISPATCHING',
@@ -26,6 +34,7 @@ export const LIVE_TRANSITIONS: Readonly<Record<string, readonly string[]>> = {
   SKIPPED: ['QUEUED', 'DISPATCHING', 'PLAYING'],
   FAILED: ['DISPATCHING', 'PLAYING'],
   EXPIRED: ['QUEUED', 'DISPATCHING'],
+  NEEDS_REVIEW: ['DISPATCHING', 'PLAYING'],
 };
 
 export function canOperateLiveQueue(role: string) {

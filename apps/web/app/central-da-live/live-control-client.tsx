@@ -18,6 +18,14 @@ type QueueItem = {
   startedAt?: string;
   failureReason?: string;
   metadata?: Record<string, unknown>;
+  playbackAttempts?: Array<{
+    id: string;
+    status: string;
+    attemptNumber: number;
+    dispatchCount: number;
+    lastError?: string;
+    updatedAt: string;
+  }>;
 };
 type Snapshot = {
   state: {
@@ -67,6 +75,7 @@ const labels: Record<string, string> = {
   SKIPPED: 'Pulado',
   FAILED: 'Falhou',
   EXPIRED: 'Expirado',
+  NEEDS_REVIEW: 'Precisa de revisão',
 };
 const kindLabels: Record<string, string> = {
   ALERT: 'Donate',
@@ -1036,6 +1045,16 @@ export function LiveControlClient({ compact = false }: { compact?: boolean }) {
                 <small>
                   {item.content ?? kindLabels[item.kind] ?? item.kind}
                 </small>
+                {item.status === 'NEEDS_REVIEW' &&
+                item.playbackAttempts?.[0] ? (
+                  <small>
+                    Tentativa {item.playbackAttempts[0].attemptNumber} ·{' '}
+                    {item.playbackAttempts[0].dispatchCount} envio(s)
+                    {item.playbackAttempts[0].lastError
+                      ? ` · ${item.playbackAttempts[0].lastError}`
+                      : ''}
+                  </small>
+                ) : null}
               </div>
               <span className={`queue-status ${item.status.toLowerCase()}`}>
                 {labels[item.status]}
@@ -1043,9 +1062,13 @@ export function LiveControlClient({ compact = false }: { compact?: boolean }) {
               <strong className="queue-amount">{itemMoney(item)}</strong>
               {canOperate ? (
                 <div className="queue-actions">
-                  {['COMPLETED', 'SKIPPED', 'FAILED', 'MEDIA_FAILED'].includes(
-                    item.status,
-                  ) ? (
+                  {[
+                    'COMPLETED',
+                    'SKIPPED',
+                    'FAILED',
+                    'MEDIA_FAILED',
+                    'NEEDS_REVIEW',
+                  ].includes(item.status) ? (
                     <button
                       title="Repetir alerta"
                       aria-label="Repetir alerta"
@@ -1053,6 +1076,31 @@ export function LiveControlClient({ compact = false }: { compact?: boolean }) {
                     >
                       ↻
                     </button>
+                  ) : null}
+                  {item.status === 'NEEDS_REVIEW' ? (
+                    <>
+                      <button
+                        title="Marcar como reproduzido"
+                        aria-label="Marcar como reproduzido"
+                        onClick={() => void command('COMPLETE', item.id)}
+                      >
+                        ✓
+                      </button>
+                      <button
+                        title="Pular"
+                        aria-label="Pular"
+                        onClick={() => void command('SKIP', item.id)}
+                      >
+                        ⇥
+                      </button>
+                      <button
+                        title="Cancelar"
+                        aria-label="Cancelar"
+                        onClick={() => void command('CANCEL', item.id)}
+                      >
+                        ×
+                      </button>
+                    </>
                   ) : null}
                   <button
                     className={

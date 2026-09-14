@@ -1,0 +1,2 @@
+ALTER TABLE "PlaybackAttempt"
+  ADD COLUMN "dispatchCount" INTEGER NOT NULL DEFAULT 1;

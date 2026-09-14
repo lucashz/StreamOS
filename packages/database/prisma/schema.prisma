@@ -517,6 +517,9 @@ model OverlayChannel {
   connectedAt      DateTime?
   lastHeartbeatAt  DateTime?
   disconnectedAt   DateTime?
+  connectionId     String?
+  synchronizedAt   DateTime?
+  overlayVersion   String?
   widgetId         String?                  @unique @db.Uuid
   organization     Organization             @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   widget           Widget?                  @relation(fields: [widgetId], references: [id], onDelete: Restrict)
@@ -1043,6 +1046,7 @@ model PlaybackAttempt {
   sequenceNumber BigInt
   status         PlaybackAttemptStatus    @default(CREATED)
   attemptNumber  Int
+  dispatchCount  Int                      @default(1)
   connectionId   String?
   dispatchedAt   DateTime?
   receivedAt     DateTime?
@@ -1052,6 +1056,7 @@ model PlaybackAttempt {
   nextAttemptAt  DateTime?
   lastAttemptAt  DateTime?
   lastError      String?
+  lastEventId    String?                  @db.Uuid
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @updatedAt
   organization   Organization             @relation(fields: [organizationId], references: [id], onDelete: Restrict)
@@ -1060,7 +1065,7 @@ model PlaybackAttempt {
   receipts       OverlayPlaybackReceipt[]
 
   @@unique([queueItemId, attemptNumber])
-  @@unique([organizationId, sequenceNumber])
+  @@index([organizationId, sequenceNumber])
   @@index([organizationId, status, nextAttemptAt])
   @@index([queueItemId, createdAt])
 }

@@ -4,7 +4,7 @@ Atualizado em: 13/09/2026
 
 ## Ciclo atual
 
-Migração incremental da fila durável de alertas pagos em andamento. Auditoria e fundação persistente concluídas.
+Fila durável de alertas pagos implementada e em validação de resiliência. Reenvio, reconciliação do Browser Source, revisão manual e timeouts por etapa estão concluídos.
 
 ## Decisões vigentes
 
@@ -65,6 +65,12 @@ Migração incremental da fila durável de alertas pagos em andamento. Auditoria
 - Worker cria `PlaybackAttempt` atomicamente com o evento de reprodução para alertas, SongPix e VideoPix; Gateway liga entrega e recibos à tentativa.
 - Browser Source persiste o estado por `playbackAttemptId` e não reinicia uma tentativa conhecida após refresh ou reconexão.
 - Carga de 100 pagamentos com concorrência 20: 100 alertas entregues, zero perdidos e zero duplicados; relatório em `docs/LOAD_TEST_PAID_ALERTS.md`.
+- Tentativas sem recibo usam o mesmo `playbackAttemptId` nos intervalos persistentes de 2, 5, 10 e 30 segundos; depois seguem para `NEEDS_REVIEW`.
+- Depois de `RECEIVED`, a fila aguarda até 10 segundos pelo início e não reproduz novamente; depois de `STARTED`, usa a duração real da mídia mais 15 segundos.
+- Reconexões sincronizam o estado local antes de receber novos eventos. Reprodução iniciada sem conclusão confirmada vai para revisão e nunca reinicia automaticamente.
+- Central da Live exibe tentativa, quantidade de envios e último erro, com ações auditadas para tentar novamente, marcar como reproduzido, pular e cancelar.
+- Teste de falhas aprovado para perda antes de `RECEIVED`, reconexão depois de `STARTED`, repetição manual com nova tentativa, OBS offline e reinício do Redis.
+- Concorrência com dois workers e 20 pagamentos: 20 concluídos, zero perdas e zero reproduções duplicadas; uma reentrega técnica foi absorvida pela idempotência.
 - Confirmação financeira concorrente, ordenação dos recibos e starvation causada por backlogs offline foram corrigidas durante a carga.
 - Reprodução automática e remoção visual do alerta aprovadas no navegador; controle completo da fila aprovado no teste E2E.
 - Moderação: política automática antes da cobrança e TTS automático aprovados.
@@ -79,6 +85,7 @@ Migração incremental da fila durável de alertas pagos em andamento. Auditoria
 
 ## Próxima ação
 
-1. Obter aprovação visual humana das capturas de Widgets, Carteira e Configurações.
-2. Decidir se o staging manterá saques desativados ou terá um ambiente controlado com `PAYOUTS_ENABLED=true`.
-3. Após aprovação, executar o procedimento específico de staging.
+1. Automatizar os cenários restantes de reinício do Worker e do Gateway durante uma tentativa ativa.
+2. Obter aprovação visual humana das capturas de Widgets, Carteira e Configurações.
+3. Decidir se o staging manterá saques desativados ou terá um ambiente controlado com `PAYOUTS_ENABLED=true`.
+4. Após aprovação, executar o procedimento específico de staging.

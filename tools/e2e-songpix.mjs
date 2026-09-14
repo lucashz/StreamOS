@@ -155,6 +155,12 @@ const unifiedSocket = io(realtime, {
   transports: ['websocket'],
   auth: { token: unified.body.token },
 });
+unifiedSocket.on('streamos:sync-request', () =>
+  unifiedSocket.emit('streamos:sync-state', {
+    overlayVersion: 'e2e',
+    attempts: [],
+  }),
+);
 await new Promise((resolve, reject) => {
   unifiedSocket.once('connect', resolve);
   unifiedSocket.once('connect_error', reject);

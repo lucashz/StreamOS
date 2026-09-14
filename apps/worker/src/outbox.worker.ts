@@ -15,7 +15,6 @@ import {
 } from 'node:crypto';
 import {
   DEFAULT_ALERT_MAX_AGE_SECONDS,
-  immediatePlaybackTimeoutSeconds,
   shouldExpireQueuedAlert,
 } from './live-queue.policy';
 
@@ -136,9 +135,94 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
     }
     await this.recoverPendingStreamEntries();
     await this.dispatchStreamEntries();
+    await this.recoverPlaybackAttempts();
     await this.recoverExpiredPlayback();
     await this.advanceUnifiedQueues();
     await this.deliverWebhooks();
+  }
+
+  private async recoverPlaybackAttempts() {
+    const due = await this.prisma.playbackAttempt.findMany({
+      where: {
+        status: { in: ['DISPATCHED', 'RECEIVED'] },
+        nextAttemptAt: { lte: new Date() },
+      },
+      include: { queueItem: true },
+      orderBy: { nextAttemptAt: 'asc' },
+      take: 100,
+    });
+    for (const attempt of due) {
+      if (attempt.status === 'RECEIVED' || attempt.dispatchCount >= 4) {
+        await this.prisma.$transaction(async (tx) => {
+          const changed = await tx.playbackAttempt.updateMany({
+            where: {
+              id: attempt.id,
+              status: attempt.status,
+              nextAttemptAt: { lte: new Date() },
+            },
+            data: {
+              status: 'NEEDS_REVIEW',
+              nextAttemptAt: null,
+              lastError:
+                attempt.status === 'RECEIVED'
+                  ? 'Overlay recebeu, mas não confirmou o início'
+                  : 'Overlay não confirmou o recebimento',
+            },
+          });
+          if (!changed.count) return;
+          await tx.liveQueueItem.updateMany({
+            where: { id: attempt.queueItemId, status: 'DISPATCHING' },
+            data: {
+              status: 'NEEDS_REVIEW',
+              failureReason:
+                attempt.status === 'RECEIVED'
+                  ? 'Recebido pelo OBS sem confirmação de início'
+                  : 'Entrega ao OBS sem confirmação',
+            },
+          });
+        });
+        continue;
+      }
+      if (!attempt.lastEventId) continue;
+      const previous = await this.prisma.outboxEvent.findUnique({
+        where: { id: attempt.lastEventId },
+      });
+      if (!previous) continue;
+      const nextDispatchCount = attempt.dispatchCount + 1;
+      const delaySeconds = [2, 5, 10, 30][nextDispatchCount - 1] ?? 30;
+      await this.prisma.$transaction(async (tx) => {
+        const claimed = await tx.playbackAttempt.updateMany({
+          where: {
+            id: attempt.id,
+            status: 'DISPATCHED',
+            dispatchCount: attempt.dispatchCount,
+            nextAttemptAt: { lte: new Date() },
+          },
+          data: {
+            dispatchCount: nextDispatchCount,
+            lastAttemptAt: new Date(),
+            nextAttemptAt: new Date(Date.now() + delaySeconds * 1000),
+          },
+        });
+        if (!claimed.count) return;
+        const resent = await tx.outboxEvent.create({
+          data: {
+            organizationId: previous.organizationId,
+            eventType: previous.eventType,
+            eventVersion: previous.eventVersion,
+            aggregateId: previous.aggregateId,
+            correlationId: previous.correlationId,
+            causationId: previous.id,
+            payload: previous.payload as Prisma.InputJsonValue,
+            occurredAt: new Date(),
+          },
+        });
+        await tx.playbackAttempt.update({
+          where: { id: attempt.id },
+          data: { lastEventId: resent.id },
+        });
+      });
+    }
   }
 
   private async recoverExpiredPlayback() {
@@ -158,23 +242,21 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
             playbackDeadline: { lt: new Date() },
           },
           data: {
-            status: 'FAILED',
+            status: 'NEEDS_REVIEW',
             finishedAt: new Date(),
             playbackDeadline: null,
-            failureReason: 'Overlay não confirmou o fim da reprodução',
+            failureReason: 'Reprodução iniciada sem confirmação de fim',
           },
         });
         if (!recovered.count) return;
-        if (item.kind === 'SONG_PIX')
-          await tx.songRequest.updateMany({
-            where: { id: item.sourceId, status: 'PLAYING' },
-            data: { status: 'UNAVAILABLE' },
-          });
-        if (item.kind === 'VIDEO_PIX')
-          await tx.videoRequest.updateMany({
-            where: { id: item.sourceId, status: 'PLAYING' },
-            data: { status: 'UNAVAILABLE' },
-          });
+        await tx.playbackAttempt.updateMany({
+          where: { queueItemId: item.id, status: 'STARTED' },
+          data: {
+            status: 'NEEDS_REVIEW',
+            nextAttemptAt: null,
+            lastError: 'Reprodução iniciada sem confirmação de fim',
+          },
+        });
         await tx.outboxEvent.create({
           data: {
             organizationId: item.organizationId,
@@ -186,7 +268,7 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
             payload: {
               queueItemId: item.id,
               kind: item.kind,
-              status: 'FAILED',
+              status: 'NEEDS_REVIEW',
               reason: 'PLAYBACK_TIMEOUT',
             },
             occurredAt: new Date(),
@@ -348,6 +430,7 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
             some: {
               widgetId: null,
               revokedAt: null,
+              synchronizedAt: { not: null },
               lastHeartbeatAt: { gte: new Date(now.getTime() - 45_000) },
             },
           },
@@ -377,6 +460,7 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
               organizationId: candidate.organizationId,
               widgetId: null,
               revokedAt: null,
+              synchronizedAt: { not: null },
               lastHeartbeatAt: { gte: new Date(Date.now() - 45_000) },
             },
           }),
@@ -386,7 +470,7 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
           this.prisma.liveQueueItem.count({
             where: {
               organizationId: candidate.organizationId,
-              status: 'PLAYING',
+              status: { in: ['DISPATCHING', 'PLAYING'] },
             },
           }),
         ]);
@@ -435,32 +519,17 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
           const claimed = await tx.liveQueueItem.updateMany({
             where: { id: candidate.id, status: 'QUEUED' },
             data: {
-              status: 'PLAYING',
-              startedAt: new Date(),
-              playbackDeadline: new Date(
-                Date.now() +
-                  immediatePlaybackTimeoutSeconds(
-                    state?.playbackTimeoutSeconds ?? 120,
-                  ) *
-                    1000,
-              ),
+              status: 'DISPATCHING',
+              startedAt: null,
+              playbackDeadline: null,
             },
           });
           if (!claimed.count) return false;
-          await tx.playbackAttempt.create({
-            data: {
-              id: playbackAttemptId,
-              organizationId: candidate.organizationId,
-              queueItemId: candidate.id,
-              sequenceNumber: candidate.sequenceNumber,
-              status: 'DISPATCHED',
-              attemptNumber: 1,
-              dispatchedAt: new Date(),
-              lastAttemptAt: new Date(),
-              nextAttemptAt: new Date(Date.now() + 5_000),
-            },
+          const previousAttempt = await tx.playbackAttempt.aggregate({
+            where: { queueItemId: candidate.id },
+            _max: { attemptNumber: true },
           });
-          await tx.outboxEvent.create({
+          const event = await tx.outboxEvent.create({
             data: {
               organizationId: candidate.organizationId,
               eventType: 'live.queue.item.playing.v1',
@@ -479,8 +548,32 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
                 title: candidate.title,
                 content: candidate.content,
                 supporterName: candidate.supporterName,
+                expectedDurationMs:
+                  candidate.kind === 'AUDIO'
+                    ? Number(
+                        (candidate.metadata as Prisma.JsonObject)
+                          .audioDurationSeconds ?? 0,
+                      ) * 1000
+                    : Number(
+                        (candidate.metadata as Prisma.JsonObject).durationMs ??
+                          8000,
+                      ),
               },
               occurredAt: new Date(),
+            },
+          });
+          await tx.playbackAttempt.create({
+            data: {
+              id: playbackAttemptId,
+              organizationId: candidate.organizationId,
+              queueItemId: candidate.id,
+              sequenceNumber: candidate.sequenceNumber,
+              status: 'DISPATCHED',
+              attemptNumber: (previousAttempt._max.attemptNumber ?? 0) + 1,
+              dispatchedAt: new Date(),
+              lastAttemptAt: new Date(),
+              nextAttemptAt: new Date(Date.now() + 2_000),
+              lastEventId: event.id,
             },
           });
           return true;
@@ -533,7 +626,7 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
       if (candidate.type === 'SONG_PIX') {
         const claimed = await tx.songRequest.updateMany({
           where: { id: candidate.request.id, status: 'QUEUED' },
-          data: { status: 'PLAYING' },
+          data: { status: 'DISPATCHING' },
         });
         if (!claimed.count) return;
         const queueClaimed = await tx.liveQueueItem.updateMany({
@@ -544,14 +637,16 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
           },
           data: {
             paymentId: payment?.id,
-            status: 'PLAYING',
-            startedAt: new Date(),
-            playbackDeadline: new Date(
-              Date.now() + candidate.request.durationSeconds * 1000 + 15_000,
-            ),
+            status: 'DISPATCHING',
+            startedAt: null,
+            playbackDeadline: null,
           },
         });
         if (!queueClaimed.count) return;
+        const previousAttempt = await tx.playbackAttempt.aggregate({
+          where: { queueItemId: candidate.queueItem.id },
+          _max: { attemptNumber: true },
+        });
         await tx.playbackAttempt.create({
           data: {
             id: playbackAttemptId,
@@ -559,13 +654,13 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
             queueItemId: candidate.queueItem.id,
             sequenceNumber: candidate.queueItem.sequenceNumber,
             status: 'DISPATCHED',
-            attemptNumber: 1,
+            attemptNumber: (previousAttempt._max.attemptNumber ?? 0) + 1,
             dispatchedAt: new Date(),
             lastAttemptAt: new Date(),
-            nextAttemptAt: new Date(Date.now() + 5_000),
+            nextAttemptAt: new Date(Date.now() + 2_000),
           },
         });
-        await tx.outboxEvent.create({
+        const event = await tx.outboxEvent.create({
           data: {
             organizationId: candidate.organizationId,
             eventType: 'song.started.v1',
@@ -587,14 +682,19 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
               artworkUrl: candidate.request.artworkUrl,
               playbackUrl: candidate.request.playbackUrl,
               status: 'PLAYING',
+              expectedDurationMs: candidate.request.durationSeconds * 1000,
             },
             occurredAt: new Date(),
           },
         });
+        await tx.playbackAttempt.update({
+          where: { id: playbackAttemptId },
+          data: { lastEventId: event.id },
+        });
       } else {
         const claimed = await tx.videoRequest.updateMany({
           where: { id: candidate.request.id, status: 'QUEUED' },
-          data: { status: 'PLAYING' },
+          data: { status: 'DISPATCHING' },
         });
         if (!claimed.count) return;
         const queueClaimed = await tx.liveQueueItem.updateMany({
@@ -605,14 +705,16 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
           },
           data: {
             paymentId: payment?.id,
-            status: 'PLAYING',
-            startedAt: new Date(),
-            playbackDeadline: new Date(
-              Date.now() + candidate.request.selectedSeconds * 1000 + 15_000,
-            ),
+            status: 'DISPATCHING',
+            startedAt: null,
+            playbackDeadline: null,
           },
         });
         if (!queueClaimed.count) return;
+        const previousAttempt = await tx.playbackAttempt.aggregate({
+          where: { queueItemId: candidate.queueItem.id },
+          _max: { attemptNumber: true },
+        });
         await tx.playbackAttempt.create({
           data: {
             id: playbackAttemptId,
@@ -620,13 +722,13 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
             queueItemId: candidate.queueItem.id,
             sequenceNumber: candidate.queueItem.sequenceNumber,
             status: 'DISPATCHED',
-            attemptNumber: 1,
+            attemptNumber: (previousAttempt._max.attemptNumber ?? 0) + 1,
             dispatchedAt: new Date(),
             lastAttemptAt: new Date(),
-            nextAttemptAt: new Date(Date.now() + 5_000),
+            nextAttemptAt: new Date(Date.now() + 2_000),
           },
         });
-        await tx.outboxEvent.create({
+        const event = await tx.outboxEvent.create({
           data: {
             organizationId: candidate.organizationId,
             eventType: 'video.started.v1',
@@ -648,9 +750,14 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
               selectedSeconds: candidate.request.selectedSeconds,
               supporterName: candidate.request.supporterName,
               status: 'PLAYING',
+              expectedDurationMs: candidate.request.selectedSeconds * 1000,
             },
             occurredAt: new Date(),
           },
+        });
+        await tx.playbackAttempt.update({
+          where: { id: playbackAttemptId },
+          data: { lastEventId: event.id },
         });
       }
     });

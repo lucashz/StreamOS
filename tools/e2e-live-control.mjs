@@ -83,11 +83,28 @@ const socket = io(realtime, {
   transports: ['websocket'],
   auth: { token: overlay.body.token },
 });
+socket.on('streamos:sync-request', () =>
+  socket.emit('streamos:sync-state', { overlayVersion: 'e2e', attempts: [] }),
+);
 await new Promise((resolve, reject) => {
   socket.once('connect', resolve);
   socket.once('connect_error', reject);
 });
 socket.emit('streamos:heartbeat');
+socket.on('streamos:event', async (event) => {
+  if (event.eventType !== 'live.queue.item.playing.v1') return;
+  for (const status of ['RECEIVED', 'STARTED']) {
+    await new Promise((resolve, reject) =>
+      socket
+        .timeout(5_000)
+        .emit(
+          'streamos:playback',
+          { eventId: event.eventId, status },
+          (error) => (error ? reject(error) : resolve()),
+        ),
+    );
+  }
+});
 
 const controlReceived = new Promise((resolve, reject) => {
   const timer = setTimeout(
@@ -165,10 +182,20 @@ const active = (
 ).body.items.find((item) => item.status === 'PLAYING');
 if (active) await command(cookie, 'COMPLETE', active.id);
 await command(cookie, 'REPLAY', playing.id);
-const replayed = (
+const queuedReplay = (
   await request('/dashboard/live-control', { headers: { cookie } })
 ).body.items.find((item) => item.id === playing.id);
-if (replayed.status !== 'PLAYING') throw new Error('Replay não iniciou');
+if (queuedReplay.status !== 'QUEUED')
+  throw new Error('Replay não voltou para a fila');
+await command(cookie, 'RESUME_QUEUE');
+const replayed = await eventually(async () => {
+  const snapshot = await request('/dashboard/live-control', {
+    headers: { cookie },
+  });
+  return snapshot.body.items.find(
+    (item) => item.id === playing.id && item.status === 'PLAYING',
+  );
+});
 
 await command(cookie, 'FLAG', playing.id, {
   reason: 'Sinalização E2E',

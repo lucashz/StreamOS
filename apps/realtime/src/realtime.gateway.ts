@@ -115,11 +115,110 @@ export class RealtimeGateway
     const now = new Date();
     await this.prisma.overlayChannel.update({
       where: { id: channel.id },
-      data: { connectedAt: now, lastHeartbeatAt: now, disconnectedAt: null },
+      data: {
+        connectedAt: now,
+        lastHeartbeatAt: now,
+        disconnectedAt: null,
+        connectionId: client.id,
+        synchronizedAt: null,
+      },
     });
     await client.join(this.room(channel.id));
     this.emitPresence(channel.organizationId);
-    await this.replay(client, channel.id);
+    client.emit('streamos:sync-request', { connectionId: client.id });
+  }
+
+  @SubscribeMessage('streamos:sync-state')
+  async synchronizeOverlay(
+    @ConnectedSocket() client: Socket,
+    @MessageBody()
+    body: {
+      overlayVersion?: string;
+      attempts?: Array<{ playbackAttemptId?: string; status?: string }>;
+    },
+  ) {
+    const data = client.data as {
+      overlayChannelId?: string;
+      organizationId?: string;
+      mode?: string;
+    };
+    if (
+      data.mode !== 'overlay' ||
+      !data.overlayChannelId ||
+      !data.organizationId
+    )
+      return { accepted: false };
+    const attempts = Array.isArray(body.attempts)
+      ? body.attempts.slice(-100)
+      : [];
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${data.organizationId!}))`;
+      for (const known of attempts) {
+        if (!known.playbackAttemptId) continue;
+        const attempt = await tx.playbackAttempt.findFirst({
+          where: {
+            id: known.playbackAttemptId,
+            organizationId: data.organizationId!,
+          },
+        });
+        if (!attempt) continue;
+        if (known.status === 'COMPLETED') {
+          await tx.playbackAttempt.update({
+            where: { id: attempt.id },
+            data: {
+              status: 'COMPLETED',
+              completedAt: attempt.completedAt ?? new Date(),
+              nextAttemptAt: null,
+            },
+          });
+          await tx.liveQueueItem.updateMany({
+            where: {
+              id: attempt.queueItemId,
+              status: { in: ['DISPATCHING', 'PLAYING'] },
+            },
+            data: {
+              status: 'COMPLETED',
+              finishedAt: new Date(),
+              playbackDeadline: null,
+            },
+          });
+          await tx.overlayDelivery.updateMany({
+            where: { playbackAttemptId: attempt.id, acknowledgedAt: null },
+            data: { acknowledgedAt: new Date() },
+          });
+        } else if (known.status === 'STARTED') {
+          await tx.playbackAttempt.update({
+            where: { id: attempt.id },
+            data: {
+              status: 'NEEDS_REVIEW',
+              nextAttemptAt: null,
+              lastError: 'Reconexão após início sem conclusão confirmada',
+            },
+          });
+          await tx.liveQueueItem.updateMany({
+            where: {
+              id: attempt.queueItemId,
+              status: { in: ['DISPATCHING', 'PLAYING'] },
+            },
+            data: {
+              status: 'NEEDS_REVIEW',
+              playbackDeadline: null,
+              failureReason: 'Reprodução ambígua após reconexão',
+            },
+          });
+        }
+      }
+      await tx.overlayChannel.update({
+        where: { id: data.overlayChannelId! },
+        data: {
+          synchronizedAt: new Date(),
+          connectionId: client.id,
+          overlayVersion: body.overlayVersion?.slice(0, 40) ?? 'unknown',
+        },
+      });
+    });
+    await this.replay(client, data.overlayChannelId);
+    return { accepted: true, connectionId: client.id };
   }
 
   async handleDisconnect(client: Socket) {
@@ -135,8 +234,12 @@ export class RealtimeGateway
     )
       return;
     await this.prisma.overlayChannel.updateMany({
-      where: { id: data.overlayChannelId },
-      data: { disconnectedAt: new Date() },
+      where: { id: data.overlayChannelId, connectionId: client.id },
+      data: {
+        disconnectedAt: new Date(),
+        synchronizedAt: null,
+        connectionId: null,
+      },
     });
     this.emitPresence(data.organizationId);
   }
@@ -250,8 +353,15 @@ export class RealtimeGateway
             data: {
               status: attemptStatus,
               connectionId: client.id,
-              ...(attemptStatus === 'RECEIVED' ? { receivedAt: now } : {}),
-              ...(attemptStatus === 'STARTED' ? { startedAt: now } : {}),
+              ...(attemptStatus === 'RECEIVED'
+                ? {
+                    receivedAt: now,
+                    nextAttemptAt: new Date(now.getTime() + 10_000),
+                  }
+                : {}),
+              ...(attemptStatus === 'STARTED'
+                ? { startedAt: now, nextAttemptAt: null }
+                : {}),
               ...(attemptStatus === 'COMPLETED'
                 ? { completedAt: now, nextAttemptAt: null }
                 : {}),
@@ -312,6 +422,10 @@ export class RealtimeGateway
                   : null;
         if (queueStatus) {
           const sourcePayload = sourceEvent.payload as Record<string, unknown>;
+          const rawDuration = Number(sourcePayload.expectedDurationMs ?? 8000);
+          const expectedDurationMs = Number.isFinite(rawDuration)
+            ? Math.max(1000, rawDuration)
+            : 8000;
           const queueItemId =
             typeof sourcePayload.queueItemId === 'string'
               ? sourcePayload.queueItemId
@@ -325,12 +439,17 @@ export class RealtimeGateway
               ],
               ...(['COMPLETED', 'MEDIA_FAILED', 'FAILED'].includes(queueStatus)
                 ? { status: { in: ['PLAYING', 'DISPATCHING'] } }
-                : {}),
+                : { status: 'DISPATCHING' }),
             },
             data: {
               status: queueStatus,
               ...(queueStatus === 'PLAYING'
-                ? { startedAt: now }
+                ? {
+                    startedAt: now,
+                    playbackDeadline: new Date(
+                      now.getTime() + expectedDurationMs + 15_000,
+                    ),
+                  }
                 : {
                     finishedAt: now,
                     playbackDeadline: null,
