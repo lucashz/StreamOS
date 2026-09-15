@@ -7,6 +7,20 @@ const realtime = (process.env.REALTIME_URL ?? 'http://localhost:3002').replace(
   /^ws/,
   'http',
 );
+const restartService = (service) =>
+  execFileSync(
+    'powershell',
+    [
+      '-NoProfile',
+      '-ExecutionPolicy',
+      'Bypass',
+      '-File',
+      'tools/restart-local-service.ps1',
+      '-Service',
+      service,
+    ],
+    { stdio: 'ignore' },
+  );
 
 async function request(path, options = {}) {
   const response = await fetch(`${api}${path}`, options);
@@ -117,8 +131,16 @@ async function pay(index) {
 
 let client = connect(access.body.token);
 await eventually(() => client.socket.connected);
+const replacedClient = client;
+client = connect(access.body.token);
+await eventually(() => client.socket.connected);
+await eventually(() => !replacedClient.socket.connected);
+replacedClient.close();
 await pay(1);
 const first = await eventually(() => client.events[0]);
+if (replacedClient.events.length)
+  throw new Error('Conexão substituída recebeu o alerta');
+restartService('worker');
 const resent = await eventually(
   () =>
     client.events.find(
@@ -142,6 +164,7 @@ const started = await eventually(() =>
 await receipt(client.socket, started.eventId, 'RECEIVED');
 await receipt(client.socket, started.eventId, 'STARTED');
 client.close();
+restartService('realtime');
 
 client = connect(access.body.token, [
   {
@@ -214,6 +237,9 @@ console.log(
   JSON.stringify(
     {
       result: 'ok',
+      singleActiveBrowserSource: replacedClient.events.length === 0,
+      recoveredAfterWorkerRestart: true,
+      reconciledAfterGatewayRestart: true,
       sameAttemptWasResent:
         first.payload.playbackAttemptId === resent.payload.playbackAttemptId,
       replayAfterStartedPrevented: true,

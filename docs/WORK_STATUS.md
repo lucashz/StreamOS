@@ -71,6 +71,8 @@ Fila durável de alertas pagos implementada e em validação de resiliência. Re
 - Central da Live exibe tentativa, quantidade de envios e último erro, com ações auditadas para tentar novamente, marcar como reproduzido, pular e cancelar.
 - Teste de falhas aprovado para perda antes de `RECEIVED`, reconexão depois de `STARTED`, repetição manual com nova tentativa, OBS offline e reinício do Redis.
 - Concorrência com dois workers e 20 pagamentos: 20 concluídos, zero perdas e zero reproduções duplicadas; uma reentrega técnica foi absorvida pela idempotência.
+- Apenas um Browser Source pode ficar ativo por canal: a conexão nova substitui a anterior de forma serializada e a entrega usa somente o `connectionId` eleito.
+- Reinício do Worker antes de `RECEIVED` preserva e reenvia a mesma tentativa; reinício do Gateway depois de `STARTED` reconcilia para revisão sem repetir a mídia.
 - Confirmação financeira concorrente, ordenação dos recibos e starvation causada por backlogs offline foram corrigidas durante a carga.
 - Reprodução automática e remoção visual do alerta aprovadas no navegador; controle completo da fila aprovado no teste E2E.
 - Moderação: política automática antes da cobrança e TTS automático aprovados.
@@ -85,7 +87,6 @@ Fila durável de alertas pagos implementada e em validação de resiliência. Re
 
 ## Próxima ação
 
-1. Automatizar os cenários restantes de reinício do Worker e do Gateway durante uma tentativa ativa.
-2. Obter aprovação visual humana das capturas de Widgets, Carteira e Configurações.
-3. Decidir se o staging manterá saques desativados ou terá um ambiente controlado com `PAYOUTS_ENABLED=true`.
-4. Após aprovação, executar o procedimento específico de staging.
+1. Finalizar a Central da Live, com foco em `NEEDS_REVIEW`, alerta atual, próximo alerta, fila extensa e mobile.
+2. Fechar os fluxos pagos e confirmar que cada pagamento materializa apenas um item financeiro e um item de fila.
+3. Tratar backlog e mensagens de erro antes do último ciclo visual.

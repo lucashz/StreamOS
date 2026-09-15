@@ -112,17 +112,32 @@ export class RealtimeGateway
     data.overlayChannelId = channel.id;
     data.organizationId = channel.organizationId;
     data.mode = 'overlay';
-    const now = new Date();
-    await this.prisma.overlayChannel.update({
-      where: { id: channel.id },
-      data: {
-        connectedAt: now,
-        lastHeartbeatAt: now,
-        disconnectedAt: null,
-        connectionId: client.id,
-        synchronizedAt: null,
-      },
+    const previousConnectionId = await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw(
+        Prisma.sql`SELECT pg_advisory_xact_lock(hashtext(${`overlay:${channel.id}`}))`,
+      );
+      const current = await tx.overlayChannel.findUnique({
+        where: { id: channel.id },
+        select: { connectionId: true },
+      });
+      const now = new Date();
+      await tx.overlayChannel.update({
+        where: { id: channel.id },
+        data: {
+          connectedAt: now,
+          lastHeartbeatAt: now,
+          disconnectedAt: null,
+          connectionId: client.id,
+          synchronizedAt: null,
+        },
+      });
+      return current?.connectionId;
     });
+    if (previousConnectionId && previousConnectionId !== client.id) {
+      const previous = this.server.sockets.sockets.get(previousConnectionId);
+      previous?.emit('streamos:error', { code: 'connection_replaced' });
+      previous?.disconnect(true);
+    }
     await client.join(this.room(channel.id));
     this.emitPresence(channel.organizationId);
     client.emit('streamos:sync-request', { connectionId: client.id });
@@ -148,6 +163,10 @@ export class RealtimeGateway
       !data.organizationId
     )
       return { accepted: false };
+    const ownsChannel = await this.prisma.overlayChannel.count({
+      where: { id: data.overlayChannelId, connectionId: client.id },
+    });
+    if (!ownsChannel) return { accepted: false, reason: 'connection_replaced' };
     const attempts = Array.isArray(body.attempts)
       ? body.attempts.slice(-100)
       : [];
@@ -253,10 +272,12 @@ export class RealtimeGateway
     };
     if (data.mode !== 'overlay' || !data.overlayChannelId)
       return { accepted: false };
-    await this.prisma.overlayChannel.update({
-      where: { id: data.overlayChannelId },
+    const updated = await this.prisma.overlayChannel.updateMany({
+      where: { id: data.overlayChannelId, connectionId: client.id },
       data: { lastHeartbeatAt: new Date(), disconnectedAt: null },
     });
+    if (!updated.count)
+      return { accepted: false, reason: 'connection_replaced' };
     if (data.organizationId) this.emitPresence(data.organizationId);
     return { accepted: true };
   }
@@ -594,7 +615,7 @@ export class RealtimeGateway
               },
             },
           });
-          if (existing) return null;
+          if (existing) return { sequence: existing.sequence };
           const reserved = await tx.overlayChannel.update({
             where: { id: channel.id },
             data: { nextSequence: { increment: 1 } },
@@ -617,9 +638,17 @@ export class RealtimeGateway
         if (
           error instanceof Prisma.PrismaClientKnownRequestError &&
           error.code === 'P2002'
-        )
-          continue;
-        throw error;
+        ) {
+          delivery = await this.prisma.overlayDelivery.findUnique({
+            where: {
+              overlayChannelId_eventId: {
+                overlayChannelId: channel.id,
+                eventId: event.eventId,
+              },
+            },
+            select: { sequence: true },
+          });
+        } else throw error;
       }
       if (!delivery) continue;
       const compositeWidget = channel.widget
@@ -670,7 +699,15 @@ export class RealtimeGateway
         : presentation
           ? { ...presentation, widgetType: 'ALERT' }
           : { widgetType: 'ALERT', config: {} };
-      this.server.to(this.room(channel.id)).emit('streamos:event', {
+      const activeConnection = await this.prisma.overlayChannel.findUnique({
+        where: { id: channel.id },
+        select: { connectionId: true, synchronizedAt: true },
+      });
+      const activeClient =
+        activeConnection?.connectionId && activeConnection.synchronizedAt
+          ? this.server.sockets.sockets.get(activeConnection.connectionId)
+          : undefined;
+      activeClient?.emit('streamos:event', {
         ...event,
         presentation: widgetPresentation,
         sequence: delivery.sequence.toString(),
