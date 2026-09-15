@@ -158,6 +158,7 @@
   font-size: 12px;
 }
 .live-now-card,
+.live-review-section,
 .live-queue-section,
 .live-history {
   padding: 22px;
@@ -173,6 +174,49 @@
     rgba(20, 24, 34, 0.95)
   );
   border-color: rgba(169, 140, 255, 0.35);
+}
+.live-review-section {
+  border-color: rgba(245, 158, 11, 0.42);
+  background: rgba(245, 158, 11, 0.055);
+}
+.live-review-section .section-heading p {
+  max-width: 680px;
+  margin: 7px 0 0;
+  color: var(--muted);
+}
+.live-review-list {
+  display: grid;
+  gap: 10px;
+}
+.live-review-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  padding: 16px;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 12px;
+  background: rgba(8, 10, 15, 0.5);
+}
+.review-reason {
+  overflow-wrap: anywhere;
+  color: #fcd34d;
+  font-size: 13px;
+}
+.review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.review-actions button {
+  min-height: 40px;
+  margin: 0;
+  padding: 0 13px;
+}
+.review-actions .danger-action {
+  color: #fb7185;
+  border-color: rgba(251, 113, 133, 0.35);
 }
 .live-item-heading,
 .queue-copy > div {
@@ -214,6 +258,31 @@
 .empty-live span,
 .queue-empty {
   color: var(--muted);
+}
+.live-next-preview {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.live-next-preview > span,
+.live-next-preview small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.live-next-preview > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+.live-next-preview strong,
+.live-next-preview small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .live-actions,
 .queue-actions {
@@ -2277,6 +2346,21 @@
   .queue-settings {
     align-items: flex-start;
     flex-direction: column;
+  }
+  .live-review-item {
+    grid-template-columns: 1fr;
+  }
+  .review-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    justify-content: stretch;
+  }
+  .review-actions button {
+    width: 100%;
+  }
+  .live-next-preview {
+    grid-template-columns: 1fr;
+    gap: 7px;
   }
 }
 * {

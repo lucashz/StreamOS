@@ -338,8 +338,14 @@ export function LiveControlClient({ compact = false }: { compact?: boolean }) {
       ) ?? [],
     [data, current],
   );
+  const next = pending[0];
+  const reviewItems =
+    data?.items.filter((item) => item.status === 'NEEDS_REVIEW') ?? [];
   const history =
-    data?.items.filter((item) => !activeStatuses.includes(item.status)) ?? [];
+    data?.items.filter(
+      (item) =>
+        !activeStatuses.includes(item.status) && item.status !== 'NEEDS_REVIEW',
+    ) ?? [];
   const sessionHistory = data?.activeSession
     ? history.filter((item) => item.liveSessionId === data.activeSession?.id)
     : history;
@@ -584,6 +590,92 @@ export function LiveControlClient({ compact = false }: { compact?: boolean }) {
         </section>
       ) : null}
 
+      {!compact && reviewItems.length ? (
+        <section className="live-review-section" aria-labelledby="review-title">
+          <div className="section-heading">
+            <div>
+              <span className="section-kicker">Ação necessária</span>
+              <h2 id="review-title">Alertas que precisam de revisão</h2>
+              <p>
+                A reprodução ficou incerta. Confira o que aconteceu antes de
+                liberar outra tentativa.
+              </p>
+            </div>
+            <span className="queue-status needs_review">
+              {reviewItems.length}{' '}
+              {reviewItems.length === 1
+                ? 'alerta pendente'
+                : 'alertas pendentes'}
+            </span>
+          </div>
+          <div className="live-review-list">
+            {reviewItems.map((item) => {
+              const attempt = item.playbackAttempts?.[0];
+              return (
+                <article className="live-review-item" key={item.id}>
+                  <div className="queue-copy">
+                    <div>
+                      <span className={`kind-badge ${item.kind.toLowerCase()}`}>
+                        {kindLabels[item.kind] ?? item.kind}
+                      </span>
+                      <span className="queue-status needs_review">
+                        Precisa de revisão
+                      </span>
+                    </div>
+                    <strong>
+                      {item.title ?? item.content ?? 'Alerta sem título'}
+                    </strong>
+                    <small>
+                      {item.supporterName ?? 'Apoiador'} · {itemMoney(item)}
+                    </small>
+                    <span className="review-reason">
+                      {attempt?.lastError ??
+                        item.failureReason ??
+                        'O OBS não confirmou o fim da reprodução.'}
+                    </span>
+                    <small>
+                      Tentativa {attempt?.attemptNumber ?? 1} ·{' '}
+                      {attempt?.dispatchCount ?? 1}{' '}
+                      {(attempt?.dispatchCount ?? 1) === 1 ? 'envio' : 'envios'}
+                    </small>
+                  </div>
+                  {canOperate ? (
+                    <div className="review-actions">
+                      <button
+                        className="primary-button"
+                        disabled={busy}
+                        onClick={() => void command('REPLAY', item.id)}
+                      >
+                        Tentar novamente
+                      </button>
+                      <button
+                        disabled={busy}
+                        onClick={() => void command('COMPLETE', item.id)}
+                      >
+                        Marcar como reproduzido
+                      </button>
+                      <button
+                        disabled={busy}
+                        onClick={() => void command('SKIP', item.id)}
+                      >
+                        Pular
+                      </button>
+                      <button
+                        className="danger-action"
+                        disabled={busy}
+                        onClick={() => void command('CANCEL', item.id)}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  ) : null}
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
       <section className="live-now-card">
         <div className="section-heading">
           <div>
@@ -703,6 +795,20 @@ export function LiveControlClient({ compact = false }: { compact?: boolean }) {
             <span>Inicie o próximo item ou ative o avanço automático.</span>
           </div>
         )}
+        <div className="live-next-preview">
+          <span>Próximo alerta</span>
+          {next ? (
+            <div>
+              <strong>{next.title ?? next.content ?? 'Incentivo'}</strong>
+              <small>
+                {next.supporterName ?? 'Apoiador'} · {itemMoney(next)} ·{' '}
+                {shortDuration(itemDuration(next))}
+              </small>
+            </div>
+          ) : (
+            <strong>A fila está vazia</strong>
+          )}
+        </div>
       </section>
 
       <section className="live-queue-section">

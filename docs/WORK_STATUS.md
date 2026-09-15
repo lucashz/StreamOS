@@ -4,7 +4,7 @@ Atualizado em: 13/09/2026
 
 ## Ciclo atual
 
-Fila durável de alertas pagos implementada e em validação de resiliência. Reenvio, reconciliação do Browser Source, revisão manual e timeouts por etapa estão concluídos.
+Central da Live concluída após o fechamento da fila durável e dos testes de resiliência.
 
 ## Decisões vigentes
 
@@ -73,6 +73,8 @@ Fila durável de alertas pagos implementada e em validação de resiliência. Re
 - Concorrência com dois workers e 20 pagamentos: 20 concluídos, zero perdas e zero reproduções duplicadas; uma reentrega técnica foi absorvida pela idempotência.
 - Apenas um Browser Source pode ficar ativo por canal: a conexão nova substitui a anterior de forma serializada e a entrega usa somente o `connectionId` eleito.
 - Reinício do Worker antes de `RECEIVED` preserva e reenvia a mesma tentativa; reinício do Gateway depois de `STARTED` reconcilia para revisão sem repetir a mídia.
+- Central da Live separa alertas incertos do histórico, mostra o motivo do bloqueio, tentativa, número de envios e quatro ações operacionais com texto claro.
+- O card de reprodução mostra sempre o próximo alerta, apoiador, valor e duração; conteúdo longo usa truncamento controlado e o layout passa para uma coluna no celular.
 - Confirmação financeira concorrente, ordenação dos recibos e starvation causada por backlogs offline foram corrigidas durante a carga.
 - Reprodução automática e remoção visual do alerta aprovadas no navegador; controle completo da fila aprovado no teste E2E.
 - Moderação: política automática antes da cobrança e TTS automático aprovados.
@@ -87,6 +89,6 @@ Fila durável de alertas pagos implementada e em validação de resiliência. Re
 
 ## Próxima ação
 
-1. Finalizar a Central da Live, com foco em `NEEDS_REVIEW`, alerta atual, próximo alerta, fila extensa e mobile.
-2. Fechar os fluxos pagos e confirmar que cada pagamento materializa apenas um item financeiro e um item de fila.
-3. Tratar backlog e mensagens de erro antes do último ciclo visual.
+1. Fechar os fluxos pagos e confirmar que cada pagamento materializa apenas um item financeiro e um item de fila.
+2. Tratar backlog por organização e mensagens de erro antes do último ciclo visual.
+3. Executar o fechamento técnico e a validação ampla antes de staging.
