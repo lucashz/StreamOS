@@ -179,3 +179,53 @@ test('revisão visual com widgets e recebíveis reais, conteúdo longo e modal',
   await page.getByRole('button', { name: 'Tentar novamente' }).click();
   await expect(page.locator('.managed-widget-card')).toHaveCount(2);
 });
+
+test('modal da contribuição encerra no envio ao overlay e fecha pelo cabeçalho', async ({
+  page,
+}, info) => {
+  const supporter = `Apoiador modal ${info.project.name}`;
+  const registration = await page.request.post(`${api}/auth/register`, {
+    data: {
+      email: `modal-${Date.now()}-${info.project.name}@streamos.local`,
+      password: 'StreamOS-Design-123!',
+      displayName: 'Teste do modal',
+      acceptTerms: true,
+    },
+  });
+  expect(registration.ok()).toBeTruthy();
+  const account = await registration.json();
+  const slug = account.memberships[0].organization.creatorProfile.slug;
+  expect(
+    (
+      await page.request.put(`${api}/dashboard/onboarding`, {
+        data: {
+          displayName: 'Teste do modal',
+          slug,
+          minimumContributionInCents: 100,
+          isPublished: true,
+        },
+      })
+    ).ok(),
+  ).toBeTruthy();
+  const payment = await page.request.post(
+    `${api}/public/creators/${slug}/payment-intents`,
+    { data: { amountInCents: 500, supporterName: supporter } },
+  );
+  expect(payment.ok()).toBeTruthy();
+  expect(
+    (
+      await page.request.post(
+        `${api}/mock/payment-intents/${(await payment.json()).id}/confirm`,
+      )
+    ).ok(),
+  ).toBeTruthy();
+
+  await page.goto('/contribuicoes');
+  await page.getByRole('button', { name: new RegExp(supporter) }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText('Enviado ao overlay')).toBeVisible();
+  await expect(dialog.getByText('Reprodução no OBS')).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Fechar' }).click();
+  await expect(dialog).toHaveCount(0);
+});

@@ -26,6 +26,7 @@ Primeiro ciclo de cores e CSS de Widgets concluído.
 
 ## Validações já registradas
 
+- Contribuições: o rastreamento visual termina em “Enviado ao overlay”; o estado de reprodução permanece interno e o botão de fechar do modal foi alinhado e validado em 360 e 1366 px.
 - Widgets: superfícies, bordas, textos secundários, estados ativo/inativo, foco e seleção agora usam papéis semânticos locais e consistentes.
 - Widgets: cards gerenciados, resumo, chamada de alertas e catálogo validados visualmente em 1366 e 360 px, sem overflow horizontal.
 - Web: typecheck e lint direcionados aprovados; o teste visual combinado avançou por Widgets e falhou posteriormente em Conta por dados de perfil ausentes.

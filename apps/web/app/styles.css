@@ -7702,13 +7702,34 @@ a {
   margin: 5px 0;
 }
 .contribution-detail-modal header button {
-  width: 34px;
-  height: 34px;
-  border: 0;
-  border-radius: 8px;
-  background: #191d25;
-  color: #eee;
-  font-size: 20px;
+  flex: 0 0 auto;
+}
+.contribution-detail-modal header .contribution-modal-close {
+  display: grid;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  margin: 0;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #343b49;
+  border-radius: 10px;
+  background: #171c25;
+  color: #d9dee8;
+  box-shadow: none;
+  font-size: 22px;
+  line-height: 1;
+}
+.contribution-detail-modal header .contribution-modal-close:hover {
+  border-color: #8060d4;
+  background: #211a32;
+  color: #fff;
+}
+.contribution-detail-modal header .contribution-modal-close:focus-visible {
+  border-color: #a88af2;
+  outline: 3px solid rgb(157 120 239 / 20%);
+  outline-offset: 2px;
 }
 .contribution-detail-modal dl {
   display: grid;
@@ -7763,6 +7784,11 @@ a {
 .trace-timeline li.done::before {
   border-color: #9d78ef;
   background: #8159da;
+}
+.trace-timeline li:last-child {
+  min-height: auto;
+  border-left-color: transparent;
+  padding-bottom: 0;
 }
 .trace-timeline span {
   color: #7e8693;

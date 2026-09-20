@@ -259,6 +259,7 @@ export default function ContributionsPage() {
                   </h2>
                 </div>
                 <button
+                  className="icon-button contribution-modal-close"
                   ref={closeButtonRef}
                   type="button"
                   onClick={() => setSelected(undefined)}
@@ -311,17 +312,6 @@ export default function ContributionsPage() {
                   <span>
                     {when(selected.trace.dispatchedAt)} ·{' '}
                     {selected.trace.dispatchAttempts} tentativa(s)
-                  </span>
-                </li>
-                <li
-                  className={
-                    selected.trace.overlayStatus === 'COMPLETED' ? 'done' : ''
-                  }
-                >
-                  <b>Reprodução no OBS</b>
-                  <span>
-                    {statusLabel[selected.trace.overlayStatus] ?? 'Aguardando'}{' '}
-                    · {when(selected.trace.overlayCompletedAt)}
                   </span>
                 </li>
               </ol>
