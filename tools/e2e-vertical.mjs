@@ -1,5 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { io } from 'socket.io-client';
+import {
+  assertPaymentInvariants,
+  closeInvariantDatabase,
+} from './assert-payment-invariants.mjs';
 
 const api = process.env.API_URL ?? 'http://localhost:3001';
 const realtime = (process.env.REALTIME_URL ?? 'http://localhost:3002').replace(
@@ -87,6 +91,9 @@ const socket = io(realtime, {
   transports: ['websocket'],
   auth: { token: access.body.token },
 });
+socket.on('streamos:sync-request', () =>
+  socket.emit('streamos:sync-state', { overlayVersion: 'e2e', attempts: [] }),
+);
 await waitFor(socket, 'connect');
 socket.emit('streamos:heartbeat');
 
@@ -113,12 +120,25 @@ const confirmation = await request(
   `/mock/payment-intents/${intent.body.id}/confirm`,
   { method: 'POST' },
 );
+const repeatedConfirmation = await request(
+  `/mock/payment-intents/${intent.body.id}/confirm`,
+  { method: 'POST' },
+);
+if (repeatedConfirmation.body.paymentId !== confirmation.body.paymentId)
+  throw new Error('Confirmação repetida criou outro pagamento');
 const event = await eventPromise;
 const ack = await new Promise((resolve) =>
   socket.emit('streamos:ack', { eventId: event.eventId }, resolve),
 );
 if (!ack.accepted) throw new Error('ACK não foi persistido');
 socket.close();
+
+const invariants = await assertPaymentInvariants({
+  paymentId: confirmation.body.paymentId,
+  organizationId: organization.id,
+  expectedQueueKind: 'ALERT',
+});
+await closeInvariantDatabase();
 
 await request(
   `/dashboard/payments/${confirmation.body.paymentId}/make-available`,
@@ -178,6 +198,7 @@ console.log(
       availableInCents: summary.body.availableInCents,
       reconciliation: reconciliation.body.reconciled,
       payoutsEnabled,
+      paymentInvariant: invariants,
     },
     null,
     2,
