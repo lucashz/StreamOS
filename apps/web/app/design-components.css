@@ -297,6 +297,168 @@ body {
   }
 }
 
+/* Widgets: semantic color roles and a single visual contract for cards. */
+.widgets-hub {
+  --widget-surface: #111722;
+  --widget-surface-raised: #151c29;
+  --widget-surface-muted: #0c1119;
+  --widget-border: rgba(129, 145, 173, 0.28);
+  --widget-border-hover: rgba(169, 132, 255, 0.68);
+  --widget-text-muted: #a7b1c3;
+  --widget-text-subtle: #7f8ca2;
+  --widget-accent: #9b7aff;
+  --widget-accent-soft: rgba(139, 92, 246, 0.14);
+  --widget-success: #67ddb0;
+  --widget-success-soft: rgba(52, 211, 153, 0.11);
+}
+
+.widgets-hub .widget-summary,
+.widgets-hub .widget-kind-guide,
+.widgets-hub .managed-widget-card,
+.widgets-hub .fixed-widget-catalog article {
+  border-color: var(--widget-border);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.025), transparent 42%),
+    var(--widget-surface);
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.widgets-hub .widget-summary > div {
+  border-color: var(--widget-border);
+}
+
+.widgets-hub .widget-summary span,
+.widgets-hub .widget-kind-guide p,
+.widgets-hub .fixed-widget-catalog :is(p, small),
+.widgets-hub .widget-card-title small,
+.widgets-hub .widget-delivery-mode > span:last-child {
+  color: var(--widget-text-muted);
+}
+
+.widgets-hub .widget-kind-guide {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(155, 122, 255, 0.34);
+  background:
+    radial-gradient(
+      circle at 8% 10%,
+      rgba(139, 92, 246, 0.16),
+      transparent 34%
+    ),
+    var(--widget-surface);
+}
+
+.widgets-hub .managed-widget-card {
+  outline: 0 solid transparent;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.widgets-hub .managed-widget-card:hover {
+  border-color: var(--widget-border-hover);
+  box-shadow:
+    0 20px 46px rgba(0, 0, 0, 0.22),
+    0 0 0 1px rgba(155, 122, 255, 0.08);
+}
+
+.widgets-hub .managed-widget-card.selected {
+  border-color: var(--widget-accent);
+  outline: 3px solid rgba(155, 122, 255, 0.14);
+  box-shadow: 0 18px 48px rgba(86, 53, 164, 0.22);
+}
+
+.widgets-hub .managed-widget-card > .compact-actions {
+  border-color: var(--widget-border);
+  background: var(--widget-surface-muted);
+}
+
+.widgets-hub .widget-type-label,
+.widgets-hub .section-kicker {
+  color: #b9a4ff;
+}
+
+.widgets-hub .widget-state-toggle {
+  border-color: var(--widget-border);
+  background: var(--widget-surface-muted);
+  color: var(--widget-text-muted);
+}
+
+.widgets-hub .widget-state-toggle.active {
+  border-color: rgba(103, 221, 176, 0.38);
+  background: var(--widget-success-soft);
+  color: var(--widget-success);
+}
+
+.widgets-hub .widget-state-toggle:hover:not(:disabled),
+.widgets-hub .widget-state-toggle:focus-visible {
+  border-color: var(--widget-border-hover);
+  color: #e2d8ff;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(155, 122, 255, 0.14);
+}
+
+.widgets-hub .widget-updated {
+  color: var(--widget-text-subtle);
+}
+
+.widgets-hub .fixed-widget-catalog article {
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.widgets-hub .fixed-widget-catalog article:hover {
+  border-color: var(--widget-border-hover);
+  background:
+    linear-gradient(145deg, rgba(155, 122, 255, 0.06), transparent 48%),
+    var(--widget-surface-raised);
+  transform: translateY(-1px);
+}
+
+.widgets-hub .fixed-widget-catalog .widget-type-icon {
+  border: 1px solid rgba(155, 122, 255, 0.18);
+  background: var(--widget-accent-soft);
+  color: #c7b7ff;
+}
+
+.widgets-hub .status-badge {
+  border: 1px solid rgba(151, 163, 184, 0.16);
+  background: rgba(151, 163, 184, 0.08);
+  color: #c0c8d6;
+}
+
+@media (max-width: 560px) {
+  .widgets-hub .widget-kind-guide {
+    gap: var(--space-4);
+    padding: var(--space-4);
+  }
+
+  .widgets-hub .widget-kind-guide .button-link {
+    width: 100%;
+  }
+
+  .widgets-hub .fixed-widget-catalog article {
+    padding: 52px var(--space-4) var(--space-4);
+  }
+
+  .widgets-hub .fixed-widget-catalog .catalog-widget-state {
+    top: var(--space-3);
+    right: var(--space-3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .widgets-hub .managed-widget-card,
+  .widgets-hub .fixed-widget-catalog article {
+    transition: none;
+  }
+}
+
 @media (max-width: 560px) {
   .dashboard {
     padding: 68px var(--space-3) 36px;

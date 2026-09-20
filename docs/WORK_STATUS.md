@@ -1,10 +1,10 @@
 # Estado de trabalho do StreamOS
 
-Atualizado em: 13/09/2026
+Atualizado em: 19/09/2026
 
 ## Ciclo atual
 
-Central da Live concluída após o fechamento da fila durável e dos testes de resiliência.
+Primeiro ciclo de cores e CSS de Widgets concluído.
 
 ## Decisões vigentes
 
@@ -25,6 +25,10 @@ Central da Live concluída após o fechamento da fila durável e dos testes de r
 - Prompt e critérios do lote registrados em `docs/REDESIGN_EXECUTION.md`.
 
 ## Validações já registradas
+
+- Widgets: superfícies, bordas, textos secundários, estados ativo/inativo, foco e seleção agora usam papéis semânticos locais e consistentes.
+- Widgets: cards gerenciados, resumo, chamada de alertas e catálogo validados visualmente em 1366 e 360 px, sem overflow horizontal.
+- Web: typecheck e lint direcionados aprovados; o teste visual combinado avançou por Widgets e falhou posteriormente em Conta por dados de perfil ausentes.
 
 - Fluxo contribuição → pagamento mock → evento em tempo real: aprovado.
 - Fluxo carteira → recebível: aprovado.
