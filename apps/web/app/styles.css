@@ -3733,9 +3733,48 @@ a {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
-.wallet-page > * {
+.wallet-page > :not(.account-status) {
   width: min(100%, 1280px) !important;
   margin-inline: auto;
+}
+.wallet-loading-state {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 16px 20px !important;
+  border-color: var(--color-border, var(--border)) !important;
+  background: var(--color-surface-raised, var(--surface)) !important;
+  color: var(--color-text-muted, var(--muted));
+  box-shadow: none !important;
+}
+.wallet-loading-state > span {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--color-action, var(--purple));
+  box-shadow: 0 0 0 5px rgb(131 87 237 / 12%);
+}
+.wallet-loading-state > p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.wallet-loading-state[aria-busy='true'] > span {
+  animation: wallet-loading-pulse 1.2s ease-in-out infinite;
+}
+@keyframes wallet-loading-pulse {
+  50% {
+    opacity: 0.45;
+    transform: scale(0.78);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wallet-loading-state[aria-busy='true'] > span {
+    animation: none;
+  }
 }
 .wallet-page > header {
   margin-top: 8px;

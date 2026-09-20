@@ -229,3 +229,32 @@ test('modal da contribuição encerra no envio ao overlay e fecha pelo cabeçalh
   await dialog.getByRole('button', { name: 'Fechar' }).click();
   await expect(dialog).toHaveCount(0);
 });
+
+test('carregamento da carteira permanece alinhado ao conteúdo', async ({
+  page,
+}, info) => {
+  const registration = await page.request.post(`${api}/auth/register`, {
+    data: {
+      email: `wallet-loading-${Date.now()}-${info.project.name}@streamos.local`,
+      password: 'StreamOS-Design-123!',
+      displayName: 'Teste da carteira',
+      acceptTerms: true,
+    },
+  });
+  expect(registration.ok()).toBeTruthy();
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route(`${api}/dashboard/wallet`, async (route) => {
+    await pending;
+    await route.continue();
+  });
+
+  await page.goto('/carteira');
+  const loading = page.locator('.wallet-loading-state[role="status"]');
+  await expect(loading).toContainText('Carregando carteira');
+  await expect(loading).toHaveClass(/wallet-loading-state/);
+  await expect(page.locator('.account-status')).toHaveCount(0);
+  release();
+});

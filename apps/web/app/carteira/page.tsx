@@ -216,6 +216,17 @@ export default function WalletPage() {
           description="Consulte saldos, recebíveis, saques e lançamentos registrados no ledger do StreamOS."
         />
 
+        {!wallet && status ? (
+          <section
+            className="feature-card wallet-loading-state"
+            role="status"
+            aria-busy={status === 'Carregando carteiraâ€¦'}
+          >
+            <span aria-hidden="true" />
+            <p>{status}</p>
+          </section>
+        ) : null}
+
         {wallet ? (
           <>
             <section className="feature-metrics">
@@ -608,7 +619,7 @@ export default function WalletPage() {
             </details>
           </>
         ) : null}
-        {status ? (
+        {wallet && status ? (
           <p className="account-status" role="status">
             {status}
           </p>
