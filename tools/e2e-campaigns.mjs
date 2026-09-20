@@ -116,6 +116,9 @@ const socket = io(realtime, {
   transports: ['websocket'],
   auth: { token: overlay.body.token },
 });
+socket.on('streamos:sync-request', () =>
+  socket.emit('streamos:sync-state', { overlayVersion: 'e2e', attempts: [] }),
+);
 socket.emit('streamos:heartbeat');
 await new Promise((resolve, reject) => {
   socket.once('connect', resolve);

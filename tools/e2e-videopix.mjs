@@ -138,14 +138,39 @@ const widget = await request(
   '/dashboard/widgets',
   json('POST', { type: 'VIDEO_PIX', name: 'Player VideoPix' }, cookie),
 );
+const unified = await request('/dashboard/overlay/rotate-token', {
+  method: 'POST',
+  headers: { cookie },
+});
+const unifiedSocket = io(realtime, {
+  transports: ['websocket'],
+  auth: { token: unified.body.token },
+});
+unifiedSocket.on('streamos:sync-request', () =>
+  unifiedSocket.emit('streamos:sync-state', {
+    overlayVersion: 'e2e',
+    attempts: [],
+  }),
+);
+await new Promise((resolve, reject) => {
+  unifiedSocket.once('connect', resolve);
+  unifiedSocket.once('connect_error', reject);
+});
 const socket = io(realtime, {
   transports: ['websocket'],
   auth: { token: widget.body.token },
 });
+socket.on('streamos:sync-request', () =>
+  socket.emit('streamos:sync-state', {
+    overlayVersion: 'e2e',
+    attempts: [],
+  }),
+);
 await new Promise((resolve, reject) => {
   socket.once('connect', resolve);
   socket.once('connect_error', reject);
 });
+const startedPromise = event(socket, 'video.started.v1');
 await request(`/mock/payment-intents/${intent.body.id}/confirm`, {
   method: 'POST',
 });
@@ -158,7 +183,6 @@ if (
   'QUEUED'
 )
   throw new Error('Fila não atualizada');
-const startedPromise = event(socket, 'video.started.v1');
 await request(
   `/dashboard/videopix/requests/${requestItem.body.id}/action`,
   json('POST', { action: 'PLAY' }, cookie),
@@ -195,6 +219,7 @@ await request(
   404,
 );
 socket.close();
+unifiedSocket.close();
 console.log(
   JSON.stringify(
     {

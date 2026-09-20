@@ -176,10 +176,15 @@ await request(`/mock/payment-intents/${intent.body.id}/confirm`, {
 const started = await startedEvent;
 if (started.presentation?.widgetType !== 'SONG_PIX')
   throw new Error('Despacho automático/widget falhou');
-unifiedSocket.emit('streamos:playback', {
-  eventId: started.eventId,
-  status: 'STARTED',
-});
+await new Promise((resolve, reject) =>
+  unifiedSocket
+    .timeout(5000)
+    .emit(
+      'streamos:playback',
+      { eventId: started.eventId, status: 'STARTED' },
+      (error) => (error ? reject(error) : resolve()),
+    ),
+);
 const queue = await request(
   `/dashboard/songpix/sessions/${session.body.id}/queue`,
   { headers: { cookie } },
