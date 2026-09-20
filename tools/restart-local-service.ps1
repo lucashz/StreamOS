@@ -14,9 +14,15 @@ $packages = @{ worker = '@streamos/worker'; realtime = '@streamos/realtime' }
 $ports = @{ worker = 0; realtime = 3002 }
 $pidFile = Join-Path $PidRoot "$Service.pid"
 
+function Stop-ProcessTree([int]$RootProcessId) {
+  $children = Get-CimInstance Win32_Process -Filter "ParentProcessId=$RootProcessId" -ErrorAction SilentlyContinue
+  foreach ($child in $children) { Stop-ProcessTree $child.ProcessId }
+  Stop-Process -Id $RootProcessId -Force -ErrorAction SilentlyContinue
+}
+
 if (Test-Path -LiteralPath $pidFile) {
   $currentPid = [int](Get-Content -LiteralPath $pidFile -Raw)
-  Stop-Process -Id $currentPid -Force -ErrorAction SilentlyContinue
+  Stop-ProcessTree $currentPid
 }
 
 $process = Start-Process -FilePath 'corepack.cmd' `

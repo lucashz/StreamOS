@@ -18,6 +18,33 @@ import {
   shouldExpireQueuedAlert,
 } from './live-queue.policy';
 
+const LIVE_QUEUE_SOURCE_CONSTRAINT = [
+  'organizationId',
+  'sourceType',
+  'sourceId',
+];
+
+function isLiveQueueSourceCollision(error: unknown) {
+  if (
+    !(error instanceof Prisma.PrismaClientKnownRequestError) ||
+    error.code !== 'P2002'
+  )
+    return false;
+  const target = error.meta?.target;
+  if (Array.isArray(target)) {
+    return (
+      target.length === LIVE_QUEUE_SOURCE_CONSTRAINT.length &&
+      LIVE_QUEUE_SOURCE_CONSTRAINT.every(
+        (field, index) => target[index] === field,
+      )
+    );
+  }
+  return (
+    target === 'LiveQueueItem_organizationId_sourceType_sourceId_key' ||
+    target === 'organizationId_sourceType_sourceId'
+  );
+}
+
 @Injectable()
 export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
   private readonly logger = new Logger(OutboxWorker.name);
@@ -356,54 +383,61 @@ export class OutboxWorker implements OnModuleInit, OnApplicationShutdown {
       data: { nextLiveQueueSequence: { increment: 1 } },
       select: { nextLiveQueueSequence: true },
     });
-    await this.prisma.liveQueueItem.upsert({
-      where: {
-        organizationId_sourceType_sourceId: {
+    try {
+      await this.prisma.liveQueueItem.upsert({
+        where: {
+          organizationId_sourceType_sourceId: {
+            organizationId: event.organizationId,
+            sourceType: event.eventType,
+            sourceId,
+          },
+        },
+        update: {},
+        create: {
           organizationId: event.organizationId,
+          liveSessionId: activeSession?.id,
           sourceType: event.eventType,
           sourceId,
-        },
-      },
-      update: {},
-      create: {
-        organizationId: event.organizationId,
-        liveSessionId: activeSession?.id,
-        sourceType: event.eventType,
-        sourceId,
-        paymentId:
-          event.eventType === 'payment.confirmed.v1' ? event.aggregateId : null,
-        sequenceNumber: sequence.nextLiveQueueSequence - 1n,
-        kind,
-        position: (last._max.position ?? 0) + 1,
-        supporterName:
-          typeof payload.supporterName === 'string'
-            ? payload.supporterName
-            : null,
-        title:
-          typeof payload.title === 'string'
-            ? payload.title
-            : kind === 'ALERT'
-              ? 'Nova contribuição'
-              : kind,
-        content:
-          typeof payload.message === 'string'
-            ? payload.message
-            : typeof payload.text === 'string'
-              ? payload.text
+          paymentId:
+            event.eventType === 'payment.confirmed.v1'
+              ? event.aggregateId
               : null,
-        amountInCents:
-          typeof payload.amountInCents === 'string' ||
-          typeof payload.amountInCents === 'number'
-            ? BigInt(payload.amountInCents)
-            : null,
-        metadata: payload as Prisma.InputJsonValue,
-        moderationStatus: 'AUTOMATICALLY_ALLOWED',
-        status: expired ? 'EXPIRED' : 'QUEUED',
-        finishedAt: expired ? new Date() : null,
-        failureReason: expired ? 'Alerta expirado antes da reprodução' : null,
-        createdAt: event.occurredAt,
-      },
-    });
+          sequenceNumber: sequence.nextLiveQueueSequence - 1n,
+          kind,
+          position: (last._max.position ?? 0) + 1,
+          supporterName:
+            typeof payload.supporterName === 'string'
+              ? payload.supporterName
+              : null,
+          title:
+            typeof payload.title === 'string'
+              ? payload.title
+              : kind === 'ALERT'
+                ? 'Nova contribuição'
+                : kind,
+          content:
+            typeof payload.message === 'string'
+              ? payload.message
+              : typeof payload.text === 'string'
+                ? payload.text
+                : null,
+          amountInCents:
+            typeof payload.amountInCents === 'string' ||
+            typeof payload.amountInCents === 'number'
+              ? BigInt(payload.amountInCents)
+              : null,
+          metadata: payload as Prisma.InputJsonValue,
+          moderationStatus: 'AUTOMATICALLY_ALLOWED',
+          status: expired ? 'EXPIRED' : 'QUEUED',
+          finishedAt: expired ? new Date() : null,
+          failureReason: expired ? 'Alerta expirado antes da reprodução' : null,
+          createdAt: event.occurredAt,
+        },
+      });
+    } catch (error: unknown) {
+      if (isLiveQueueSourceCollision(error)) return;
+      throw error;
+    }
   }
 
   private async advanceUnifiedQueues() {
