@@ -31,10 +31,10 @@ function materializationHarness(collisionTarget: string[]) {
   const queueItems = new Map<string, unknown>();
   let sequence = 0n;
   const prisma = {
-    paymentIntent: { findUnique: async () => null },
+    paymentIntent: { findUnique: () => null },
     liveQueueItem: {
-      aggregate: async () => ({ _max: { position: null } }),
-      upsert: async (args: {
+      aggregate: () => ({ _max: { position: null } }),
+      upsert: (args: {
         where: {
           organizationId_sourceType_sourceId: {
             organizationId: string;
@@ -50,9 +50,9 @@ function materializationHarness(collisionTarget: string[]) {
         queueItems.set(key, args.create);
       },
     },
-    liveSession: { findFirst: async () => null },
+    liveSession: { findFirst: () => null },
     organization: {
-      update: async () => ({ nextLiveQueueSequence: ++sequence }),
+      update: () => ({ nextLiveQueueSequence: ++sequence }),
     },
   };
   const worker = Object.create(OutboxWorker.prototype) as MaterializeWorker & {
