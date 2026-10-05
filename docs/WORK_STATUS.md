@@ -4,7 +4,7 @@ Atualizado em: 05/10/2026
 
 ## Ciclo atual
 
-Invariantes financeiros dos fluxos pagos concluídos.
+Fechamento técnico dos ciclos pendentes concluído.
 
 ## Decisões vigentes
 
@@ -95,9 +95,10 @@ Invariantes financeiros dos fluxos pagos concluídos.
 - SongPix: validação de gênero, checkout, fila, reprodução automática e recibo do overlay aprovados.
 - VideoPix: metadados, preço por segundo, checkout, player, indisponibilidade posterior e isolamento aprovados.
 - Página pública aprovada visualmente por automação em 360 e 1366 px com nome e mensagem longos.
+- Editor de alertas: o cliente de teste agora responde à sincronização exigida pelo Browser Source antes de solicitar um alerta; entrega direcionada, mídias e atualização ao vivo aprovadas.
+- Fechamento operacional: moderação, carteira, fila resiliente e fluxo local completo aprovados; este último confirmou um Payment, quatro lançamentos contábeis e apenas um item de fila.
 
 ## Próxima ação
 
-1. Fechar os fluxos pagos e confirmar que cada pagamento materializa apenas um item financeiro e um item de fila.
-2. Tratar backlog por organização e mensagens de erro antes do último ciclo visual.
-3. Executar o fechamento técnico e a validação ampla antes de staging.
+1. Configurar credenciais de provedor e habilitar `PAYOUTS_ENABLED` em ambiente de homologação para validar o saque real.
+2. Executar o preflight e o smoke test com as variáveis e URLs finais de staging.
