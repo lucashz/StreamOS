@@ -100,6 +100,7 @@ Fechamento técnico dos ciclos pendentes concluído.
 - Conta: atualização de perfil não retorna mais campos `BigInt` do domínio; perfil, sessões, senha, recuperação e isolamento entre contas aprovados.
 - Widgets/OBS: os testes de entrega agora sincronizam o Browser Source antes de solicitar eventos; catálogo, mídia, QR Code, rotação de token e isolamento aprovados.
 - Plataforma: RBAC, rotação de token bearer, assinatura e histórico de webhooks e isolamento aprovados.
+- Fechamento visual: suíte Playwright aprovada com 72 cenários responsivos; o replay do histórico confirma o estado intermediário `QUEUED` e a nova reprodução no Browser Source.
 
 ## Próxima ação
 

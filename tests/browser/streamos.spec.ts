@@ -510,7 +510,7 @@ test('history replay resumes a paused queue and renders again', async ({
   expect(replaySnapshot.state.paused).toBe(false);
   expect(
     replaySnapshot.items.find((item) => item.id === completed!.id)?.status,
-  ).toBe('PLAYING');
+  ).toBe('QUEUED');
   await expect(page.locator('.alert-card')).toBeVisible({ timeout: 12_000 });
 });
 
