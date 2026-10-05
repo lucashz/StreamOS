@@ -4,7 +4,7 @@ Atualizado em: 05/10/2026
 
 ## Ciclo atual
 
-Política de backlog da Central da Live concluída.
+Invariantes financeiros dos fluxos pagos concluídos.
 
 ## Decisões vigentes
 
@@ -29,6 +29,7 @@ Política de backlog da Central da Live concluída.
 - Carteira: carregamento movido para um bloco neutro alinhado ao conteúdo; notificações voltaram ao tamanho compacto e o estado foi validado em 360 e 1366 px.
 - Carteira: alerta financeiro compacto, contexto de saldo e destino no saque, extrato em grade estável e retorno visual de erro/sucesso revisados em 360 e 1366 px.
 - Central da Live: aviso de fila extensa quando a espera estimada alcança 15 minutos ou 100 alertas; os pagamentos permanecem preservados e as ações existentes de pausar e reorganizar continuam disponíveis.
+- Fluxos pagos: Vaquinha, SongPix e VideoPix comprovam um Payment, um JournalEntry com quatro postings e um item de fila; assinaturas continuam mock, com renovação idempotente e fila única, sem cobrança recorrente no ledger.
 - Contribuições: o rastreamento visual termina em “Enviado ao overlay”; o estado de reprodução permanece interno e o botão de fechar do modal foi alinhado e validado em 360 e 1366 px.
 - Widgets: superfícies, bordas, textos secundários, estados ativo/inativo, foco e seleção agora usam papéis semânticos locais e consistentes.
 - Widgets: cards gerenciados, resumo, chamada de alertas e catálogo validados visualmente em 1366 e 360 px, sem overflow horizontal.

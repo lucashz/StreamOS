@@ -1,5 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { io } from 'socket.io-client';
+import {
+  assertSubscriptionInvariants,
+  closeInvariantDatabase,
+} from './assert-payment-invariants.mjs';
 
 const api = process.env.API_URL ?? 'http://localhost:3001';
 const realtime = process.env.REALTIME_URL ?? 'http://localhost:3002';
@@ -186,6 +190,13 @@ await request(
   404,
 );
 socket.close();
+const invariants = await assertSubscriptionInvariants({
+  subscriptionId: subscription.body.id,
+  organizationId:
+    creator.organizationId ?? registration.body.memberships[0].organization.id,
+  renewalIdempotencyKey: renewalKey,
+});
+await closeInvariantDatabase();
 console.log(
   JSON.stringify(
     {
@@ -197,6 +208,7 @@ console.log(
       cancelAtPeriodEnd: true,
       history: true,
       crossOrganizationIsolation: true,
+      invariants,
     },
     null,
     2,

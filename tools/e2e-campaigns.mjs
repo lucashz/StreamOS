@@ -1,4 +1,8 @@
 import { io } from 'socket.io-client';
+import {
+  assertPaymentInvariants,
+  closeInvariantDatabase,
+} from './assert-payment-invariants.mjs';
 
 const api = process.env.API_URL ?? 'http://localhost:3001';
 const realtime = process.env.REALTIME_URL ?? 'http://localhost:3002';
@@ -151,7 +155,7 @@ const eventPromise = waitFor(
     event.eventType === 'live.queue.item.playing.v1' &&
     event.payload.kind === 'CAMPAIGN',
 );
-await request(
+const confirmation = await request(
   `/mock/payment-intents/${winner.body.id}/confirm`,
   { method: 'POST' },
   201,
@@ -198,6 +202,12 @@ await request(
   404,
 );
 socket.close();
+const invariants = await assertPaymentInvariants({
+  paymentId: confirmation.body.paymentId,
+  organizationId: organization.id,
+  expectedQueueKind: 'CAMPAIGN',
+});
+await closeInvariantDatabase();
 
 console.log(
   JSON.stringify(
@@ -208,6 +218,7 @@ console.log(
       realtimeWidget: true,
       claimDelivery: true,
       crossOrganizationIsolation: true,
+      paymentInvariant: invariants,
     },
     null,
     2,

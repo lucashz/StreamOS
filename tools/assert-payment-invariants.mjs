@@ -16,7 +16,9 @@ async function eventually(read, predicate, label, timeoutMs = 12_000) {
     if (predicate(value)) return value;
     await new Promise((resolve) => setTimeout(resolve, 200));
   } while (Date.now() < deadline);
-  throw new Error(`${label}: estado esperado não foi persistido em ${timeoutMs}ms`);
+  throw new Error(
+    `${label}: estado esperado não foi persistido em ${timeoutMs}ms`,
+  );
 }
 
 export async function assertPaymentInvariants({
@@ -31,6 +33,15 @@ export async function assertPaymentInvariants({
     select: { id: true, paymentIntentId: true },
   });
   invariant(payments.length, 1, 'Payment do fluxo');
+
+  const intent = await prisma.paymentIntent.findUnique({
+    where: { id: payments[0].paymentIntentId },
+    select: {
+      songRequest: { select: { id: true } },
+      videoRequest: { select: { id: true } },
+      campaignContribution: { select: { id: true } },
+    },
+  });
 
   const entries = await prisma.journalEntry.findMany({
     where: {
@@ -47,13 +58,23 @@ export async function assertPaymentInvariants({
     'Postings da confirmação',
   );
 
+  const inferredQueueSource = intent?.songRequest
+    ? { sourceType: 'song.requested.v1', sourceId: intent.songRequest.id }
+    : intent?.videoRequest
+      ? { sourceType: 'video.requested.v1', sourceId: intent.videoRequest.id }
+      : intent?.campaignContribution
+        ? {
+            sourceType: 'campaign.contribution.confirmed.v1',
+            sourceId: intent.campaignContribution.id,
+          }
+        : undefined;
   const queueWhere = {
     organizationId,
     kind: expectedQueueKind,
-    ...(expectedQueueSource
+    ...((expectedQueueSource ?? inferredQueueSource)
       ? {
-          sourceType: expectedQueueSource.sourceType,
-          sourceId: expectedQueueSource.sourceId,
+          sourceType: (expectedQueueSource ?? inferredQueueSource).sourceType,
+          sourceId: (expectedQueueSource ?? inferredQueueSource).sourceId,
         }
       : { paymentId }),
   };

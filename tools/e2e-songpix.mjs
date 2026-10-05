@@ -1,4 +1,8 @@
 import { io } from 'socket.io-client';
+import {
+  assertPaymentInvariants,
+  closeInvariantDatabase,
+} from './assert-payment-invariants.mjs';
 
 const api = process.env.API_URL ?? 'http://localhost:3001';
 const realtime = (process.env.REALTIME_URL ?? 'http://localhost:3002').replace(
@@ -66,7 +70,8 @@ const registration = await request(
   }),
 );
 const cookie = cookieFrom(registration.response);
-const profile = registration.body.memberships[0].organization.creatorProfile;
+const organization = registration.body.memberships[0].organization;
+const profile = organization.creatorProfile;
 await request(
   '/dashboard/onboarding',
   json(
@@ -170,9 +175,12 @@ const startedEvent = waitForMatching(
   unifiedSocket,
   (event) => event.eventType === 'song.started.v1',
 );
-await request(`/mock/payment-intents/${intent.body.id}/confirm`, {
-  method: 'POST',
-});
+const confirmation = await request(
+  `/mock/payment-intents/${intent.body.id}/confirm`,
+  {
+    method: 'POST',
+  },
+);
 const started = await startedEvent;
 if (started.presentation?.widgetType !== 'SONG_PIX')
   throw new Error('Despacho automático/widget falhou');
@@ -231,6 +239,12 @@ await request(
 );
 socket.close();
 unifiedSocket.close();
+const invariants = await assertPaymentInvariants({
+  paymentId: confirmation.body.paymentId,
+  organizationId: organization.id,
+  expectedQueueKind: 'SONG_PIX',
+});
+await closeInvariantDatabase();
 console.log(
   JSON.stringify(
     {
@@ -242,6 +256,7 @@ console.log(
       automaticPlayback: true,
       overlayReceiptCompletion: true,
       crossOrganizationIsolation: true,
+      paymentInvariant: invariants,
     },
     null,
     2,

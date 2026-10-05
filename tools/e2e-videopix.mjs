@@ -1,4 +1,8 @@
 import { io } from 'socket.io-client';
+import {
+  assertPaymentInvariants,
+  closeInvariantDatabase,
+} from './assert-payment-invariants.mjs';
 const api = process.env.API_URL ?? 'http://localhost:3001';
 const realtime = (process.env.REALTIME_URL ?? 'http://localhost:3002').replace(
   /^ws/,
@@ -60,7 +64,8 @@ const registration = await request(
   }),
 );
 const cookie = cookieFrom(registration.response);
-const profile = registration.body.memberships[0].organization.creatorProfile;
+const organization = registration.body.memberships[0].organization;
+const profile = organization.creatorProfile;
 await request(
   '/dashboard/onboarding',
   json(
@@ -171,9 +176,12 @@ await new Promise((resolve, reject) => {
   socket.once('connect_error', reject);
 });
 const startedPromise = event(socket, 'video.started.v1');
-await request(`/mock/payment-intents/${intent.body.id}/confirm`, {
-  method: 'POST',
-});
+const confirmation = await request(
+  `/mock/payment-intents/${intent.body.id}/confirm`,
+  {
+    method: 'POST',
+  },
+);
 const queue = await request(
   `/dashboard/videopix/sessions/${session.body.id}/queue`,
   { headers: { cookie } },
@@ -220,6 +228,12 @@ await request(
 );
 socket.close();
 unifiedSocket.close();
+const invariants = await assertPaymentInvariants({
+  paymentId: confirmation.body.paymentId,
+  organizationId: organization.id,
+  expectedQueueKind: 'VIDEO_PIX',
+});
+await closeInvariantDatabase();
 console.log(
   JSON.stringify(
     {
@@ -230,6 +244,7 @@ console.log(
       realtimePlayer: true,
       unavailableAfterConfirmation: true,
       crossOrganizationIsolation: true,
+      paymentInvariant: invariants,
     },
     null,
     2,
