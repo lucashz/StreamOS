@@ -161,13 +161,18 @@ export class AuthService {
             id: true,
             email: true,
             memberships: {
-              include: {
+              select: {
+                id: true,
+                organizationId: true,
+                role: true,
                 organization: {
-                  include: {
+                  select: {
+                    id: true,
+                    name: true,
                     creatorProfile: {
                       omit: { minimumContributionInCents: true },
                     },
-                    complianceProfile: true,
+                    complianceProfile: { select: { status: true } },
                   },
                 },
               },

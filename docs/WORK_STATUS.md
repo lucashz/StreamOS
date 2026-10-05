@@ -97,6 +97,9 @@ Fechamento técnico dos ciclos pendentes concluído.
 - Página pública aprovada visualmente por automação em 360 e 1366 px com nome e mensagem longos.
 - Editor de alertas: o cliente de teste agora responde à sincronização exigida pelo Browser Source antes de solicitar um alerta; entrega direcionada, mídias e atualização ao vivo aprovadas.
 - Fechamento operacional: moderação, carteira, fila resiliente e fluxo local completo aprovados; este último confirmou um Payment, quatro lançamentos contábeis e apenas um item de fila.
+- Conta: atualização de perfil não retorna mais campos `BigInt` do domínio; perfil, sessões, senha, recuperação e isolamento entre contas aprovados.
+- Widgets/OBS: os testes de entrega agora sincronizam o Browser Source antes de solicitar eventos; catálogo, mídia, QR Code, rotação de token e isolamento aprovados.
+- Plataforma: RBAC, rotação de token bearer, assinatura e histórico de webhooks e isolamento aprovados.
 
 ## Próxima ação
 

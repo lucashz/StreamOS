@@ -169,6 +169,12 @@ const socket = io(realtime, {
   transports: ['websocket'],
   auth: { token: unified.body.token },
 });
+socket.on('streamos:sync-request', () =>
+  socket.emit('streamos:sync-state', {
+    overlayVersion: 'e2e',
+    attempts: [],
+  }),
+);
 await waitFor(socket, 'connect');
 socket.emit('streamos:heartbeat');
 const eventPromise = waitFor(socket, 'streamos:event');
