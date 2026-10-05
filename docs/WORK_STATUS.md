@@ -1,10 +1,10 @@
 # Estado de trabalho do StreamOS
 
-Atualizado em: 19/09/2026
+Atualizado em: 05/10/2026
 
 ## Ciclo atual
 
-Primeiro ciclo de cores e CSS de Widgets concluído.
+Revisão visual e funcional da Carteira concluída.
 
 ## Decisões vigentes
 
@@ -27,6 +27,7 @@ Primeiro ciclo de cores e CSS de Widgets concluído.
 ## Validações já registradas
 
 - Carteira: carregamento movido para um bloco neutro alinhado ao conteúdo; notificações voltaram ao tamanho compacto e o estado foi validado em 360 e 1366 px.
+- Carteira: alerta financeiro compacto, contexto de saldo e destino no saque, extrato em grade estável e retorno visual de erro/sucesso revisados em 360 e 1366 px.
 - Contribuições: o rastreamento visual termina em “Enviado ao overlay”; o estado de reprodução permanece interno e o botão de fechar do modal foi alinhado e validado em 360 e 1366 px.
 - Widgets: superfícies, bordas, textos secundários, estados ativo/inativo, foco e seleção agora usam papéis semânticos locais e consistentes.
 - Widgets: cards gerenciados, resumo, chamada de alertas e catálogo validados visualmente em 1366 e 360 px, sem overflow horizontal.

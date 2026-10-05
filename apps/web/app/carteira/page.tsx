@@ -109,6 +109,7 @@ export default function WalletPage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [status, setStatus] = useState('Carregando carteira…');
+  const [statusTone, setStatusTone] = useState<'success' | 'danger'>('success');
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -162,6 +163,7 @@ export default function WalletPage() {
       body: JSON.stringify({ type: pixType, value: pixValue }),
     });
     const body = (await response.json()) as Settings & { message?: string };
+    setStatusTone(response.ok ? 'success' : 'danger');
     setStatus(
       response.ok
         ? 'Chave Pix validada e carteira de recebimentos configurada.'
@@ -185,14 +187,14 @@ export default function WalletPage() {
       body: JSON.stringify({ amountInCents }),
     });
     const body = (await response.json()) as { message?: string };
-    setStatus(
-      response.ok
-        ? 'Saque solicitado e registrado no extrato.'
-        : (body.message ?? 'Não foi possível solicitar o saque.'),
-    );
     if (response.ok) {
       setAmount('');
       await Promise.all([load(), loadStatement()]);
+      setStatusTone('success');
+      setStatus('Saque solicitado e registrado no extrato.');
+    } else {
+      setStatusTone('danger');
+      setStatus(body.message ?? 'Não foi possível solicitar o saque.');
     }
   }
 
@@ -253,11 +255,13 @@ export default function WalletPage() {
                 <h2>Destino Pix</h2>
                 {settings && !settings.legalProfileCompleted ? (
                   <div className="wallet-prerequisite" role="alert">
-                    <strong>Dados financeiros pendentes</strong>
-                    <p>
-                      Informe o nome legal e o CPF ou CNPJ, depois aceite os
-                      termos financeiros para criar a subconta.
-                    </p>
+                    <div>
+                      <strong>Dados financeiros pendentes</strong>
+                      <p>
+                        Informe o nome legal e o CPF ou CNPJ, depois aceite os
+                        termos financeiros para criar a subconta.
+                      </p>
+                    </div>
                     <Link
                       className="secondary-button button-link"
                       href="/onboarding"
@@ -361,7 +365,20 @@ export default function WalletPage() {
                       Você receberá <strong>{money(requestedInCents)}</strong>
                     </span>
                   </div>
-                ) : null}
+                ) : (
+                  <div className="wallet-payout-context">
+                    <span>
+                      <small>Saldo disponível</small>
+                      <strong>{money(wallet.balances.availableInCents)}</strong>
+                    </span>
+                    <span>
+                      <small>Destino</small>
+                      <strong>
+                        {settings?.pixKeyMasked ?? 'Chave Pix não cadastrada'}
+                      </strong>
+                    </span>
+                  </div>
+                )}
                 <button
                   disabled={!amount || !settings?.pixKeyMasked}
                   onClick={() => void requestPayout()}
@@ -620,7 +637,7 @@ export default function WalletPage() {
           </>
         ) : null}
         {wallet && status ? (
-          <p className="account-status" role="status">
+          <p className={`account-status ${statusTone}`} role="status">
             {status}
           </p>
         ) : null}

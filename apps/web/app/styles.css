@@ -3640,6 +3640,11 @@ a {
   background: #143528;
   color: #9df0c7;
 }
+.account-status.danger {
+  border-color: #fb718555;
+  background: #3b1c24;
+  color: #fecdd3;
+}
 
 .consent-field {
   display: flex !important;
@@ -3789,7 +3794,6 @@ a {
 }
 .wallet-page .wallet-grid > .feature-card {
   align-content: start;
-  min-height: 354px;
   padding: 18px;
 }
 .wallet-page .wallet-settings-card {
@@ -4077,6 +4081,36 @@ a {
   padding: 14px 2px;
 }
 
+.wallet-page .wallet-prerequisite {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+}
+.wallet-page .wallet-prerequisite > div {
+  display: grid;
+  gap: 6px;
+}
+.wallet-page .wallet-prerequisite p {
+  margin: 0;
+}
+.wallet-page .wallet-prerequisite .button-link {
+  white-space: nowrap;
+}
+
+.wallet-statement-list > article {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.8fr) minmax(360px, 1.2fr);
+  gap: 24px;
+}
+.wallet-statement-list .posting-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+}
+.wallet-statement-list .posting-summary > span {
+  min-width: 0;
+}
+
 .payout-summary {
   display: grid;
   gap: 8px;
@@ -4097,6 +4131,28 @@ a {
   padding-top: 8px;
   border-top: 1px solid var(--border);
   color: var(--text);
+}
+
+.wallet-payout-context {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.wallet-payout-context > span {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #0c1017;
+}
+.wallet-payout-context small {
+  color: var(--muted);
+}
+.wallet-payout-context strong {
+  overflow-wrap: anywhere;
+  font-size: 13px;
 }
 
 .settings-form select,
@@ -4158,6 +4214,16 @@ a {
   }
   .wallet-page .wallet-grid > .feature-card {
     min-height: auto;
+  }
+  .wallet-page .wallet-prerequisite {
+    grid-template-columns: 1fr;
+  }
+  .wallet-page .wallet-prerequisite .button-link {
+    width: fit-content;
+  }
+  .wallet-statement-list > article {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .statement-filters {
@@ -4230,6 +4296,9 @@ a {
     text-align: left;
   }
   .wallet-payout-list > article {
+    grid-template-columns: 1fr;
+  }
+  .wallet-payout-context {
     grid-template-columns: 1fr;
   }
   .wallet-payout-destination,
