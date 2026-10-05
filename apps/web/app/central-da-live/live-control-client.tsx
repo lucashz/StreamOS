@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { io } from 'socket.io-client';
+import { backlogState } from './backlog-policy';
 
 type QueueItem = {
   id: string;
@@ -379,6 +380,10 @@ export function LiveControlClient({ compact = false }: { compact?: boolean }) {
     (total, item) => total + itemDuration(item),
     0,
   );
+  const backlog = backlogState({
+    pendingCount: pending.length,
+    estimatedSeconds: estimatedQueueSeconds,
+  });
 
   async function toggleMute() {
     const volume = data?.state.masterVolume ?? 100;
@@ -411,6 +416,15 @@ export function LiveControlClient({ compact = false }: { compact?: boolean }) {
           <span>
             A fila permanece salva e retomará automaticamente quando a Browser
             Source reconectar.
+          </span>
+        </div>
+      ) : null}
+      {!compact && backlog.level === 'warning' ? (
+        <div className="live-backlog-warning" role="status">
+          <strong>Fila extensa</strong>
+          <span>
+            {backlog.reason} Os pagamentos permanecem registrados. Pause ou
+            reorganize a fila antes de iniciar novos alertas.
           </span>
         </div>
       ) : null}
