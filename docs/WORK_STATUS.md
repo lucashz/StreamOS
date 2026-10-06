@@ -31,6 +31,8 @@ Revalidação das automações afetadas pelos convites concluída; validação d
 - Carga de readiness (06/10/2026): repetição isolada aprovou 500 requisições, concorrência 25, zero falhas e p95 de 32,25 ms. A primeira execução no lote atingiu 1003,73 ms e excedeu o limite de 500 ms.
 - Resiliência (06/10/2026): indisponibilidade controlada e recuperação de Redis e PostgreSQL aprovadas.
 - Decisão de cobertura: `load-beta` exercita somente readiness e `resilience-beta` somente falha/recuperação da infraestrutura; cenário de convite nesses scripts não acrescentaria cobertura. `load-paid-alerts` já cadastra a conta com convite sob carga, e as regras do convite serão validadas diretamente via API no ciclo seguinte.
+- Convites/API (06/10/2026): `test:e2e:accounts` rejeitou código inválido, rejeitou e-mail divergente sem consumir o convite, rejeitou reutilização e confirmou o cookie de sessão em `GET /auth/me` imediatamente após o cadastro.
+- Convites/manual: pendente de uma sessão de navegador interativa compartilhada. A automação Playwright não será usada como substituta para este item.
 
 - Carteira: carregamento movido para um bloco neutro alinhado ao conteúdo; notificações voltaram ao tamanho compacto e o estado foi validado em 360 e 1366 px.
 - Carteira: alerta financeiro compacto, contexto de saldo e destino no saque, extrato em grade estável e retorno visual de erro/sucesso revisados em 360 e 1366 px.

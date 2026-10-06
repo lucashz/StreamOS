@@ -106,6 +106,18 @@ await request(
 await request(
   '/auth/register',
   json('POST', {
+    email: `invalid-invite-${suffix}@streamos.local`,
+    password,
+    displayName: 'Convite inválido',
+    acceptTerms: true,
+    inviteCode: `invalid-${suffix}`,
+  }),
+  403,
+);
+
+await request(
+  '/auth/register',
+  json('POST', {
     email: otherEmail,
     password,
     displayName: 'E-mail divergente',
@@ -131,6 +143,13 @@ const registration = await request(
   ),
 );
 const cookieOne = cookieFrom(registration.response);
+const registeredAccount = await request('/auth/me', {
+  headers: { cookie: cookieOne },
+});
+if (registeredAccount.body.email !== email)
+  throw new Error(
+    `Sessão pós-cadastro pertence a outra conta: ${JSON.stringify(registeredAccount.body)}`,
+  );
 
 await request(
   '/auth/register',
@@ -242,6 +261,10 @@ console.log(
     {
       result: 'ok',
       account: email,
+      invalidInviteRejected: true,
+      divergentEmailRejectedWithoutConsumption: true,
+      reusedInviteRejected: true,
+      registrationSessionValidated: true,
       sessionsValidated: 2,
       profileUpdated: true,
       crossAccountIsolation: true,
