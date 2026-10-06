@@ -22,7 +22,12 @@ type Preview = {
   amountInCents: number;
   validation: 'AUTOMATIC';
 };
-type Pix = { id: string; pixCopyPaste: string; amountInCents: number };
+type Pix = {
+  id: string;
+  pixCopyPaste: string;
+  amountInCents: number;
+  expiresAt?: string;
+};
 const clock = (seconds: number) =>
   `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 const parseClock = (value: string) => {
@@ -78,6 +83,7 @@ export default function PublicVideoPixPage() {
   const [endAtSeconds, setEndAtSeconds] = useState(0);
   const [preview, setPreview] = useState<Preview>();
   const [pix, setPix] = useState<Pix>();
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [status, setStatus] = useState('Carregando…');
   useEffect(() => {
     void fetch(`${api}/public/creators/${slug}/videopix`, {
@@ -97,6 +103,21 @@ export default function PublicVideoPixPage() {
         setStatus('O VideoPix demorou para responder. Tente novamente.'),
       );
   }, [slug]);
+  useEffect(() => {
+    if (!pix || paymentConfirmed) return;
+    const expiresAt = pix.expiresAt ? new Date(pix.expiresAt).getTime() : 0;
+    if (!expiresAt) return;
+    const expire = window.setTimeout(
+      () => {
+        setPix(undefined);
+        setStatus(
+          'Este Pix expirou. Gere uma nova cobrança para enviar o vídeo.',
+        );
+      },
+      Math.max(0, expiresAt - Date.now()),
+    );
+    return () => window.clearTimeout(expire);
+  }, [paymentConfirmed, pix]);
   async function validate(useSelectedRange = false) {
     if (!session) return;
     if (!url.trim()) return setStatus('Cole um link público do YouTube.');
@@ -149,6 +170,7 @@ export default function PublicVideoPixPage() {
     if (!response.ok)
       return setStatus(body.message ?? 'Não foi possível gerar o Pix.');
     setPix(body);
+    setPaymentConfirmed(false);
     setStatus(
       'Pix gerado. Após a confirmação, o vídeo entra automaticamente na fila.',
     );
@@ -164,6 +186,7 @@ export default function PublicVideoPixPage() {
         ? 'Contribuição confirmada. Vídeo adicionado à fila!'
         : 'Falha na confirmação.',
     );
+    if (response.ok) setPaymentConfirmed(true);
   }
   return (
     <main
@@ -310,6 +333,12 @@ export default function PublicVideoPixPage() {
             <section className="panel" style={{ padding: 20 }}>
               <h3>Pagamento Pix</h3>
               <code style={{ wordBreak: 'break-all' }}>{pix.pixCopyPaste}</code>
+              {pix.expiresAt ? (
+                <small>
+                  Este Pix expira em{' '}
+                  {new Date(pix.expiresAt).toLocaleString('pt-BR')}.
+                </small>
+              ) : null}
               <br />
               {simulationEnabled ? (
                 <button

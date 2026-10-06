@@ -25,7 +25,12 @@ type Song = {
   available?: boolean;
   provider?: string;
 };
-type Pix = { id: string; pixCopyPaste: string; amountInCents: number };
+type Pix = {
+  id: string;
+  pixCopyPaste: string;
+  amountInCents: number;
+  expiresAt?: string;
+};
 const normalizeGenre = (value: string) => {
   const normalized = value
     .normalize('NFD')
@@ -60,6 +65,7 @@ export default function PublicSongPixPage() {
   const [amountInCents, setAmountInCents] = useState(0);
   const [selected, setSelected] = useState<Song>();
   const [pix, setPix] = useState<Pix>();
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [status, setStatus] = useState('Carregando SongPix…');
   useEffect(() => {
     void Promise.all([
@@ -134,6 +140,21 @@ export default function PublicSongPixPage() {
     }, 300);
     return () => window.clearTimeout(timer);
   }, [query, session]);
+  useEffect(() => {
+    if (!pix || paymentConfirmed) return;
+    const expiresAt = pix.expiresAt ? new Date(pix.expiresAt).getTime() : 0;
+    if (!expiresAt) return;
+    const expire = window.setTimeout(
+      () => {
+        setPix(undefined);
+        setStatus(
+          'Este Pix expirou. Escolha a música novamente para gerar uma nova cobrança.',
+        );
+      },
+      Math.max(0, expiresAt - Date.now()),
+    );
+    return () => window.clearTimeout(expire);
+  }, [paymentConfirmed, pix]);
   async function checkout() {
     if (!session || !selected) return;
     setStatus('Validando regras antes do pagamento…');
@@ -156,6 +177,7 @@ export default function PublicSongPixPage() {
         body.message ?? 'Pedido incompatível com as regras atuais.',
       );
     setPix(body);
+    setPaymentConfirmed(false);
     setStatus(
       'Pix gerado. Após a confirmação, a música entra automaticamente na fila.',
     );
@@ -171,6 +193,7 @@ export default function PublicSongPixPage() {
         ? 'Contribuição confirmada. Sua música entrou na fila!'
         : 'Não foi possível confirmar.',
     );
+    if (response.ok) setPaymentConfirmed(true);
   }
   return (
     <main
@@ -296,6 +319,12 @@ export default function PublicSongPixPage() {
             <section className="public-incentive-card pix-checkout-card">
               <h3>Pagamento Pix</h3>
               <code>{pix.pixCopyPaste}</code>
+              {pix.expiresAt ? (
+                <small>
+                  Este Pix expira em{' '}
+                  {new Date(pix.expiresAt).toLocaleString('pt-BR')}.
+                </small>
+              ) : null}
               <br />
               {simulationEnabled ? (
                 <button
