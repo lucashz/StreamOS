@@ -104,5 +104,6 @@ Fechamento técnico dos ciclos pendentes concluído.
 
 ## Próxima ação
 
-1. Configurar credenciais de provedor e habilitar `PAYOUTS_ENABLED` em ambiente de homologação para validar o saque real.
-2. Executar o preflight e o smoke test com as variáveis e URLs finais de staging.
+1. Fechar o cadastro da beta com convites obrigatórios e auditáveis.
+2. Guiar o criador com onboarding pendente até a primeira live.
+3. Configurar staging, executar preflight e smoke test com as variáveis e URLs finais.
