@@ -82,6 +82,20 @@ model User {
   consents            UserConsent[]
   auditLogs           AuditLog[]           @relation("AuditActor")
   liveQueueActions    LiveQueueAction[]    @relation("LiveQueueActor")
+  acceptedBetaInvite  BetaInvite?          @relation("BetaInviteAcceptedBy")
+}
+
+model BetaInvite {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String
+  codeHash     String    @unique
+  createdAt    DateTime  @default(now())
+  acceptedAt   DateTime?
+  revokedAt    DateTime?
+  acceptedById String?   @unique @db.Uuid
+  acceptedBy   User?     @relation("BetaInviteAcceptedBy", fields: [acceptedById], references: [id], onDelete: Restrict)
+
+  @@index([email])
 }
 
 model UserConsent {

@@ -20,7 +20,9 @@ export function AuthForm({ mode }: Readonly<{ mode: 'login' | 'register' }>) {
     const values = Object.fromEntries(data.entries());
     if (mode === 'register' && values.password !== values.confirmPassword) {
       setError('As senhas não coincidem');
-      formRef.current?.querySelector<HTMLInputElement>('[name="confirmPassword"]')?.focus();
+      formRef.current
+        ?.querySelector<HTMLInputElement>('[name="confirmPassword"]')
+        ?.focus();
       setLoading(false);
       return;
     }
@@ -47,7 +49,9 @@ export function AuthForm({ mode }: Readonly<{ mode: 'login' | 'register' }>) {
       router.refresh();
     } catch (reason: unknown) {
       setError(reason instanceof Error ? reason.message : 'Erro inesperado');
-      formRef.current?.querySelector<HTMLInputElement>(':invalid, [name="email"]')?.focus();
+      formRef.current
+        ?.querySelector<HTMLInputElement>(':invalid, [name="email"]')
+        ?.focus();
     } finally {
       setLoading(false);
     }
@@ -113,9 +117,23 @@ export function AuthForm({ mode }: Readonly<{ mode: 'login' | 'register' }>) {
       </label>
       {mode === 'register' ? (
         <ul className="password-requirements" aria-label="Requisitos da senha">
-          <li className={password.length >= 10 ? 'valid' : ''}>10 caracteres ou mais</li>
-          <li className={/[A-Za-z]/.test(password) && /\d/.test(password) ? 'valid' : ''}>Letras e números</li>
+          <li className={password.length >= 10 ? 'valid' : ''}>
+            10 caracteres ou mais
+          </li>
+          <li
+            className={
+              /[A-Za-z]/.test(password) && /\d/.test(password) ? 'valid' : ''
+            }
+          >
+            Letras e números
+          </li>
         </ul>
+      ) : null}
+      {mode === 'register' ? (
+        <label>
+          Código do convite
+          <input name="inviteCode" autoComplete="off" required />
+        </label>
       ) : null}
       {mode === 'register' ? (
         <label>
@@ -142,11 +160,7 @@ export function AuthForm({ mode }: Readonly<{ mode: 'login' | 'register' }>) {
         </p>
       )}
       <button disabled={loading} type="submit">
-        {loading
-          ? 'Aguarde…'
-          : mode === 'login'
-            ? 'Entrar'
-            : 'Criar conta'}
+        {loading ? 'Aguarde…' : mode === 'login' ? 'Entrar' : 'Criar conta'}
       </button>
     </form>
   );

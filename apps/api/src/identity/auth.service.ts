@@ -23,6 +23,7 @@ interface RegisterInput {
   password: string;
   displayName: string;
   acceptTerms: boolean;
+  inviteCode?: string;
 }
 interface LoginInput {
   email: string;
@@ -52,6 +53,9 @@ export class AuthService {
     }
     const existing = await this.prisma.user.findUnique({ where: { email } });
     if (existing) throw new BadRequestException('E-mail já cadastrado');
+    const inviteCode = input.inviteCode?.trim();
+    if (!inviteCode)
+      throw new ForbiddenException('O cadastro desta beta requer um convite');
     const passwordHash = await this.hashPassword(input.password);
     const slugBase =
       input.displayName
@@ -61,8 +65,20 @@ export class AuthService {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '') || 'creator';
     const slug = `${slugBase}-${randomBytes(2).toString('hex')}`;
-    const user = await this.prisma.$transaction(async (tx) =>
-      tx.user.create({
+    const user = await this.prisma.$transaction(async (tx) => {
+      const invite = await tx.betaInvite.findUnique({
+        where: { codeHash: this.digest(inviteCode) },
+      });
+      if (
+        !invite ||
+        invite.revokedAt ||
+        invite.acceptedAt ||
+        invite.email !== email
+      )
+        throw new ForbiddenException(
+          'O convite nÃ£o Ã© vÃ¡lido para este e-mail',
+        );
+      const created = await tx.user.create({
         data: {
           email,
           passwordHash,
@@ -127,8 +143,13 @@ export class AuthService {
             },
           },
         },
-      }),
-    );
+      });
+      await tx.betaInvite.update({
+        where: { id: invite.id },
+        data: { acceptedAt: new Date(), acceptedById: created.id },
+      });
+      return created;
+    });
     return {
       user,
       sessionToken: await this.createSession(user.id, metadata),
