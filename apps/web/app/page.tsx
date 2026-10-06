@@ -200,6 +200,11 @@ interface DashboardSummary {
   }>;
 }
 
+interface OnboardingStatus {
+  isPublished: boolean;
+  onboardingCompletedAt: string | null;
+}
+
 async function getViewer(): Promise<Viewer | null> {
   try {
     const cookie = (await cookies()).toString();
@@ -231,6 +236,20 @@ async function getSummary(): Promise<DashboardSummary | null> {
   }
 }
 
+async function getOnboarding(): Promise<OnboardingStatus | null> {
+  try {
+    const cookie = (await cookies()).toString();
+    if (!cookie) return null;
+    const response = await fetch(
+      `${process.env.API_URL ?? 'http://localhost:3001'}/dashboard/onboarding`,
+      { headers: { cookie }, cache: 'no-store' },
+    );
+    return response.ok ? (response.json() as Promise<OnboardingStatus>) : null;
+  } catch {
+    return null;
+  }
+}
+
 function money(value: number) {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -239,7 +258,11 @@ function money(value: number) {
 }
 
 export default async function HomePage() {
-  const [viewer, summary] = await Promise.all([getViewer(), getSummary()]);
+  const [viewer, summary, onboarding] = await Promise.all([
+    getViewer(),
+    getSummary(),
+    getOnboarding(),
+  ]);
   const organization = viewer?.memberships[0]?.organization;
   const creatorName = organization?.name ?? 'Luna Plays';
   const firstName = creatorName.split(' ')[0];
@@ -380,6 +403,23 @@ export default async function HomePage() {
             <Link href="/cadastro">Criar conta</Link>
           )}
         </section>
+        {viewer &&
+        onboarding &&
+        (!onboarding.onboardingCompletedAt || !onboarding.isPublished) ? (
+          <section
+            className="demo-notice"
+            aria-label="Próximo passo da ativação"
+          >
+            <div>
+              <Icon name="sparkles" size={18} />
+              <span>
+                <strong>Conclua a ativação</strong> — publique sua página e
+                configure o OBS para receber a primeira contribuição.
+              </span>
+            </div>
+            <Link href="/onboarding">Continuar configuração</Link>
+          </section>
+        ) : null}
 
         <section className="metrics-grid" aria-label="Indicadores principais">
           {displayedMetrics.map((metric) => (
