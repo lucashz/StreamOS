@@ -1,4 +1,3 @@
-import './lib/e2e-invites.mjs';
 const api = process.env.API_URL ?? 'http://localhost:3001';
 import { PrismaClient } from '../packages/database/dist/index.js';
 import { createHash, randomBytes } from 'node:crypto';
@@ -104,6 +103,18 @@ await request(
   403,
 );
 
+await request(
+  '/auth/register',
+  json('POST', {
+    email: otherEmail,
+    password,
+    displayName: 'E-mail divergente',
+    acceptTerms: true,
+    inviteCode,
+  }),
+  403,
+);
+
 const registration = await request(
   '/auth/register',
   json(
@@ -120,6 +131,18 @@ const registration = await request(
   ),
 );
 const cookieOne = cookieFrom(registration.response);
+
+await request(
+  '/auth/register',
+  json('POST', {
+    email: `reused-${suffix}@streamos.local`,
+    password,
+    displayName: 'Convite reutilizado',
+    acceptTerms: true,
+    inviteCode,
+  }),
+  403,
+);
 
 const secondLogin = await request(
   '/auth/login',
