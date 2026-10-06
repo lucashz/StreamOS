@@ -124,8 +124,8 @@ o fechamento de cada lote, não para cada correção.
 - Saque fica explicitamente indisponível enquanto não houver homologação, sem
   sugerir que valores sandbox podem ser transferidos.
 
-## Decisão pendente
+## Decisão de acesso
 
-Definir se a beta usa convites obrigatórios ou cadastro aberto com uma lista
-operacional de participantes. Essa decisão será tomada antes do ciclo de
-cadastro e ativação.
+A beta fechada usa convites obrigatórios. Cadastro sem convite válido não cria
+conta nem organização. O convite é de uso único, associado ao e-mail informado
+e auditado quando aceito ou revogado.
