@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { CampaignDonationForm } from './campaign-donation-form';
 const api = process.env.API_URL ?? 'http://localhost:3001';
 export default async function PublicCampaignPage({
@@ -13,7 +14,17 @@ export default async function PublicCampaignPage({
   if (!response.ok)
     return (
       <main className="public-page">
-        <h1>Vaquinha indisponível</h1>
+        <section className="creator-card">
+          <span className="section-kicker">Vaquinha</span>
+          <h1>Vaquinha indisponível</h1>
+          <p>
+            Esta campanha foi encerrada, ficou privada ou não está mais
+            recebendo contribuições.
+          </p>
+          <Link className="secondary-button button-link" href={`/${slug}`}>
+            Ver página do criador
+          </Link>
+        </section>
       </main>
     );
   const value = (await response.json()) as {

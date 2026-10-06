@@ -17,9 +17,14 @@ export function CampaignDonationForm({ campaign }: Props) {
   const [amount, setAmount] = useState('10');
   const [name, setName] = useState('');
   const [rewardId, setRewardId] = useState('');
-  const [charge, setCharge] = useState<{ id: string; pixCopyPaste: string }>();
+  const [charge, setCharge] = useState<{
+    id: string;
+    pixCopyPaste: string;
+    expiresAt?: string;
+  }>();
   const [message, setMessage] = useState('');
   async function contribute() {
+    setMessage('');
     const r = await fetch(
       `${api}/public/campaigns/${campaign.id}/contributions`,
       {
@@ -31,7 +36,11 @@ export function CampaignDonationForm({ campaign }: Props) {
           rewardId: rewardId || undefined,
         }),
       },
-    );
+    ).catch(() => null);
+    if (!r)
+      return setMessage(
+        'Não foi possível acessar o pagamento. Tente novamente.',
+      );
     if (!r.ok)
       return setMessage(
         ((await r.json()) as { message?: string }).message ??
@@ -43,9 +52,9 @@ export function CampaignDonationForm({ campaign }: Props) {
     if (!charge) return;
     const r = await fetch(`${api}/mock/payment-intents/${charge.id}/confirm`, {
       method: 'POST',
-    });
+    }).catch(() => null);
     setMessage(
-      r.ok
+      r?.ok
         ? 'Contribuição confirmada. Obrigado!'
         : 'Não foi possível confirmar.',
     );
@@ -56,6 +65,12 @@ export function CampaignDonationForm({ campaign }: Props) {
       {charge ? (
         <>
           <code>{charge.pixCopyPaste}</code>
+          {charge.expiresAt ? (
+            <small>
+              Este Pix expira em{' '}
+              {new Date(charge.expiresAt).toLocaleString('pt-BR')}.
+            </small>
+          ) : null}
           <button onClick={() => void confirm()}>
             Simular pagamento aprovado (local)
           </button>

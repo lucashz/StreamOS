@@ -1,7 +1,36 @@
 import { expect, test, type Page } from '@playwright/test';
+import { PrismaClient } from '../../packages/database/dist/index.js';
+import { createHash, randomBytes } from 'node:crypto';
 
 const api = process.env.API_URL ?? 'http://localhost:3001';
 const overlay = process.env.OVERLAY_URL ?? 'http://localhost:3003';
+
+async function invite(email: string) {
+  const code = randomBytes(18).toString('base64url');
+  const prisma = new PrismaClient();
+  await prisma.betaInvite.create({
+    data: { email, codeHash: createHash('sha256').update(code).digest('hex') },
+  });
+  await prisma.$disconnect();
+  return code;
+}
+
+async function register(
+  page: Page,
+  request: {
+    data: {
+      email: string;
+      password: string;
+      displayName: string;
+      acceptTerms: boolean;
+    };
+  },
+) {
+  return page.request.post(`${api}/auth/register`, {
+    ...request,
+    data: { ...request.data, inviteCode: await invite(request.data.email) },
+  });
+}
 
 async function expectNoHorizontalOverflow(page: Page) {
   const layout = await page.evaluate(() => ({
@@ -60,17 +89,20 @@ test('autenticação e painel são responsivos', async ({ page }) => {
   await expectNoHorizontalOverflow(page);
 
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const response = await page.request.post(`${api}/auth/register`, {
+  const email = `browser-${suffix}@streamos.local`;
+  const response = await register(page, {
     data: {
-      email: `browser-${suffix}@streamos.local`,
+      email,
       password: 'StreamOS-Browser-123!',
       displayName: 'Browser E2E',
       acceptTerms: true,
     },
   });
   expect(response.ok()).toBeTruthy();
-
   await page.goto('/');
+  await expect(
+    page.getByRole('heading', { name: 'Visão geral' }),
+  ).toBeVisible();
   const performancePeriod = page.getByLabel('Período do gráfico');
   await performancePeriod.selectOption('7');
   await expect(page.getByText('Sem receita nos últimos 7 dias')).toBeVisible();
@@ -91,7 +123,7 @@ test('autenticação e painel são responsivos', async ({ page }) => {
 
 test('overlay ocioso permanece transparente e vazio', async ({ page }) => {
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const registration = await page.request.post(`${api}/auth/register`, {
+  const registration = await register(page, {
     data: {
       email: `overlay-browser-${suffix}@streamos.local`,
       password: 'StreamOS-Overlay-123!',
@@ -124,7 +156,7 @@ test('todas as telas administrativas preservam layout e responsividade', async (
   page,
 }) => {
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const registration = await page.request.post(`${api}/auth/register`, {
+  const registration = await register(page, {
     data: {
       email: `visual-${suffix}@streamos.local`,
       password: 'StreamOS-Visual-123!',
@@ -190,7 +222,7 @@ test('configurações executam os fluxos principais com retorno visível', async
   page,
 }) => {
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const registration = await page.request.post(`${api}/auth/register`, {
+  const registration = await register(page, {
     data: {
       email: `settings-${suffix}@streamos.local`,
       password: 'StreamOS-Settings-123!',
@@ -263,7 +295,7 @@ test('assinaturas criam e publicam um plano com retorno visível', async ({
   page,
 }) => {
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const registration = await page.request.post(`${api}/auth/register`, {
+  const registration = await register(page, {
     data: {
       email: `subscriptions-${suffix}@streamos.local`,
       password: 'StreamOS-Subscriptions-123!',
@@ -295,7 +327,7 @@ test('meta valida e salva as informações exibidas no progresso', async ({
   page,
 }) => {
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const registration = await page.request.post(`${api}/auth/register`, {
+  const registration = await register(page, {
     data: {
       email: `goal-${suffix}@streamos.local`,
       password: 'StreamOS-Goal-123!',
@@ -361,7 +393,7 @@ test('alerta percorre a fila e desaparece automaticamente', async ({
   test.skip(testInfo.project.name === 'mobile');
   test.setTimeout(35_000);
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const registration = await page.request.post(`${api}/auth/register`, {
+  const registration = await register(page, {
     data: {
       email: `playback-browser-${suffix}@streamos.local`,
       password: 'StreamOS-Playback-123!',
@@ -391,7 +423,7 @@ test('overlays de música e vídeo preservam layout e canal dedicado', async ({
 }) => {
   test.setTimeout(35_000);
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const registration = await page.request.post(`${api}/auth/register`, {
+  const registration = await register(page, {
     data: {
       email: `media-overlay-${suffix}@streamos.local`,
       password: 'StreamOS-Media-123!',
@@ -448,7 +480,7 @@ test('history replay resumes a paused queue and renders again', async ({
   test.skip(testInfo.project.name !== 'desktop-1366');
   test.setTimeout(45_000);
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const registration = await page.request.post(`${api}/auth/register`, {
+  const registration = await register(page, {
     data: {
       email: `history-replay-${suffix}@streamos.local`,
       password: 'StreamOS-History-123!',
@@ -518,7 +550,7 @@ test('widget activation toggle is functional in the catalog', async ({
   page,
 }) => {
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const registration = await page.request.post(`${api}/auth/register`, {
+  const registration = await register(page, {
     data: {
       email: `widget-toggle-${suffix}@streamos.local`,
       password: 'StreamOS-Widget-123!',
@@ -550,7 +582,7 @@ test('template pronto aplica o preset completo e persiste após recarregar', asy
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1366');
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const registration = await page.request.post(`${api}/auth/register`, {
+  const registration = await register(page, {
     data: {
       email: `alert-template-${suffix}@streamos.local`,
       password: 'StreamOS-Template-123!',
@@ -588,7 +620,7 @@ test('detalhes da contribuição abrem como modal central responsivo', async ({
   page,
 }) => {
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const registration = await page.request.post(`${api}/auth/register`, {
+  const registration = await register(page, {
     data: {
       email: `contribution-modal-${suffix}@streamos.local`,
       password: 'StreamOS-Modal-123!',
@@ -673,7 +705,7 @@ test('agenda e extrato funcionam como menus expansíveis da carteira', async ({
   page,
 }) => {
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const registration = await page.request.post(`${api}/auth/register`, {
+  const registration = await register(page, {
     data: {
       email: `wallet-menu-${suffix}@streamos.local`,
       password: 'StreamOS-Wallet-Menu-123!',
@@ -699,7 +731,7 @@ test('imagem de capa da vaquinha pode ser enviada e removida', async ({
   page,
 }) => {
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const registration = await page.request.post(`${api}/auth/register`, {
+  const registration = await register(page, {
     data: {
       email: `campaign-cover-${suffix}@streamos.local`,
       password: 'StreamOS-Campaign-Cover-123!',

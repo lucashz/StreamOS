@@ -35,18 +35,30 @@ type Onboarding = {
   };
 };
 
+type OverlayStatus = {
+  configured: boolean;
+  connected: boolean;
+};
+
 export default function OnboardingPage() {
   const [profile, setProfile] = useState<Onboarding>();
+  const [overlay, setOverlay] = useState<OverlayStatus>();
   const [legalName, setLegalName] = useState('');
   const [taxId, setTaxId] = useState('');
   const [financialTermsAccepted, setFinancialTermsAccepted] = useState(false);
   const [status, setStatus] = useState('Carregando configuração…');
 
   useEffect(() => {
-    void fetch(`${api}/dashboard/onboarding`, { credentials: 'include' })
-      .then(async (response) => {
-        if (!response.ok) throw new Error('Entre na sua conta para continuar.');
-        const value = (await response.json()) as Onboarding;
+    void Promise.all([
+      fetch(`${api}/dashboard/onboarding`, { credentials: 'include' }),
+      fetch(`${api}/dashboard/overlay/status`, { credentials: 'include' }),
+    ])
+      .then(async ([onboardingResponse, overlayResponse]) => {
+        if (!onboardingResponse.ok)
+          throw new Error('Entre na sua conta para continuar.');
+        const value = (await onboardingResponse.json()) as Onboarding;
+        if (overlayResponse.ok)
+          setOverlay((await overlayResponse.json()) as OverlayStatus);
         setProfile(value);
         setLegalName(value.organization.walletSettings?.legalName ?? '');
         setFinancialTermsAccepted(
@@ -136,6 +148,13 @@ export default function OnboardingPage() {
                   {profile.isPublished
                     ? '✓ Página publicada'
                     : '○ Página ainda privada'}
+                </span>
+                <span>
+                  {overlay?.connected
+                    ? '✓ OBS conectado'
+                    : overlay?.configured
+                      ? '○ OBS sem conexão'
+                      : '○ Browser Source ainda não configurado'}
                 </span>
               </div>
               <div className="form-grid two-columns">
@@ -321,8 +340,16 @@ export default function OnboardingPage() {
                 className="secondary-button button-link"
                 href="/conta#browser-source"
               >
-                Abrir configurações do OBS
+                {overlay?.connected
+                  ? 'Revisar configurações do OBS'
+                  : 'Configurar Browser Source'}
               </Link>
+              {overlay?.configured && !overlay.connected ? (
+                <p className="field-help">
+                  A URL já foi criada. Abra a Browser Source no OBS para
+                  concluir a conexão.
+                </p>
+              ) : null}
             </section>
             <section
               className="feature-card onboarding-finish"
@@ -336,8 +363,21 @@ export default function OnboardingPage() {
                   OBS.
                 </p>
               </div>
-              <Link className="primary-button" href="/central-da-live">
-                Ir para a Central da Live
+              <Link
+                className="primary-button"
+                href={
+                  !profile.onboardingCompletedAt || !profile.isPublished
+                    ? '#profile-step'
+                    : !overlay?.connected
+                      ? '/conta#browser-source'
+                      : '/central-da-live'
+                }
+              >
+                {!profile.onboardingCompletedAt || !profile.isPublished
+                  ? 'Concluir perfil e publicação'
+                  : !overlay?.connected
+                    ? 'Conectar o OBS'
+                    : 'Ir para a Central da Live'}
               </Link>
             </section>
           </>

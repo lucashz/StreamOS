@@ -28,6 +28,7 @@ export class AuthController {
       password: string;
       displayName: string;
       acceptTerms: boolean;
+      inviteCode?: string;
     },
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,

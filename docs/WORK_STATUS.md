@@ -104,6 +104,6 @@ Fechamento técnico dos ciclos pendentes concluído.
 
 ## Próxima ação
 
-1. Fechar o cadastro da beta com convites obrigatórios e auditáveis.
-2. Guiar o criador com onboarding pendente até a primeira live.
-3. Configurar staging, executar preflight e smoke test com as variáveis e URLs finais.
+1. Reexecutar as validações de navegador pendentes para convite, onboarding e estados públicos.
+2. Provisionar staging com domínios, segredos e credenciais reais fora do repositório.
+3. Executar migração limpa, `preflight:staging` e `smoke:staging` somente no ambiente provisionado.

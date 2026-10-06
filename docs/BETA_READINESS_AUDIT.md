@@ -2,18 +2,18 @@
 
 Atualizado em 05/10/2026. Evidências executadas no ambiente local.
 
-| Jornada | Estado | Evidência | Bloqueador / saída |
-| --- | --- | --- | --- |
-| Entrada e identidade | BLOQUEADOR | `test:e2e:accounts` aprovou cadastro, login, sessões, perfil e senha. | Cadastro está aberto; implementar convite obrigatório e testar código inválido, revogado e e-mail divergente. |
-| Página inicial | PENDENTE | Playwright responsivo aprovado. | Revisar conteúdo e CTA da beta após o bloqueio de convites. |
-| Onboarding | PENDENTE | Onboarding usado por todos os E2Es pagos. | Falta provar que o criador entende o próximo passo ao retornar incompleto. |
-| Página pública e contribuição | PRONTO | Fluxo local, pagamentos, campanhas, SongPix e VideoPix aprovados; Playwright responsivo aprovado. | Revalidar estados de URL inexistente e recurso despublicado. |
-| Carteira | PRONTO | `test:e2e:wallet` aprovou recebível, chave Pix protegida e kill switch. | Saque real fora da beta até homologação. |
-| Alertas, OBS e Central | PRONTO | `test:e2e:alerts`, `test:e2e:widgets`, `test:e2e:alert-reliability` e Playwright aprovados. | Sem bloqueador local. |
-| Moderação e TTS | PRONTO | `test:e2e:moderation` aprovado. | Sem bloqueador local. |
-| Configurações e plataforma | PRONTO | `test:e2e:platform` aprovou RBAC, tokens e webhooks. | Sem bloqueador local. |
-| Staging | BLOQUEADOR | `preflight:staging` falhou pela ausência de `.env.staging`. | Criar ambiente com URLs e credenciais, executar preflight e smoke. |
+| Jornada                       | Estado             | Evidência                                                                                                                                      | Bloqueador / saída                                                                                                                                                  |
+| ----------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Entrada e identidade          | PENDENTE           | Cadastro exige convite vinculado ao e-mail; o comando local cria códigos auditáveis.                                                           | Reexecutar a automação do navegador para código inválido, e-mail divergente e reutilização.                                                                         |
+| Página inicial                | PENDENTE           | Playwright responsivo aprovado anteriormente; o painel orienta ativações incompletas.                                                          | Validar visualmente o CTA depois do fechamento deste lote.                                                                                                          |
+| Onboarding                    | PENDENTE           | O checklist agora consulta o estado real do Browser Source e conduz para perfil, publicação ou OBS.                                            | Validar desktop e mobile com os três estados.                                                                                                                       |
+| Página pública e contribuição | PENDENTE           | Fluxo local, pagamentos, campanhas, SongPix e VideoPix aprovados anteriormente. URL e vaquinha indisponíveis agora oferecem retorno explícito. | Revalidar estados de URL inexistente, recurso despublicado e Pix expirado.                                                                                          |
+| Carteira                      | PRONTO             | `test:e2e:wallet` aprovou recebível, chave Pix protegida e kill switch.                                                                        | Saque real fora da beta até homologação.                                                                                                                            |
+| Alertas, OBS e Central        | PRONTO             | `test:e2e:alerts`, `test:e2e:widgets`, `test:e2e:alert-reliability` e Playwright aprovados.                                                    | Sem bloqueador local.                                                                                                                                               |
+| Moderação e TTS               | PRONTO             | `test:e2e:moderation` aprovado.                                                                                                                | Sem bloqueador local.                                                                                                                                               |
+| Configurações e plataforma    | PRONTO             | `test:e2e:platform` aprovou RBAC, tokens e webhooks.                                                                                           | Sem bloqueador local.                                                                                                                                               |
+| Staging                       | BLOQUEADOR EXTERNO | Exemplo de ambiente e compose já definem domínios, segredos e provedores necessários.                                                          | Faltam domínios, cofre de segredos e credenciais reais; então não há `.env.staging`, migração limpa, preflight ou smoke de homologação para executar com segurança. |
 
 ## Próximo ciclo
 
-Implementar convites obrigatórios para fechar o acesso da beta.
+Provisionar o ambiente de staging com domínios e segredos reais; em seguida executar migração limpa, preflight e smoke.

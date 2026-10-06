@@ -132,7 +132,13 @@ export function AuthForm({ mode }: Readonly<{ mode: 'login' | 'register' }>) {
       {mode === 'register' ? (
         <label>
           Código do convite
-          <input name="inviteCode" autoComplete="off" required />
+          <input
+            name="inviteCode"
+            autoComplete="off"
+            placeholder="Cole o código recebido"
+            required
+          />
+          <small>O código é vinculado ao e-mail convidado.</small>
         </label>
       ) : null}
       {mode === 'register' ? (

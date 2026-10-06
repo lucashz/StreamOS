@@ -146,6 +146,14 @@ export function DonationForm({
     )
       return;
     const check = async () => {
+      if (new Date(charge.expiresAt).getTime() <= Date.now()) {
+        setCharge(undefined);
+        setErrorMessage(
+          'Este Pix expirou. Gere uma nova cobrança para continuar.',
+        );
+        setStage('error');
+        return;
+      }
       const response = await fetch(
         `${api}/public/payment-intents/${charge.id}`,
         { cache: 'no-store' },
@@ -160,7 +168,20 @@ export function DonationForm({
     };
     void check();
     const poll = window.setInterval(() => void check(), 2_000);
-    return () => window.clearInterval(poll);
+    const expiry = window.setTimeout(
+      () => {
+        setCharge(undefined);
+        setErrorMessage(
+          'Este Pix expirou. Gere uma nova cobrança para continuar.',
+        );
+        setStage('error');
+      },
+      Math.max(0, new Date(charge.expiresAt).getTime() - Date.now()),
+    );
+    return () => {
+      window.clearInterval(poll);
+      window.clearTimeout(expiry);
+    };
   }, [charge, stage]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
