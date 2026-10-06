@@ -1,10 +1,10 @@
 # Estado de trabalho do StreamOS
 
-Atualizado em: 05/10/2026
+Atualizado em: 06/10/2026
 
 ## Ciclo atual
 
-Fechamento técnico dos ciclos pendentes concluído.
+Revalidação das automações afetadas pelos convites concluída; validação direta dos convites é o próximo ciclo.
 
 ## Decisões vigentes
 
@@ -25,6 +25,12 @@ Fechamento técnico dos ciclos pendentes concluído.
 - Prompt e critérios do lote registrados em `docs/REDESIGN_EXECUTION.md`.
 
 ## Validações já registradas
+
+- Convites/E2E (06/10/2026): `test:e2e:alerts`, `test:e2e:campaigns`, `test:e2e:subscriptions`, `test:e2e:songpix`, `test:e2e:videopix`, `test:e2e:platform` e `test:e2e:alert-reliability` aprovados com a criação de `BetaInvite` restrita aos utilitários de teste.
+- Carga de alertas (06/10/2026): repetição isolada aprovou 100 pagamentos, 100 entregas, zero perdas e zero reprodução duplicada. A primeira execução, imediatamente após sete E2Es, teve um HTTP 500 isolado e não reproduzido.
+- Carga de readiness (06/10/2026): repetição isolada aprovou 500 requisições, concorrência 25, zero falhas e p95 de 32,25 ms. A primeira execução no lote atingiu 1003,73 ms e excedeu o limite de 500 ms.
+- Resiliência (06/10/2026): indisponibilidade controlada e recuperação de Redis e PostgreSQL aprovadas.
+- Decisão de cobertura: `load-beta` exercita somente readiness e `resilience-beta` somente falha/recuperação da infraestrutura; cenário de convite nesses scripts não acrescentaria cobertura. `load-paid-alerts` já cadastra a conta com convite sob carga, e as regras do convite serão validadas diretamente via API no ciclo seguinte.
 
 - Carteira: carregamento movido para um bloco neutro alinhado ao conteúdo; notificações voltaram ao tamanho compacto e o estado foi validado em 360 e 1366 px.
 - Carteira: alerta financeiro compacto, contexto de saldo e destino no saque, extrato em grade estável e retorno visual de erro/sucesso revisados em 360 e 1366 px.
@@ -104,6 +110,6 @@ Fechamento técnico dos ciclos pendentes concluído.
 
 ## Próxima ação
 
-1. Reexecutar as validações de navegador pendentes para convite, onboarding e estados públicos.
-2. Provisionar staging com domínios, segredos e credenciais reais fora do repositório.
-3. Executar migração limpa, `preflight:staging` e `smoke:staging` somente no ambiente provisionado.
+1. Validar código de convite inválido, e-mail divergente, reutilização e sessão criada via API e fluxo manual, sem Playwright.
+2. Validar os quatro estados reais do onboarding e os estados públicos pendentes.
+3. Provisionar staging com domínios, segredos e credenciais reais fora do repositório; somente então executar migração limpa, `preflight:staging` e `smoke:staging`.

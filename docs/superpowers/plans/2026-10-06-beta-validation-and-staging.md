@@ -2,74 +2,138 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make the beta-closed validation suite executable again, validate affected creator and public flows, and prepare a safe staging gate.
+**Goal:** Revalidate the beta journeys affected by mandatory invitations, close the remaining activation and public-state checks, and leave staging ready for execution once its external inputs exist.
 
-**Architecture:** Keep invitation enforcement in the product. Centralize creation of test-only `BetaInvite` records in a tool helper, then migrate each E2E script and browser fixture to it. Validation uses existing local services; staging remains external and secret-free in Git.
+**Architecture:** Preserve mandatory invitations in product code and use the existing test-only invitation fixture for automated E2Es. Validate invitation rules directly through the API and a reproducible manual browser flow, without adding Playwright coverage for invitations. Run focused local checks first; keep staging secrets outside Git and treat missing domains, vault and real credentials as external blockers.
 
-**Tech Stack:** Node.js, Prisma/PostgreSQL, Playwright, Next.js, NestJS, Docker Compose.
+**Tech Stack:** Node.js, Prisma/PostgreSQL, Next.js, NestJS, Docker Compose, Playwright only for existing non-invitation E2Es.
 
 **Spec:** `docs/superpowers/specs/2026-10-05-beta-readiness-design.md`
 
 ## Global Constraints
 
-- Do not bypass or weaken invite validation in application code.
-- Do not enable `PAYOUTS_ENABLED`.
-- Do not commit `.env.staging` or real credentials.
-- Correct only failures reproduced by a directed test.
+- Do not bypass or weaken invitation validation in application code.
+- Validate invitations through API requests and a manual browser flow, not Playwright.
+- Correct onboarding or public pages only when a route or message is demonstrably wrong.
+- Do not commit `.env.staging`, domains or credentials.
+- Keep `PAYOUTS_ENABLED=false` locally and in staging.
+- Record only fresh evidence and real blockers in `docs/BETA_READINESS_AUDIT.md` and `docs/WORK_STATUS.md`.
 
 ## Review Focus
 
-- An invitation can only register its exact e-mail once.
-- Browser API registration must transfer the session to page navigation.
-- An OBS-disconnected creator must see the Browser Source action.
-- Public failure states must offer a safe next action without exposing private data.
-- Staging commands must reject placeholder secrets and example domains.
+- An invitation can register only its exact e-mail and only once.
+- Successful registration creates a usable authenticated session.
+- Onboarding distinguishes incomplete profile, private page, configured Browser Source without OBS, and connected OBS.
+- Missing/private creators, closed campaigns, unavailable media products and pending/expired Pix show the correct safe message.
+- Load and resilience coverage remains representative after invitation creation moved into test setup.
 
-### Task 1: Shared invitation fixture for automation
+---
 
-**Files:**
-- Create: `tools/lib/e2e-invites.mjs`
-- Modify: every `tools/e2e-*.mjs`, `tools/load-*.mjs`, `tools/resilience-*.mjs`, `tools/audit-ui.mjs`, `tests/browser/streamos.spec.ts`
-
-- [ ] Create `createBetaInvite(email)` using `PrismaClient`, SHA-256 and `BetaInvite`.
-- [ ] Replace direct registrations with a helper that adds a generated invite code.
-- [ ] Run each directed E2E and fix only failures after registration.
-- [ ] Commit: `Atualiza automações para beta fechada`.
-
-### Task 2: Invitation and onboarding browser validation
+### Task 1: Revalidate the E2Es affected by invitations
 
 **Files:**
-- Modify: `tests/browser/streamos.spec.ts`
-- Modify only if a failing test proves a product defect: `apps/web/app/auth-form.tsx`, `apps/web/app/onboarding/page.tsx`
+- Inspect: `tools/lib/e2e-invites.mjs`
+- Run: existing E2E, load and resilience scripts
+- Modify only if a reproduced test defect requires it: `tools/*.mjs`
 
-- [ ] Add browser scenarios for invalid code, divergent e-mail, reused code and post-registration session.
-- [ ] Add desktop/mobile onboarding cases for incomplete profile, unpublished page, disconnected and connected OBS.
-- [ ] Run focused Playwright projects at 360 and 1366 px.
-- [ ] Commit: `Valida convite e ativação da beta`.
+**Interfaces:**
+- Consumes: test-only `BetaInvite` creation before `POST /auth/register`.
+- Produces: fresh pass/fail evidence for alerts, campaigns, subscriptions, SongPix, VideoPix, platform and alert reliability; a decision on extra invitation coverage in load/resilience.
 
-### Task 3: Public and creator operational validation
+- [ ] Run `test:e2e:alerts`, `test:e2e:campaigns`, `test:e2e:subscriptions`, `test:e2e:songpix`, `test:e2e:videopix`, `test:e2e:platform` and `test:e2e:alert-reliability`.
+- [ ] Inspect `load-paid-alerts.mjs`, `load-beta.mjs` and `resilience-beta.mjs` for invitation setup and execute their directed commands.
+- [ ] Add an invitation scenario to load or resilience only if the inspection or a failure proves a coverage gap.
+- [ ] Update `docs/WORK_STATUS.md` with commands, results, limitations and the next cycle.
+- [ ] Commit the cycle if any tracked file changes.
 
-**Files:**
-- Modify only when reproduced: public pages and their existing E2E scripts.
-
-- [ ] Validate missing/private creator, closed campaign, unavailable SongPix/VideoPix, pending and expired Pix.
-- [ ] Run wallet, live-control, widgets, alerts and moderation with empty, long and failed states.
-- [ ] Record remaining reproduced blockers in `docs/BETA_READINESS_AUDIT.md`.
-- [ ] Commit: `Valida jornadas públicas e operação do criador`.
-
-### Task 4: Technical gate and staging handoff
+### Task 2: Validate invitation rules through API and manual flow
 
 **Files:**
-- Modify: `docs/BETA_READINESS_AUDIT.md`, `docs/WORK_STATUS.md`, `.env.staging.example` only if a gap is found.
+- Create if useful: a focused reusable API validation script under `tools/`
+- Modify only if a failing check proves a product defect: `apps/api/src/identity/*`, `apps/web/app/auth-form.tsx`
+- Update: `docs/WORK_STATUS.md`
 
-- [ ] Run `typecheck`, `lint`, `build`, directed E2Es and full Playwright once.
-- [ ] With externally provisioned domains/secrets, create ignored `.env.staging`, migrate a clean database, then run preflight and smoke.
-- [ ] Record missing external credentials as an explicit blocker; retain `PAYOUTS_ENABLED=false`.
-- [ ] Commit: `Fecha validação técnica da beta`.
+**Interfaces:**
+- Consumes: `POST /auth/register`, `GET /auth/me`, administrative local invitation creation.
+- Produces: evidence for invalid code, divergent e-mail, code reuse and post-registration session.
+
+- [ ] Exercise an invalid code and assert rejection without account creation.
+- [ ] Exercise an invitation with a different e-mail and assert rejection without consuming the invitation.
+- [ ] Register with the correct e-mail, verify the session cookie and confirm `GET /auth/me` succeeds.
+- [ ] Reuse the accepted code with another registration attempt and assert rejection.
+- [ ] Repeat the successful path manually in the browser and record the observed redirect/session state; do not add Playwright.
+- [ ] Update `docs/WORK_STATUS.md` and commit the cycle if tracked files changed.
+
+### Task 3: Validate the four real onboarding states
+
+**Files:**
+- Inspect: `apps/web/app/onboarding/page.tsx`, dashboard and overlay-status API routes.
+- Modify only if route or message is wrong: the owning onboarding/API file.
+- Update: `docs/WORK_STATUS.md`
+
+**Interfaces:**
+- Consumes: onboarding profile state and Browser Source configuration/connection state.
+- Produces: evidence for incomplete profile, private page, Browser Source without OBS and connected OBS.
+
+- [ ] Create or reset controlled data for each state through existing APIs/database fixtures.
+- [ ] Inspect each state at 1366 px and 360 px and compare the action, route and message with the real backend state.
+- [ ] If a defect is found, write a focused failing test, apply the minimal correction and rerun the focused validation.
+- [ ] Update `docs/WORK_STATUS.md` and commit the cycle if tracked files changed.
+
+### Task 4: Validate public failure and payment states
+
+**Files:**
+- Inspect: `apps/web/app/[slug]/**` and owning public API services.
+- Modify only if a reproduced route/message defect exists.
+- Update: `docs/WORK_STATUS.md`
+
+**Interfaces:**
+- Consumes: controlled creator, campaign, SongPix, VideoPix and payment records.
+- Produces: evidence for missing/private creator, closed campaign, unavailable SongPix/VideoPix and pending/expired Pix.
+
+- [ ] Validate missing and private creators at their public URLs.
+- [ ] Validate a closed campaign URL.
+- [ ] Validate unavailable SongPix and VideoPix routes.
+- [ ] Validate pending and expired Pix status/return routes.
+- [ ] Inspect the affected public states at 1366 px and 360 px; correct only proven route/message defects.
+- [ ] Update `docs/WORK_STATUS.md` and commit the cycle if tracked files changed.
+
+### Task 5: Close the operational audit
+
+**Files:**
+- Modify: `docs/BETA_READINESS_AUDIT.md`
+- Modify: `docs/WORK_STATUS.md`
+
+**Interfaces:**
+- Consumes: fresh evidence from Tasks 1–4.
+- Produces: the current readiness matrix and explicit blocker list.
+
+- [ ] Replace stale evidence with the exact commands/results collected in this run.
+- [ ] Classify every listed journey as `PRONTO`, `PENDENTE` or `BLOQUEADOR EXTERNO` without extrapolating from unrelated tests.
+- [ ] Keep staging blocked until domains, secret vault and real provider credentials exist.
+- [ ] Commit the audit cycle.
+
+### Task 6: Execute the staging gate when external inputs exist
+
+**Files:**
+- Create locally, ignored by Git: `.env.staging`
+- Modify only if a proven configuration gap exists: `.env.staging.example`, `tools/preflight-staging.mjs`, `tools/smoke-staging.mjs`
+
+**Interfaces:**
+- Consumes: final domains, vault-provided secrets, real provider credentials and a clean staging database.
+- Produces: clean migration, passing staging preflight and smoke evidence.
+
+- [ ] Confirm `.env.staging` is ignored, populate it outside Git and verify `PAYOUTS_ENABLED=false`.
+- [ ] Run migrations against the clean staging database.
+- [ ] Run `node tools/preflight-staging.mjs .env.staging` with the environment values available to the deploy workflow.
+- [ ] Run `smoke:staging` against the final public URLs.
+- [ ] If any external input is absent, do not fabricate it; record the exact blocker and stop this task at the gate.
+- [ ] Update both audit documents and commit only tracked documentation/configuration changes.
 
 ## Self-review
 
-- Task 1 restores every automated journey without weakening beta access control.
-- Task 2 covers all invitation and activation states named in the request.
-- Task 3 covers public and creator operation states.
-- Task 4 separates local verification from external staging credentials.
+- The remaining E2Es named by the user are covered explicitly in Task 1.
+- Invitation validation is API plus manual browser flow and contains no Playwright work.
+- All four onboarding states and all seven public/payment states have an owning task.
+- Load and resilience receive an explicit coverage decision rather than an assumed pass.
+- Staging actions are executable only with real external inputs, keep secrets outside Git and retain `PAYOUTS_ENABLED=false`.
