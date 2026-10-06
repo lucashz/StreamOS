@@ -1,3 +1,4 @@
+import './lib/e2e-invites.mjs';
 import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';

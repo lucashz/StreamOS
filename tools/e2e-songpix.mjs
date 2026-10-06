@@ -1,3 +1,4 @@
+import './lib/e2e-invites.mjs';
 import { io } from 'socket.io-client';
 import {
   assertPaymentInvariants,

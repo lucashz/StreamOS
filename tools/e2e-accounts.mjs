@@ -1,3 +1,4 @@
+import './lib/e2e-invites.mjs';
 const api = process.env.API_URL ?? 'http://localhost:3001';
 import { PrismaClient } from '../packages/database/dist/index.js';
 import { createHash, randomBytes } from 'node:crypto';

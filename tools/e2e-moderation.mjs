@@ -1,3 +1,4 @@
+import './lib/e2e-invites.mjs';
 import { io } from 'socket.io-client';
 const api = process.env.API_URL ?? 'http://localhost:3001';
 const realtime = (process.env.REALTIME_URL ?? 'http://localhost:3002').replace(

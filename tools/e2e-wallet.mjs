@@ -1,3 +1,4 @@
+import './lib/e2e-invites.mjs';
 import { randomUUID } from 'node:crypto';
 
 const api = process.env.API_URL ?? 'http://localhost:3001';
@@ -155,7 +156,11 @@ if (process.env.PAYOUTS_ENABLED !== 'true') {
     }),
     400,
   );
-  if (!JSON.stringify(disabledPayout.body).includes('temporariamente indisponíveis'))
+  if (
+    !JSON.stringify(disabledPayout.body).includes(
+      'temporariamente indisponíveis',
+    )
+  )
     throw new Error(
       `Kill switch de saques não retornou a mensagem esperada: ${JSON.stringify(disabledPayout.body)}`,
     );

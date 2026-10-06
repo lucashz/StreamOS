@@ -1,3 +1,4 @@
+import './lib/e2e-invites.mjs';
 import { performance } from 'node:perf_hooks';
 import { io } from 'socket.io-client';
 

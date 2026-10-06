@@ -1,3 +1,4 @@
+import './lib/e2e-invites.mjs';
 import { createHmac } from 'node:crypto';
 import { createServer } from 'node:http';
 
@@ -132,9 +133,8 @@ for (let attempt = 0; attempt < 25; attempt += 1) {
   overview = await request('/dashboard/platform', {
     headers: { cookie: ownerCookie },
   });
-  delivery = overview.body.webhooks.find(
-    (item) => item.id === endpoint.body.id,
-  )?.deliveries[0];
+  delivery = overview.body.webhooks.find((item) => item.id === endpoint.body.id)
+    ?.deliveries[0];
   if (delivery?.status === 'DELIVERED') break;
   await new Promise((resolve) => setTimeout(resolve, 200));
 }
