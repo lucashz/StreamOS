@@ -129,3 +129,6 @@ o fechamento de cada lote, não para cada correção.
 A beta fechada usa convites obrigatórios. Cadastro sem convite válido não cria
 conta nem organização. O convite é de uso único, associado ao e-mail informado
 e auditado quando aceito ou revogado.
+
+Os convites são criados por comando administrativo local de operação; não há
+endpoint público nem tela de criador para emitir convites.
