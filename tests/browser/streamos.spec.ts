@@ -100,9 +100,7 @@ test('autenticação e painel são responsivos', async ({ page }) => {
   });
   expect(response.ok()).toBeTruthy();
   await page.goto('/');
-  await expect(
-    page.getByRole('heading', { name: 'Visão geral' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Boa tarde,/ })).toBeVisible();
   const performancePeriod = page.getByLabel('Período do gráfico');
   await performancePeriod.selectOption('7');
   await expect(page.getByText('Sem receita nos últimos 7 dias')).toBeVisible();
