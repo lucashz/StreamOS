@@ -68,6 +68,116 @@ async function expectNoHorizontalOverflow(page: Page) {
   );
 }
 
+test('onboarding reflete perfil, publicação e conexão real do OBS', async ({
+  page,
+}) => {
+  const browserErrors: string[] = [];
+  page.on('pageerror', (error) => browserErrors.push(error.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error') browserErrors.push(message.text());
+  });
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const registration = await register(page, {
+    data: {
+      email: `onboarding-state-${suffix}@streamos.local`,
+      password: 'StreamOS-Onboarding-123!',
+      displayName: 'Estados do onboarding',
+      acceptTerms: true,
+    },
+  });
+  expect(registration.ok()).toBeTruthy();
+  const account = (await registration.json()) as {
+    memberships: Array<{
+      organizationId: string;
+      organization: { creatorProfile: { slug: string } };
+    }>;
+  };
+  const membership = account.memberships[0];
+  expect(membership).toBeTruthy();
+
+  await page.goto('/onboarding');
+  const browserApiCheck = await page.evaluate(async (apiUrl) => {
+    try {
+      const [onboarding, overlayStatus] = await Promise.all([
+        fetch(`${apiUrl}/dashboard/onboarding`, { credentials: 'include' }),
+        fetch(`${apiUrl}/dashboard/overlay/status`, { credentials: 'include' }),
+      ]);
+      return {
+        status: onboarding.status,
+        body: await onboarding.text(),
+        overlayStatus: overlayStatus.status,
+        overlayBody: await overlayStatus.text(),
+      };
+    } catch (error) {
+      return { status: 0, body: String(error), overlayStatus: 0, overlayBody: '' };
+    }
+  }, api);
+  expect(browserApiCheck.status, browserApiCheck.body).toBe(200);
+  expect(browserApiCheck.overlayStatus, browserApiCheck.overlayBody).toBe(200);
+  await page.waitForTimeout(1_000);
+  expect(browserErrors, await page.locator('body').innerText()).toEqual([]);
+  await expect(page.getByText('○ Perfil configurado')).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.getByText('○ Página ainda privada')).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Concluir perfil e publicação' }),
+  ).toHaveAttribute('href', '#profile-step');
+
+  const saved = await page.request.put(`${api}/dashboard/onboarding`, {
+    data: {
+      displayName: 'Estados do onboarding',
+      slug: membership.organization.creatorProfile.slug,
+      bio: 'Validação dos estados reais',
+      minimumContributionInCents: 100,
+      isPublished: false,
+      legalName: 'Estados do onboarding',
+      taxId: '52998224725',
+      financialTermsAccepted: true,
+    },
+  });
+  expect(saved.ok()).toBeTruthy();
+  await page.reload();
+  await expect(page.getByText('✓ Perfil configurado')).toBeVisible();
+  await expect(page.getByText('○ Página ainda privada')).toBeVisible();
+
+  const published = await page.request.put(`${api}/dashboard/onboarding`, {
+    data: { ...(await saved.json()), isPublished: true },
+  });
+  expect(published.ok()).toBeTruthy();
+  const configured = await page.request.post(
+    `${api}/dashboard/overlay/rotate-token`,
+  );
+  expect(configured.ok()).toBeTruthy();
+  await page.reload();
+  await expect(page.getByText('○ OBS sem conexão')).toBeVisible();
+  await expect(
+    page.getByText('A URL já foi criada. Abra a Browser Source no OBS'),
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Conectar o OBS' })).toHaveAttribute(
+    'href',
+    '/conta#browser-source',
+  );
+
+  const prisma = new PrismaClient();
+  await prisma.overlayChannel.updateMany({
+    where: { organizationId: membership.organizationId, revokedAt: null },
+    data: {
+      connectedAt: new Date(),
+      lastHeartbeatAt: new Date(),
+      disconnectedAt: null,
+      connectionId: `onboarding-${suffix}`,
+    },
+  });
+  await prisma.$disconnect();
+  await page.reload();
+  await expect(page.getByText('✓ OBS conectado')).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Ir para a Central da Live' }),
+  ).toHaveAttribute('href', '/central-da-live');
+  await expectNoHorizontalOverflow(page);
+});
+
 test('autenticação e painel são responsivos', async ({ page }) => {
   page.on('pageerror', (error) =>
     console.error(`browser pageerror [${page.url()}]:`, error),
