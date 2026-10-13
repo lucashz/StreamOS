@@ -4,7 +4,7 @@ Atualizado em: 13/10/2026
 
 ## Ciclo atual
 
-Onboarding validado em 13/10/2026 nos quatro estados reais em 360 px e 1366 px; validação das páginas públicas e estados do Pix é o próximo ciclo.
+Páginas públicas e estados do Pix validados em 13/10/2026 nos cenários de indisponibilidade e expiração em 360 px e 1366 px; preparação de staging é a próxima etapa.
 
 ## Decisões vigentes
 
@@ -109,10 +109,10 @@ Onboarding validado em 13/10/2026 nos quatro estados reais em 360 px e 1366 px; 
 - Widgets/OBS: os testes de entrega agora sincronizam o Browser Source antes de solicitar eventos; catálogo, mídia, QR Code, rotação de token e isolamento aprovados.
 - Plataforma: RBAC, rotação de token bearer, assinatura e histórico de webhooks e isolamento aprovados.
 - Onboarding (13/10/2026): os quatro estados derivados de dados reais (perfil incompleto, perfil salvo não publicado, publicado sem conexão OBS e OBS conectado com transição para Central da Live) validados via Playwright em 360 px e 1366 px sem overflow.
+- Páginas públicas e Pix (13/10/2026): criador inexistente, perfil privado/não publicado, SongPix/VideoPix desativados, vaquinha encerrada, Pix aguardando confirmação e Pix expirado validados via Playwright em 360 px e 1366 px sem overflow.
 - Fechamento visual: suíte Playwright aprovada com 72 cenários responsivos; o replay do histórico confirma o estado intermediário `QUEUED` e a nova reprodução no Browser Source.
 
 ## Próxima ação
 
-1. Validar páginas públicas (criador inexistente, perfil não publicado, SongPix/VideoPix desativados, vaquinha encerrada) e estados do Pix (aguardando e expirado) em 360 px e 1366 px.
+1. Provisionar staging com domínios, segredos e credenciais reais fora do repositório; somente então executar migração limpa, `preflight:staging` e `smoke:staging`.
 2. Validar código de convite via fluxo manual em sessão de navegador interativa compartilhada quando disponível.
-3. Provisionar staging com domínios, segredos e credenciais reais fora do repositório; somente então executar migração limpa, `preflight:staging` e `smoke:staging`.

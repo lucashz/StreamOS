@@ -178,6 +178,92 @@ test('onboarding reflete perfil, publicação e conexão real do OBS', async ({
   await expectNoHorizontalOverflow(page);
 });
 
+test('páginas públicas explicam indisponibilidade e estados do Pix', async ({
+  page,
+}) => {
+  await page.goto(`/criador-inexistente-${Date.now()}`);
+  await expect(page.getByRole('heading', { name: 'Página indisponível' })).toBeVisible();
+
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const registration = await register(page, {
+    data: {
+      email: `public-states-${suffix}@streamos.local`,
+      password: 'StreamOS-Public-123!',
+      displayName: 'Estados públicos',
+      acceptTerms: true,
+    },
+  });
+  const account = (await registration.json()) as {
+    memberships: Array<{ organization: { creatorProfile: { slug: string } } }>;
+  };
+  const slug = account.memberships[0].organization.creatorProfile.slug;
+  await page.goto(`/${slug}`);
+  await expect(page.getByRole('heading', { name: 'Página indisponível' })).toBeVisible();
+
+  const onboarding = await page.request.put(`${api}/dashboard/onboarding`, {
+    data: {
+      displayName: 'Estados públicos',
+      slug,
+      bio: 'Validação pública',
+      minimumContributionInCents: 100,
+      isPublished: true,
+      legalName: 'Estados públicos',
+      taxId: '52998224725',
+      financialTermsAccepted: true,
+    },
+  });
+  expect(onboarding.ok()).toBeTruthy();
+
+  await page.goto(`/${slug}/songpix`);
+  await expect(page.getByText('O criador não está aceitando pedidos agora.')).toBeVisible();
+  await page.goto(`/${slug}/videopix`);
+  await expect(page.getByText('O criador não está aceitando vídeos agora.')).toBeVisible();
+
+  const campaign = await page.request.post(`${api}/dashboard/campaigns`, {
+    data: {
+      title: 'Campanha encerrada',
+      slug: `encerrada-${suffix}`,
+      description: 'Campanha usada na validação pública',
+      targetInCents: 10_000,
+    },
+  });
+  expect(campaign.ok()).toBeTruthy();
+  const campaignBody = (await campaign.json()) as { id: string; slug: string };
+  await page.request.post(`${api}/dashboard/campaigns/${campaignBody.id}/status`, {
+    data: { status: 'PUBLISHED' },
+  });
+  await page.request.post(`${api}/dashboard/campaigns/${campaignBody.id}/status`, {
+    data: { status: 'CLOSED' },
+  });
+  await page.goto(`/${slug}/vaquinhas/${campaignBody.slug}`);
+  await expect(page.getByRole('heading', { name: 'Vaquinha indisponível' })).toBeVisible();
+
+  let expired = false;
+  await page.route(`**/public/creators/${slug}/payment-intents`, async (route) => {
+    await route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: `pix-${suffix}`,
+        pixCopyPaste: 'PIX-REAL-VALIDATION',
+        expiresAt: new Date(Date.now() + (expired ? -1_000 : 60_000)).toISOString(),
+      }),
+    });
+  });
+  await page.goto(`/${slug}`);
+  await page.getByLabel('Seu nome de usuário').fill('Apoiador público');
+  await page.getByRole('button', { name: /Continuar com/ }).click();
+  await expect(page.getByText('Pagamento Pix aguardando confirmação')).toBeVisible();
+  expired = true;
+  await page.goto(`/${slug}`);
+  await page.getByLabel('Seu nome de usuário').fill('Apoiador público');
+  await page.getByRole('button', { name: /Continuar com/ }).click();
+  await expect(
+    page.getByText('Este Pix expirou. Gere uma nova cobrança para continuar.'),
+  ).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+});
+
 test('autenticação e painel são responsivos', async ({ page }) => {
   page.on('pageerror', (error) =>
     console.error(`browser pageerror [${page.url()}]:`, error),
