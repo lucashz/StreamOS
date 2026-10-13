@@ -34,7 +34,7 @@ function Wait-Until([scriptblock]$Check, [string]$Description) {
 }
 
 function Start-DockerDesktop {
-  docker info *> $null
+  cmd.exe /c 'docker info >nul 2>&1'
   if ($LASTEXITCODE -eq 0) { return }
 
   $dockerDesktop = Join-Path $env:ProgramFiles 'Docker\Docker\Docker Desktop.exe'
@@ -43,7 +43,7 @@ function Start-DockerDesktop {
   }
   Write-Host '[...] Iniciando Docker Desktop'
   Start-Process -FilePath $dockerDesktop -WindowStyle Hidden
-  Wait-Until { docker info *> $null; $LASTEXITCODE -eq 0 } 'Docker Desktop'
+  Wait-Until { cmd.exe /c 'docker info >nul 2>&1'; $LASTEXITCODE -eq 0 } 'Docker Desktop'
 }
 
 function Start-ServiceProcess([string]$Name, [string]$Package, [int]$Port = 0) {
