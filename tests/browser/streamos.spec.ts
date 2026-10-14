@@ -410,7 +410,9 @@ test('autenticação e painel são responsivos', async ({ page }) => {
   });
   expect(response.ok()).toBeTruthy();
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: /Boa tarde,/ })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: /Boa tarde|Bom dia|Boa noite/ }),
+  ).toBeVisible();
   const performancePeriod = page.getByLabel('Período do gráfico');
   await performancePeriod.selectOption('7');
   await expect(page.getByText('Sem receita nos últimos 7 dias')).toBeVisible();
@@ -423,8 +425,15 @@ test('autenticação e painel são responsivos', async ({ page }) => {
   await expect(page.locator('aside,nav').first()).toBeAttached();
   await expectNoHorizontalOverflow(page);
   await page.goto('/saude');
-  await expect(page.getByText('Gate do beta')).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Saúde da transmissão' }),
+  ).toBeVisible();
+  await expect(page.getByText('Conexão com OBS')).toBeVisible();
   await expect(page.getByText('Conciliação', { exact: true })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+
+  await page.goto('/plataforma#sistema');
+  await expect(page.getByText('Gate do beta')).toBeVisible();
   await expect(page.getByText('Último backup', { exact: true })).toBeVisible();
   await expectNoHorizontalOverflow(page);
 });
@@ -596,7 +605,9 @@ test('configurações executam os fluxos principais com retorno visível', async
   await expect(twitch.getByRole('button', { name: 'Testar' })).toBeEnabled();
 
   await page.goto('/saude');
-  await expect(page.getByText('Gate do beta')).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Saúde da transmissão' }),
+  ).toBeVisible();
 });
 
 test('assinaturas criam e publicam um plano com retorno visível', async ({

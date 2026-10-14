@@ -6485,6 +6485,9 @@ a {
 .platform-settings-page > #webhooks {
   order: 6;
 }
+.platform-settings-page > #sistema {
+  order: 7;
+}
 
 .platform-settings-page .integration-grid {
   align-items: stretch;

@@ -57,6 +57,45 @@ type Overview = {
   scopes: string[];
   webhookEvents: string[];
 };
+
+type Operations = {
+  checkedAt: string;
+  betaGate: { ready: boolean; reasons: string[] };
+  psp: {
+    provider: string;
+    environment: string;
+    credentialsConfigured: boolean;
+    webhookConfigured: boolean;
+    pixOutEnabled: boolean;
+    kycKyb: string;
+    medHandling: string;
+  };
+  infrastructure: {
+    postgresql: string;
+    redis: string;
+    worker: string;
+    realtime: string;
+  };
+  grossInCents: number;
+  platformRevenueInCents: number;
+  providerFeesInCents: number;
+  netPlatformMarginInCents: number;
+  durableQueueDepth: number;
+  deadLetterEvents: number;
+  pendingOutbox: number;
+  backup: {
+    healthy: boolean;
+    lastBackupAt: string | null;
+    ageHours: number | null;
+  };
+};
+
+const money = (value: number) =>
+  new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value / 100);
+
 const rolePermissions: Record<string, string> = {
   ADMIN: 'Gerencia equipe, transmissão, conteúdo e configurações.',
   MODERATOR: 'Controla fila, alertas e moderação; não acessa saques.',
@@ -65,6 +104,7 @@ const rolePermissions: Record<string, string> = {
 };
 export default function Page() {
   const [data, setData] = useState<Overview>();
+  const [operations, setOperations] = useState<Operations>();
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('MODERATOR');
   const [url, setUrl] = useState('');
@@ -76,18 +116,27 @@ export default function Page() {
   const [busy, setBusy] = useState(false);
   const load = useCallback(async () => {
     try {
-      const r = await fetch(`${api}/dashboard/platform`, {
-        credentials: 'include',
-        cache: 'no-store',
-      });
-      const body = (await r.json().catch(() => ({}))) as Overview & {
+      const [rPlatform, rOps] = await Promise.all([
+        fetch(`${api}/dashboard/platform`, {
+          credentials: 'include',
+          cache: 'no-store',
+        }),
+        fetch(`${api}/dashboard/operations`, {
+          credentials: 'include',
+          cache: 'no-store',
+        }),
+      ]);
+      const body = (await rPlatform.json().catch(() => ({}))) as Overview & {
         message?: string;
       };
-      if (!r.ok)
+      if (!rPlatform.ok)
         throw new Error(
           body.message ?? 'Não foi possível carregar as configurações.',
         );
       setData(body);
+      if (rOps.ok) {
+        setOperations((await rOps.json()) as Operations);
+      }
       setStatus('Configurações sincronizadas.');
     } catch (error) {
       setStatus(
@@ -154,6 +203,7 @@ export default function Page() {
           <a href="#integracoes">Integrações</a>
           <a href="#api">API</a>
           <a href="#webhooks">Webhooks</a>
+          <a href="#sistema">Sistema</a>
         </nav>
         <p className="settings-feedback" role="status">
           {status}
@@ -539,6 +589,166 @@ export default function Page() {
               );
             })}
           </div>
+        </section>
+
+        <section id="sistema" className="feature-card settings-form">
+          <div className="settings-section-heading">
+            <h2>Sistema e Infraestrutura</h2>
+            <p>
+              Monitoramento global de servidores, banco de dados, backups e
+              provedor financeiro da plataforma.
+            </p>
+          </div>
+
+          {operations ? (
+            <div
+              style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+            >
+              <div
+                className={`feature-card beta-gate ${operations.betaGate.ready ? 'ready' : 'blocked'}`}
+                style={{ margin: 0 }}
+              >
+                <div>
+                  <span className="section-kicker">Gate do beta</span>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                    {operations.betaGate.ready
+                      ? 'Apto para operar'
+                      : 'Bloqueado'}
+                  </h3>
+                </div>
+                <small>
+                  Última verificação:{' '}
+                  {new Date(operations.checkedAt).toLocaleString('pt-BR')}
+                </small>
+                {operations.betaGate.reasons.length ? (
+                  <ul>
+                    {operations.betaGate.reasons.map((reason) => (
+                      <li key={reason}>{reason}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>
+                    Todos os critérios técnicos do ambiente estão dentro da
+                    meta.
+                  </p>
+                )}
+              </div>
+
+              <div className="feature-card psp-health" style={{ margin: 0 }}>
+                <div className="panel-heading">
+                  <div>
+                    <span className="section-kicker">Infraestrutura</span>
+                    <h3>Serviços essenciais</h3>
+                  </div>
+                </div>
+                <dl className="psp-health-grid">
+                  {Object.entries(operations.infrastructure).map(
+                    ([service, state]) => (
+                      <div key={service}>
+                        <dt>
+                          {service === 'postgresql'
+                            ? 'PostgreSQL'
+                            : service === 'redis'
+                              ? 'Redis'
+                              : service === 'worker'
+                                ? 'Worker'
+                                : 'Realtime'}
+                        </dt>
+                        <dd>{state}</dd>
+                      </div>
+                    ),
+                  )}
+                  <div>
+                    <dt>Último backup</dt>
+                    <dd>
+                      {operations.backup.healthy ? 'OK' : 'Alerta'} (
+                      {operations.backup.lastBackupAt
+                        ? `${operations.backup.ageHours}h atrás`
+                        : 'não encontrado'}
+                      )
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+
+              <div className="feature-card psp-health" style={{ margin: 0 }}>
+                <div className="panel-heading">
+                  <div>
+                    <span className="section-kicker">Financeiro</span>
+                    <h3>Provedor Pix (PSP)</h3>
+                  </div>
+                  <strong>{operations.psp.provider}</strong>
+                </div>
+                <dl className="psp-health-grid">
+                  <div>
+                    <dt>Ambiente</dt>
+                    <dd>{operations.psp.environment}</dd>
+                  </div>
+                  <div>
+                    <dt>Credenciais</dt>
+                    <dd>
+                      {operations.psp.credentialsConfigured
+                        ? 'Configuradas'
+                        : 'Pendentes'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Webhook</dt>
+                    <dd>
+                      {operations.psp.webhookConfigured
+                        ? 'Configurado'
+                        : 'Pendente'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Pix Out</dt>
+                    <dd>
+                      {operations.psp.pixOutEnabled
+                        ? 'Habilitado'
+                        : 'Desabilitado'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>KYC/KYB</dt>
+                    <dd>{operations.psp.kycKyb}</dd>
+                  </div>
+                  <div>
+                    <dt>MED</dt>
+                    <dd>{operations.psp.medHandling}</dd>
+                  </div>
+                </dl>
+              </div>
+
+              <div className="operations-grid">
+                <article className="feature-card">
+                  <small>Volume confirmado</small>
+                  <strong>{money(operations.grossInCents)}</strong>
+                  <span>
+                    {money(operations.platformRevenueInCents)} receita StreamOS
+                  </span>
+                </article>
+                <article className="feature-card">
+                  <small>Taxas do provedor</small>
+                  <strong>{money(operations.providerFeesInCents)}</strong>
+                  <span>custo financeiro do PSP</span>
+                </article>
+                <article className="feature-card">
+                  <small>Margem operacional</small>
+                  <strong>{money(operations.netPlatformMarginInCents)}</strong>
+                  <span>receita após custo do PSP</span>
+                </article>
+                <article className="feature-card">
+                  <small>Stream durável</small>
+                  <strong>{operations.durableQueueDepth}</strong>
+                  <span>{operations.deadLetterEvents} em dead-letter</span>
+                </article>
+              </div>
+            </div>
+          ) : (
+            <p style={{ color: 'var(--muted)' }}>
+              Carregando dados da infraestrutura…
+            </p>
+          )}
         </section>
       </main>
     </PanelShell>

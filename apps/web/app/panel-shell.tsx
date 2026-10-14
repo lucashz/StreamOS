@@ -225,7 +225,8 @@ const groups: ReadonlyArray<{
       ['Equipe', '/plataforma#equipe', 'users', ['OWNER', 'ADMIN']],
       ['Integrações', '/plataforma#integracoes', 'plug', ['OWNER', 'ADMIN']],
       ['API e Webhooks', '/plataforma#api', 'settings', ['OWNER', 'ADMIN']],
-      ['Saúde', '/saude', 'activity', ['OWNER', 'ADMIN']],
+      ['Saúde da transmissão', '/saude', 'activity'],
+      ['Infraestrutura', '/plataforma#sistema', 'activity', ['OWNER', 'ADMIN']],
     ],
   },
 ];

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { PanelShell } from '../panel-shell';
 import { PageHeader } from '../ui';
 
@@ -9,21 +10,6 @@ const api = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 type Operations = {
   periodHours: number;
   checkedAt: string;
-  psp: {
-    provider: string;
-    environment: string;
-    credentialsConfigured: boolean;
-    webhookConfigured: boolean;
-    pixOutEnabled: boolean;
-    kycKyb: string;
-    medHandling: string;
-  };
-  infrastructure: {
-    postgresql: string;
-    redis: string;
-    worker: string;
-    realtime: string;
-  };
   flags: {
     paymentsEnabled: boolean;
     payoutsEnabled: boolean;
@@ -45,33 +31,14 @@ type Operations = {
     alertStartTargetMs: number;
     alertStartMet: boolean;
   };
-  betaGate: { ready: boolean; reasons: string[] };
-  grossInCents: number;
-  platformRevenueInCents: number;
-  providerFeesInCents: number;
-  netPlatformMarginInCents: number;
   reconciliation: { healthy: boolean; divergences: number };
-  backup: {
-    healthy: boolean;
-    lastBackupAt: string | null;
-    ageHours: number | null;
-  };
   playbackTotal: number;
   playbackFailures: number;
   overlayConnected: boolean;
   lastHeartbeatAt: string | null;
   pendingOutbox: number;
   failedWebhooks: number;
-  durableQueueDepth: number;
-  streamPending: number;
-  deadLetterEvents: number;
 };
-
-const money = (value: number) =>
-  new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value / 100);
 
 const duration = (value: number) =>
   value < 1_000
@@ -93,7 +60,7 @@ export default function HealthPage() {
       setError(
         response.status === 403
           ? 'Somente proprietários e administradores podem ver esta página.'
-          : 'Não foi possível consultar a saúde do sistema.',
+          : 'Não foi possível consultar a saúde da transmissão.',
       );
       setLoading(false);
       return;
@@ -109,13 +76,17 @@ export default function HealthPage() {
     return () => window.clearInterval(timer);
   }, [load]);
 
+  const playbackSuccessRate = data
+    ? Math.max(0, 100 - data.playbackFailurePercent)
+    : 100;
+
   return (
     <PanelShell>
       <main className="feature-page operations-page">
         <PageHeader
-          eyebrow="Configurações · Operação"
-          title="Saúde do sistema"
-          description="Pagamentos, alertas e integrações nas últimas 24 horas."
+          eyebrow="Transmissão · Diagnóstico"
+          title="Saúde da transmissão"
+          description="Monitore a conexão do OBS, estabilidade dos alertas e desempenho do Pix no seu canal nas últimas 24 horas."
           actions={
             <button className="secondary-button" onClick={() => void load()}>
               Atualizar
@@ -124,7 +95,7 @@ export default function HealthPage() {
         />
 
         {loading && !data ? (
-          <div className="feature-card">Carregando...</div>
+          <div className="feature-card">Carregando dados da transmissão...</div>
         ) : null}
         {error ? (
           <div className="feature-card operations-error">{error}</div>
@@ -133,40 +104,29 @@ export default function HealthPage() {
           <>
             <section
               className="operations-flags"
-              aria-label="Controles operacionais"
+              aria-label="Status dos módulos da live"
             >
-              <div
-                className={`operations-flag ${data.flags.paymentsEnabled ? 'ok' : 'off'}`}
-              >
-                <span />
-                <div>
-                  <strong>Recebimentos</strong>
-                  <small>
-                    {data.flags.paymentsEnabled ? 'Ativos' : 'Pausados'}
-                  </small>
-                </div>
-              </div>
-              <div
-                className={`operations-flag ${data.flags.payoutsEnabled ? 'ok' : 'off'}`}
-              >
-                <span />
-                <div>
-                  <strong>Saques</strong>
-                  <small>
-                    {data.flags.payoutsEnabled ? 'Ativos' : 'Pausados'}
-                  </small>
-                </div>
-              </div>
               <div
                 className={`operations-flag ${data.overlayConnected ? 'ok' : 'off'}`}
               >
                 <span />
                 <div>
-                  <strong>Overlay unificado</strong>
+                  <strong>Conexão com OBS</strong>
                   <small>
                     {data.overlayConnected
-                      ? 'Conectado ao OBS'
-                      : 'Sem heartbeat recente'}
+                      ? 'Conectado e recebendo heartbeat'
+                      : 'Aguardando conexão do OBS'}
+                  </small>
+                </div>
+              </div>
+              <div
+                className={`operations-flag ${data.flags.paymentsEnabled ? 'ok' : 'off'}`}
+              >
+                <span />
+                <div>
+                  <strong>Pix na live</strong>
+                  <small>
+                    {data.flags.paymentsEnabled ? 'Ativo' : 'Pausado'}
                   </small>
                 </div>
               </div>
@@ -182,210 +142,134 @@ export default function HealthPage() {
                   <span />
                   <div>
                     <strong>{String(label)}</strong>
-                    <small>{enabled ? 'Ativo' : 'Pausado'}</small>
+                    <small>{enabled ? 'Ativo no canal' : 'Desativado'}</small>
                   </div>
                 </div>
               ))}
             </section>
 
+            {/* OBS & Overlay Performance */}
+            <section className="feature-card psp-health">
+              <div className="panel-heading">
+                <div>
+                  <span className="section-kicker">Transmissão</span>
+                  <h2>Status do OBS e Alertas</h2>
+                </div>
+                <strong
+                  style={{
+                    color: data.overlayConnected
+                      ? 'var(--accent)'
+                      : 'var(--muted)',
+                  }}
+                >
+                  {data.overlayConnected ? '● Online' : '○ Offline'}
+                </strong>
+              </div>
+              <p
+                style={{
+                  margin: '8px 0 16px',
+                  color: 'var(--muted)',
+                  fontSize: '13px',
+                }}
+              >
+                {data.lastHeartbeatAt
+                  ? `Último heartbeat recebido em ${new Date(data.lastHeartbeatAt).toLocaleTimeString('pt-BR')} do overlay do OBS.`
+                  : 'Nenhum heartbeat recebido recentemente. Adicione a Browser Source no OBS Studio.'}
+              </p>
+              <dl className="psp-health-grid">
+                <div>
+                  <dt>Latência OBS (P95)</dt>
+                  <dd>{duration(data.p95OverlayDeliveryMs)}</dd>
+                </div>
+                <div>
+                  <dt>Meta de entrega</dt>
+                  <dd>
+                    {data.slo.alertStartMet
+                      ? `OK (meta < ${duration(data.slo.alertStartTargetMs)})`
+                      : 'Atenção na rede'}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Pagamento → Tela (P95)</dt>
+                  <dd>{duration(data.p95AlertStartMs)}</dd>
+                </div>
+                <div>
+                  <dt>Taxa de sucesso</dt>
+                  <dd>{playbackSuccessRate}%</dd>
+                </div>
+              </dl>
+            </section>
+
+            {/* Metrics Grid focused on channel */}
             <section
-              className={`feature-card beta-gate ${data.betaGate.ready ? 'ready' : 'blocked'}`}
+              className="operations-grid"
+              aria-label="Indicadores do canal"
             >
-              <div>
-                <span className="section-kicker">Gate do beta</span>
-                <h2>
-                  {data.betaGate.ready ? 'Apto para operar' : 'Bloqueado'}
-                </h2>
-              </div>
-              <small>
-                Última verificação:{' '}
-                {new Date(data.checkedAt).toLocaleString('pt-BR')}
-              </small>
-              {data.betaGate.reasons.length ? (
-                <ul>
-                  {data.betaGate.reasons.map((reason) => (
-                    <li key={reason}>{reason}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p>Todos os critérios técnicos locais estão dentro da meta.</p>
-              )}
-            </section>
-
-            <section className="feature-card psp-health">
-              <div className="panel-heading">
-                <div>
-                  <span className="section-kicker">Financeiro</span>
-                  <h2>Provedor Pix</h2>
-                </div>
-                <strong>{data.psp.provider}</strong>
-              </div>
-              <dl className="psp-health-grid">
-                <div>
-                  <dt>Ambiente</dt>
-                  <dd>{data.psp.environment}</dd>
-                </div>
-                <div>
-                  <dt>Credenciais</dt>
-                  <dd>
-                    {data.psp.credentialsConfigured
-                      ? 'Configuradas'
-                      : 'Pendentes'}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Webhook</dt>
-                  <dd>
-                    {data.psp.webhookConfigured ? 'Configurado' : 'Pendente'}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Pix Out</dt>
-                  <dd>
-                    {data.psp.pixOutEnabled ? 'Habilitado' : 'Desabilitado'}
-                  </dd>
-                </div>
-                <div>
-                  <dt>KYC/KYB</dt>
-                  <dd>{data.psp.kycKyb}</dd>
-                </div>
-                <div>
-                  <dt>MED</dt>
-                  <dd>{data.psp.medHandling}</dd>
-                </div>
-              </dl>
-            </section>
-            <section className="feature-card psp-health">
-              <div className="panel-heading">
-                <div>
-                  <span className="section-kicker">Infraestrutura</span>
-                  <h2>Serviços essenciais</h2>
-                </div>
-              </div>
-              <dl className="psp-health-grid">
-                {Object.entries(data.infrastructure).map(([service, state]) => (
-                  <div key={service}>
-                    <dt>
-                      {service === 'postgresql'
-                        ? 'PostgreSQL'
-                        : service === 'redis'
-                          ? 'Redis'
-                          : service === 'worker'
-                            ? 'Worker'
-                            : 'Realtime'}
-                    </dt>
-                    <dd>{state}</dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
-
-            <section className="operations-grid">
               <article className="feature-card">
-                <small>Intenções Pix</small>
+                <small>Intenções de Pix</small>
                 <strong>{data.paymentIntents}</strong>
-                <span>{data.confirmedPayments} confirmadas</span>
+                <span>{data.confirmedPayments} pagamentos confirmados</span>
               </article>
               <article className="feature-card">
-                <small>Conversão</small>
+                <small>Conversão do checkout</small>
                 <strong>{data.conversionPercent}%</strong>
-                <span>criação até confirmação</span>
+                <span>intenções que viraram pagamento</span>
               </article>
               <article className="feature-card">
-                <small>Tempo de confirmação</small>
+                <small>Confirmação do Pix</small>
                 <strong>{duration(data.averageConfirmationMs)}</strong>
-                <span>P95 {duration(data.p95ConfirmationMs)}</span>
+                <span>média (P95: {duration(data.p95ConfirmationMs)})</span>
               </article>
               <article className="feature-card">
-                <small>SLO Pix</small>
+                <small>Velocidade do Pix (SLO)</small>
                 <strong>
-                  {data.slo.paymentConfirmationMet ? 'OK' : 'Alerta'}
+                  {data.slo.paymentConfirmationMet ? 'Excelente' : 'Atenção'}
                 </strong>
                 <span>
                   95% em até {duration(data.slo.paymentConfirmationTargetMs)}
                 </span>
               </article>
               <article className="feature-card">
-                <small>SLO entrega ao OBS</small>
-                <strong>{data.slo.alertStartMet ? 'OK' : 'Alerta'}</strong>
-                <span>
-                  P95 {duration(data.p95OverlayDeliveryMs)} · meta{' '}
-                  {duration(data.slo.alertStartTargetMs)}
-                </span>
-              </article>
-              <article className="feature-card">
-                <small>Pagamento → reprodução</small>
-                <strong>{duration(data.p95AlertStartMs)}</strong>
-                <span>P95 incluindo espera na fila</span>
-              </article>
-              <article className="feature-card">
-                <small>Volume confirmado</small>
-                <strong>{money(data.grossInCents)}</strong>
-                <span>
-                  {money(data.platformRevenueInCents)} para a StreamOS
-                </span>
-              </article>
-              <article className="feature-card">
-                <small>Alertas executados</small>
+                <small>Alertas reproduzidos</small>
                 <strong>{data.playbackTotal}</strong>
                 <span>
-                  {data.playbackFailures} falhas · {data.playbackFailurePercent}
-                  %
+                  {data.playbackFailures} falhas de mídia (
+                  {data.playbackFailurePercent}%)
                 </span>
               </article>
               <article className="feature-card">
-                <small>Fila interna</small>
+                <small>Fila de transmissão</small>
                 <strong>{data.pendingOutbox}</strong>
-                <span>eventos aguardando entrega</span>
-              </article>
-              <article className="feature-card">
-                <small>Webhooks com falha</small>
-                <strong>{data.failedWebhooks}</strong>
-                <span>nas últimas 24 horas</span>
-              </article>
-              <article className="feature-card">
-                <small>Taxas do provedor</small>
-                <strong>{money(data.providerFeesInCents)}</strong>
-                <span>custo financeiro registrado</span>
-              </article>
-              <article className="feature-card">
-                <small>Margem operacional</small>
-                <strong>{money(data.netPlatformMarginInCents)}</strong>
-                <span>receita StreamOS após o repasse do custo do PSP</span>
+                <span>alertas aguardando exibição</span>
               </article>
               <article className="feature-card">
                 <small>Conciliação</small>
                 <strong>{data.reconciliation.healthy ? 'OK' : 'Alerta'}</strong>
-                <span>{data.reconciliation.divergences} divergências</span>
-              </article>
-              <article className="feature-card">
-                <small>Último backup</small>
-                <strong>{data.backup.healthy ? 'OK' : 'Alerta'}</strong>
                 <span>
-                  {data.backup.lastBackupAt
-                    ? `${data.backup.ageHours}h atrás`
-                    : 'não encontrado'}
+                  {data.reconciliation.divergences} divergências na carteira
                 </span>
               </article>
               <article className="feature-card">
-                <small>Stream durável</small>
-                <strong>{data.durableQueueDepth}</strong>
-                <span>{data.streamPending} aguardando ACK do worker</span>
-              </article>
-              <article className="feature-card">
-                <small>Dead-letter</small>
-                <strong>{data.deadLetterEvents}</strong>
-                <span>eventos que exigem intervenção</span>
+                <small>Webhooks de integração</small>
+                <strong>{data.failedWebhooks}</strong>
+                <span>falhas de entrega em 24h</span>
               </article>
             </section>
 
+            {/* Operator reference */}
             <section className="feature-card operations-note">
-              <h2>Overlay do OBS</h2>
+              <span className="section-kicker">Operador da plataforma</span>
+              <h2>Infraestrutura de servidores</h2>
               <p>
-                {data.lastHeartbeatAt
-                  ? `Último heartbeat em ${new Date(data.lastHeartbeatAt).toLocaleString('pt-BR')}.`
-                  : 'O overlay unificado ainda não enviou heartbeat. Abra a URL de alertas no OBS.'}
+                Informações de servidores (PostgreSQL, Redis), backups e gateway
+                financeiro pertencem à operação global da plataforma e estão
+                disponíveis na área administrativa de Infraestrutura.
               </p>
+              <div style={{ marginTop: '12px' }}>
+                <Link className="secondary-button" href="/plataforma#sistema">
+                  Acessar infraestrutura do sistema →
+                </Link>
+              </div>
             </section>
           </>
         ) : null}
