@@ -64,7 +64,12 @@ function Start-ServiceProcess([string]$Name, [string]$Package, [int]$Port = 0) {
   $stdout = Join-Path $LogRoot "$Name.out.log"
   $stderr = Join-Path $LogRoot "$Name.err.log"
   $cmd = "cmd.exe /c corepack.cmd pnpm exec dotenv -e .env -- corepack.cmd pnpm --filter $Package start > `"$stdout`" 2> `"$stderr`""
-  $spawn = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = $cmd; CurrentDirectory = $ProjectRoot }
+  $startup = New-CimInstance -ClassName Win32_ProcessStartup -Property @{ ShowWindow = [uint16]0 } -ClientOnly
+  $spawn = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
+    CommandLine = $cmd
+    CurrentDirectory = $ProjectRoot
+    ProcessStartupInformation = $startup
+  }
   $processId = [int]$spawn.ProcessId
   $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
   Set-Content -LiteralPath $pidFile -Value $processId
