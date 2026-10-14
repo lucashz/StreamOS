@@ -68,6 +68,83 @@ async function expectNoHorizontalOverflow(page: Page) {
   );
 }
 
+test('cadastro no navegador valida regras de convite e redireciona para onboarding', async ({
+  page,
+}) => {
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const validEmail = `cadastro-valido-${suffix}@streamos.local`;
+  const otherEmail = `cadastro-divergente-${suffix}@streamos.local`;
+  const validCode = await invite(validEmail);
+
+  await page.goto('/cadastro');
+  await expectNoHorizontalOverflow(page);
+
+  // 1. Código de convite inválido
+  await page.locator('input[name="displayName"]').fill('Canal Teste');
+  await page.locator('input[name="email"]').fill(validEmail);
+  await page.locator('input[name="password"]').fill('StreamOS-Senha-123!');
+  await page.locator('input[name="confirmPassword"]').fill('StreamOS-Senha-123!');
+  await page.locator('input[name="inviteCode"]').fill(`invalido-${suffix}`);
+  await page.locator('input[name="acceptTerms"]').check();
+  await page.getByRole('button', { name: 'Criar conta' }).click();
+  await expect(page.locator('.auth-error')).toContainText(/convite/i);
+
+  // 2. E-mail divergente do convite
+  await page.locator('input[name="email"]').fill(otherEmail);
+  await page.locator('input[name="inviteCode"]').fill(validCode);
+  await page.getByRole('button', { name: 'Criar conta' }).click();
+  await expect(page.locator('.auth-error')).toContainText(/convite/i);
+
+  // 3. Sucesso com código e e-mail corretos
+  await page.locator('input[name="email"]').fill(validEmail);
+  await page.getByRole('button', { name: 'Criar conta' }).click();
+  await expect(page).toHaveURL(/.*\/onboarding/);
+  await expect(page.getByText('○ Perfil configurado')).toBeVisible();
+
+  // 4. Reutilização do convite rejeitada
+  await page.goto('/cadastro');
+  await page.locator('input[name="displayName"]').fill('Canal Reutilizado');
+  await page.locator('input[name="email"]').fill(`outro-${suffix}@streamos.local`);
+  await page.locator('input[name="password"]').fill('StreamOS-Senha-123!');
+  await page.locator('input[name="confirmPassword"]').fill('StreamOS-Senha-123!');
+  await page.locator('input[name="inviteCode"]').fill(validCode);
+  await page.locator('input[name="acceptTerms"]').check();
+  await page.getByRole('button', { name: 'Criar conta' }).click();
+  await expect(page.locator('.auth-error')).toContainText(/convite/i);
+
+  await expectNoHorizontalOverflow(page);
+});
+
+test('página inicial orienta ativação incompleta com CTA para onboarding', async ({
+  page,
+}) => {
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const registration = await register(page, {
+    data: {
+      email: `home-cta-${suffix}@streamos.local`,
+      password: 'StreamOS-Home-123!',
+      displayName: 'Ativação Pendente',
+      acceptTerms: true,
+    },
+  });
+  expect(registration.ok()).toBeTruthy();
+
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: /Boa tarde|Bom dia|Boa noite/ })).toBeVisible();
+
+  const notice = page.locator('section[aria-label="Próximo passo da ativação"]');
+  await expect(notice).toBeVisible();
+  await expect(notice.getByText('Conclua a ativação')).toBeVisible();
+  const ctaLink = notice.getByRole('link', { name: 'Continuar configuração' });
+  await expect(ctaLink).toHaveAttribute('href', '/onboarding');
+
+  await ctaLink.click();
+  await expect(page).toHaveURL(/.*\/onboarding/);
+  await expect(page.getByText('○ Perfil configurado')).toBeVisible();
+
+  await expectNoHorizontalOverflow(page);
+});
+
 test('onboarding reflete perfil, publicação e conexão real do OBS', async ({
   page,
 }) => {

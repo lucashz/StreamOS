@@ -4,7 +4,7 @@ Atualizado em: 13/10/2026
 
 ## Ciclo atual
 
-Páginas públicas e estados do Pix validados em 13/10/2026 nos cenários de indisponibilidade e expiração em 360 px e 1366 px; preparação de staging é a próxima etapa.
+Entrada e identidade (convites no cadastro) e orientação da página inicial (CTA de ativação) validados em 13/10/2026 em 360 px e 1366 px; fechamento da auditoria de prontidão da beta local concluído.
 
 ## Decisões vigentes
 
@@ -110,6 +110,9 @@ Páginas públicas e estados do Pix validados em 13/10/2026 nos cenários de ind
 - Plataforma: RBAC, rotação de token bearer, assinatura e histórico de webhooks e isolamento aprovados.
 - Onboarding (13/10/2026): os quatro estados derivados de dados reais (perfil incompleto, perfil salvo não publicado, publicado sem conexão OBS e OBS conectado com transição para Central da Live) validados via Playwright em 360 px e 1366 px sem overflow.
 - Páginas públicas e Pix (13/10/2026): criador inexistente, perfil privado/não publicado, SongPix/VideoPix desativados, vaquinha encerrada, Pix aguardando confirmação e Pix expirado validados via Playwright em 360 px e 1366 px sem overflow.
+- Entrada e identidade (13/10/2026): cadastro no navegador valida código de convite inválido, e-mail divergente, reutilização bloqueada e redirecionamento para onboarding, em 360 px e 1366 px sem overflow.
+- Página inicial (13/10/2026): painel orienta ativações incompletas com aviso visual e CTA direto para `/onboarding`, validado em 360 px e 1366 px sem overflow.
+- Auditoria de prontidão (13/10/2026): todas as jornadas locais em `docs/BETA_READINESS_AUDIT.md` (Entrada, Início, Onboarding, Pública, Carteira, Alertas/OBS, Moderação e Plataforma) concluídas e em estado PRONTO; staging permanece como único bloqueador externo dependente de credenciais reais.
 - Fechamento visual: suíte Playwright aprovada com 72 cenários responsivos; o replay do histórico confirma o estado intermediário `QUEUED` e a nova reprodução no Browser Source.
 
 ## Próxima ação
