@@ -41,6 +41,8 @@ import { PlatformController } from './platform/platform.controller';
 import { PlatformService } from './platform/platform.service';
 import { PublicRateLimitGuard } from './security/public-rate-limit.guard';
 import { MetricsController } from './observability/metrics.controller';
+import { TtsController } from './tts/tts.controller';
+import { TtsService } from './tts/tts.service';
 
 const environment = parseEnvironment(process.env);
 
@@ -61,12 +63,14 @@ const environment = parseEnvironment(process.env);
     SubscriptionsController,
     PlatformController,
     MetricsController,
+    TtsController,
   ],
   providers: [
     AuthService,
     MailerService,
     DashboardService,
     PaymentsService,
+    TtsService,
     MockPaymentProvider,
     WooviPaymentProvider,
     {

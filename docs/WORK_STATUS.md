@@ -1,15 +1,21 @@
 # Estado de trabalho do StreamOS
 
-Atualizado em: 13/10/2026
+Atualizado em: 14/10/2026
 
 ## Ciclo atual
 
-Catálogo de vozes de personalidades no estilo Livepix implementado e validado em 13/10/2026 nas resoluções desktop (1366 px) e mobile (360 px), sem overflow horizontal. As personas contam com avatares, analogias, frases de demonstração e síntese por Web Speech API / TTS customizado no overlay.
+Motor de TTS de alta fidelidade estilo Livepix implementado com arquitetura de 3 camadas:
+1. ElevenLabs AI Voice (opcional via variáveis de ambiente para clonagem de estúdio);
+2. Microsoft Edge Neural TTS integrado no backend (gratuito, sem cota rígida e com vozes brasileiras de estúdio `pt-BR-AntonioNeural`, `pt-BR-FranciscaNeural` e `pt-BR-ThalitaMultilingualNeural` moduladas por pitch e rate);
+3. Cache persistente em disco (`.runtime/tts-cache/`) gerando áudio em MP3 com resposta em ~200 ms e endpoint público `/public/tts` com streaming;
+4. Fallback no frontend e OBS Overlay para síntese local caso ocorra qualquer indisponibilidade de rede.
 
 ## Decisões vigentes
 
-- Catálogo unificado de vozes em `apps/web/app/voice-profiles.ts`: reúne 16 vozes sintéticas/paródicas (Silvio, Galvão, Faustão, Mano Brown, Craque Neto, Lula, Bolsonaro, Bambam, Xuxa, Cortella, Jornalista, etc.) com botões de prévia (`🔊 Ouvir` e `▶ Ouvir`) no painel e na página pública.
-- A whitelist de vozes permitidas em `apps/api/src/payments/payments.service.ts` aceita todos os novos identificadores `voice-*`.
+- Endpoint `GET /public/tts?voice={id}&text={text}` implementado em `apps/api/src/tts/` com headers de cache imutável e entrega de `audio/mpeg`.
+- Catálogo unificado de vozes em `apps/web/app/voice-profiles.ts`: reúne 16 vozes de personalidades (Silvio, Galvão, Faustão, Mano Brown, Craque Neto, Lula, Bolsonaro, Bambam, Xuxa, Cortella, Jornalista, etc.) com prévia por áudio real e fallback gracioso.
+- O cliente de overlay (`apps/overlay/app/overlay-client.tsx`) executa o áudio MP3 direto do servidor de TTS respeitando o volume do alerta e do master volume, com fallback de síntese caso a reprodução falhe.
+- Whitelist de identificadores `voice-*` aceita no backend e testada nas resoluções desktop (1366 px) e mobile (360 px).
 - O cliente de overlay (`apps/overlay/app/overlay-client.tsx`) mapeia os IDs de personalidade para modulações de tom (pitch), velocidade (rate) e preferências de gênero/estilo de voz no navegador.
 - Os seletores de voz em Alertas (`/alertas`) e Moderação (`/moderacao`) utilizam agrupamento com `<optgroup>` e comportamento flexível (`minWidth: 0`, `flexWrap: 'wrap'`), garantindo responsividade total em 360 px sem corte de texto nem overflow.
 - A grade de personas na página pública do streamer (`/[slug]`) adapta-se para 2 colunas no mobile e preserva quebra de linha de títulos longos.
