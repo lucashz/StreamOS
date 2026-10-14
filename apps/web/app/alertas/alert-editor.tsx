@@ -1,7 +1,9 @@
 'use client';
+
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import NextImage from 'next/image';
 import Link from 'next/link';
+import { voiceProfiles, previewTtsVoice } from '../voice-profiles';
 type Asset = {
   id: string;
   name: string;
@@ -780,19 +782,57 @@ export function AlertEditor() {
           </div>
           <label>
             <strong>Voz do Text to Speech</strong>
-            <select
-              disabled={!selected.ttsEnabled}
-              value={selected.ttsVoice}
-              onChange={(event) => update('ttsVoice', event.target.value)}
+            <div
+              style={{
+                display: 'flex',
+                gap: '8px',
+                alignItems: 'center',
+                minWidth: 0,
+                width: '100%',
+                flexWrap: 'wrap',
+              }}
             >
-              <option value="pt-BR-default">
-                Vitória (Português do Brasil)
-              </option>
-              <option value="pt-BR-female">Português feminina</option>
-              <option value="pt-BR-male">Português masculina</option>
-              <option value="ai-popular-orator">IA · Orador popular</option>
-              <option value="ai-commander">IA · Comandante</option>
-            </select>
+              <select
+                style={{ flex: '1 1 180px', minWidth: 0 }}
+                disabled={!selected.ttsEnabled}
+                value={selected.ttsVoice}
+                onChange={(event) => update('ttsVoice', event.target.value)}
+              >
+                <optgroup label="Personalidades & Paródias (Estilo Livepix)">
+                  {voiceProfiles
+                    .filter((v) => v.id.startsWith('voice-'))
+                    .map((profile) => (
+                      <option key={profile.id} value={profile.id}>
+                        {profile.avatar} {profile.name} — {profile.analogy}
+                      </option>
+                    ))}
+                </optgroup>
+                <optgroup label="Tradicionais & Sintéticas">
+                  {voiceProfiles
+                    .filter((v) => !v.id.startsWith('voice-'))
+                    .map((profile) => (
+                      <option key={profile.id} value={profile.id}>
+                        {profile.avatar} {profile.name}
+                      </option>
+                    ))}
+                </optgroup>
+              </select>
+              <button
+                type="button"
+                className="secondary-button"
+                style={{
+                  whiteSpace: 'nowrap',
+                  padding: '0 12px',
+                  minHeight: '38px',
+                  flexShrink: 0,
+                }}
+                disabled={!selected.ttsEnabled}
+                onClick={() => previewTtsVoice(selected.ttsVoice)}
+                title="Ouvir demonstração desta voz"
+              >
+                🔊 Ouvir
+              </button>
+            </div>
           </label>
           <label>
             <strong>Volume</strong>
@@ -1184,16 +1224,55 @@ export function AlertEditor() {
           </div>
           <label>
             Voz TTS
-            <select
-              value={selected.ttsVoice}
-              onChange={(event) => update('ttsVoice', event.target.value)}
+            <div
+              style={{
+                display: 'flex',
+                gap: '8px',
+                alignItems: 'center',
+                minWidth: 0,
+                width: '100%',
+                flexWrap: 'wrap',
+              }}
             >
-              <option value="pt-BR-default">Português padrão</option>
-              <option value="pt-BR-female">Português feminina</option>
-              <option value="pt-BR-male">Português masculina</option>
-              <option value="ai-popular-orator">IA · Orador popular</option>
-              <option value="ai-commander">IA · Comandante</option>
-            </select>
+              <select
+                style={{ flex: '1 1 180px', minWidth: 0 }}
+                value={selected.ttsVoice}
+                onChange={(event) => update('ttsVoice', event.target.value)}
+              >
+                <optgroup label="Personalidades & Paródias (Estilo Livepix)">
+                  {voiceProfiles
+                    .filter((v) => v.id.startsWith('voice-'))
+                    .map((profile) => (
+                      <option key={profile.id} value={profile.id}>
+                        {profile.avatar} {profile.name} — {profile.analogy}
+                      </option>
+                    ))}
+                </optgroup>
+                <optgroup label="Tradicionais & Sintéticas">
+                  {voiceProfiles
+                    .filter((v) => !v.id.startsWith('voice-'))
+                    .map((profile) => (
+                      <option key={profile.id} value={profile.id}>
+                        {profile.avatar} {profile.name}
+                      </option>
+                    ))}
+                </optgroup>
+              </select>
+              <button
+                type="button"
+                className="secondary-button"
+                style={{
+                  whiteSpace: 'nowrap',
+                  padding: '0 12px',
+                  minHeight: '38px',
+                  flexShrink: 0,
+                }}
+                onClick={() => previewTtsVoice(selected.ttsVoice)}
+                title="Ouvir demonstração desta voz"
+              >
+                🔊 Ouvir
+              </button>
+            </div>
           </label>
           <label>
             Velocidade TTS: {selected.ttsRate.toFixed(1)}x

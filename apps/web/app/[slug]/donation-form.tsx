@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useState, type FormEvent } from 'react';
 import { usePaymentSimulation } from '../use-payment-simulation';
+import { voiceProfiles, previewTtsVoice } from '../voice-profiles';
 
 const api = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -17,51 +18,6 @@ type Receipt = {
   receiptId: string | null;
   confirmedAt: string | null;
 };
-
-const voiceProfiles = [
-  {
-    id: 'ai-popular-orator',
-    name: 'Orador popular',
-    detail: 'Teste IA · madura e pausada',
-    avatar: '🗣️',
-  },
-  {
-    id: 'ai-commander',
-    name: 'Comandante',
-    detail: 'Teste IA · grave e enérgica',
-    avatar: '🎖️',
-  },
-  {
-    id: 'pt-BR-default',
-    name: 'Natural',
-    detail: 'Clara e equilibrada',
-    avatar: '🎙️',
-  },
-  {
-    id: 'character-narrator',
-    name: 'Locutor',
-    detail: 'Épica e marcante',
-    avatar: '📻',
-  },
-  {
-    id: 'character-deep',
-    name: 'Titã',
-    detail: 'Grave e cadenciada',
-    avatar: '🦁',
-  },
-  {
-    id: 'character-cheerful',
-    name: 'Torcida',
-    detail: 'Movimento intenso',
-    avatar: '⚽',
-  },
-  {
-    id: 'character-robot',
-    name: 'Sintético',
-    detail: 'Digital e divertida',
-    avatar: '🤖',
-  },
-] as const;
 
 export function DonationForm({
   slug,
@@ -88,54 +44,7 @@ export function DonationForm({
   const simulationEnabled = usePaymentSimulation();
 
   function previewVoice(selectedVoice = voice) {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const speech = new SpeechSynthesisUtterance(
-      'Valeu pelo apoio! Esta é a voz escolhida para sua mensagem.',
-    );
-    speech.lang = 'pt-BR';
-    const available = window.speechSynthesis.getVoices();
-    const portuguese = available.filter((item) =>
-      item.lang.toLowerCase().startsWith('pt'),
-    );
-    const pool = [
-      ...portuguese,
-      ...available.filter((item) => !portuguese.includes(item)),
-    ];
-    const profileIndex: Record<string, number> = {
-      'ai-popular-orator': 1,
-      'ai-commander': 2,
-      'pt-BR-default': 0,
-      'character-narrator': 1,
-      'character-deep': 2,
-      'character-cheerful': 3,
-      'character-robot': 4,
-    };
-    const selected = pool[(profileIndex[selectedVoice] ?? 0) % pool.length];
-    if (selected) {
-      speech.voice = selected;
-      speech.lang = selected.lang;
-    }
-    if (selectedVoice === 'ai-popular-orator') {
-      speech.pitch = 0.72;
-      speech.rate = 0.78;
-    } else if (selectedVoice === 'ai-commander') {
-      speech.pitch = 0.52;
-      speech.rate = 1.04;
-    } else if (selectedVoice === 'character-narrator') {
-      speech.pitch = 0.78;
-      speech.rate = 0.86;
-    } else if (selectedVoice === 'character-deep') {
-      speech.pitch = 0.45;
-      speech.rate = 0.76;
-    } else if (selectedVoice === 'character-cheerful') {
-      speech.pitch = 1.55;
-      speech.rate = 1.22;
-    } else if (selectedVoice === 'character-robot') {
-      speech.pitch = 0.25;
-      speech.rate = 0.68;
-    }
-    window.speechSynthesis.speak(speech);
+    previewTtsVoice(selectedVoice);
   }
 
   useEffect(() => {

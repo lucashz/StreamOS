@@ -1723,9 +1723,20 @@ export class PaymentsService {
 
   private donateVoice(value?: string) {
     const voices = [
+      'pt-BR-default',
+      'voice-silvio',
+      'voice-galvao',
+      'voice-faustao',
+      'voice-barba',
+      'voice-capitao',
+      'voice-craque',
+      'voice-mano',
+      'voice-filosofo',
+      'voice-xuxa',
+      'voice-monstro',
+      'voice-jornalista',
       'ai-popular-orator',
       'ai-commander',
-      'pt-BR-default',
       'character-narrator',
       'character-deep',
       'character-cheerful',

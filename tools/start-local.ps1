@@ -63,14 +63,11 @@ function Start-ServiceProcess([string]$Name, [string]$Package, [int]$Port = 0) {
 
   $stdout = Join-Path $LogRoot "$Name.out.log"
   $stderr = Join-Path $LogRoot "$Name.err.log"
-  $process = Start-Process -FilePath 'corepack.cmd' `
-    -ArgumentList @('pnpm', 'exec', 'dotenv', '-e', '.env', '--', 'corepack', 'pnpm', '--filter', $Package, 'start') `
-    -WorkingDirectory $ProjectRoot `
-    -RedirectStandardOutput $stdout `
-    -RedirectStandardError $stderr `
-    -WindowStyle Hidden `
-    -PassThru
-  Set-Content -LiteralPath $pidFile -Value $process.Id
+  $cmd = "cmd.exe /c corepack.cmd pnpm exec dotenv -e .env -- corepack.cmd pnpm --filter $Package start > `"$stdout`" 2> `"$stderr`""
+  $spawn = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = $cmd; CurrentDirectory = $ProjectRoot }
+  $processId = [int]$spawn.ProcessId
+  $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
+  Set-Content -LiteralPath $pidFile -Value $processId
   $Started.Add([pscustomobject]@{ Name = $Name; Process = $process })
 
   if ($Port -gt 0) {

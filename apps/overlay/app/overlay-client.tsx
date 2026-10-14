@@ -157,6 +157,30 @@ function normalizedVoiceName(voice: SpeechSynthesisVoice) {
     .toLowerCase();
 }
 
+const personalityVoiceMap: Record<
+  string,
+  { pitch: number; rateMultiplier: number; gender?: 'male' | 'female' }
+> = {
+  'voice-silvio': { pitch: 1.3, rateMultiplier: 1.1, gender: 'male' },
+  'voice-galvao': { pitch: 0.95, rateMultiplier: 1.08, gender: 'male' },
+  'voice-faustao': { pitch: 0.85, rateMultiplier: 1.2, gender: 'male' },
+  'voice-barba': { pitch: 0.68, rateMultiplier: 0.82, gender: 'male' },
+  'voice-capitao': { pitch: 0.88, rateMultiplier: 1.22, gender: 'male' },
+  'voice-craque': { pitch: 1.12, rateMultiplier: 1.18, gender: 'male' },
+  'voice-mano': { pitch: 0.58, rateMultiplier: 0.88, gender: 'male' },
+  'voice-filosofo': { pitch: 0.82, rateMultiplier: 0.85, gender: 'male' },
+  'voice-xuxa': { pitch: 1.5, rateMultiplier: 1.05, gender: 'female' },
+  'voice-monstro': { pitch: 0.42, rateMultiplier: 1.15, gender: 'male' },
+  'voice-jornalista': { pitch: 1.12, rateMultiplier: 1.02, gender: 'female' },
+  'pt-BR-default': { pitch: 1.0, rateMultiplier: 1.0 },
+  'ai-popular-orator': { pitch: 0.72, rateMultiplier: 0.78, gender: 'male' },
+  'ai-commander': { pitch: 0.52, rateMultiplier: 1.04, gender: 'male' },
+  'character-narrator': { pitch: 0.78, rateMultiplier: 0.86, gender: 'male' },
+  'character-deep': { pitch: 0.45, rateMultiplier: 0.76, gender: 'male' },
+  'character-cheerful': { pitch: 1.55, rateMultiplier: 1.22, gender: 'male' },
+  'character-robot': { pitch: 0.25, rateMultiplier: 0.68, gender: 'male' },
+};
+
 function configuredVoice(preference: string) {
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return undefined;
@@ -174,19 +198,24 @@ function configuredVoice(preference: string) {
     ...portuguese,
     ...voices.filter((voice) => !portuguese.includes(voice)),
   ];
-  const profileIndex: Record<string, number> = {
-    'ai-popular-orator': 1,
-    'ai-commander': 2,
-    'pt-BR-default': 0,
-    'character-narrator': 1,
-    'character-deep': 2,
-    'character-cheerful': 3,
-    'character-robot': 4,
-  };
-  if (preference in profileIndex) {
-    const wanted = profileIndex[preference] ?? 0;
-    return candidates[wanted % candidates.length];
+
+  const profile = personalityVoiceMap[preference];
+  if (profile?.gender === 'female') {
+    const female = candidates.find((voice) =>
+      /female|femin|francisca|maria|vitoria|luciana/i.test(
+        normalizedVoiceName(voice),
+      ),
+    );
+    if (female) return female;
+  } else if (profile?.gender === 'male') {
+    const male = candidates.find((voice) =>
+      /male|mascul|antonio|daniel|ricardo|felipe/i.test(
+        normalizedVoiceName(voice),
+      ),
+    );
+    if (male) return male;
   }
+
   const markers = preference.endsWith('-male')
     ? ['antonio', 'daniel', 'ricardo', 'felipe', 'male', 'mascul']
     : preference.endsWith('-female')
@@ -882,24 +911,10 @@ export function OverlayClient() {
       const requestedVoice = String(
         current.payload.ttsVoice ?? variation.ttsVoice,
       );
-      if (requestedVoice === 'ai-popular-orator') {
-        speech.pitch = 0.72;
-        speech.rate *= 0.78;
-      } else if (requestedVoice === 'ai-commander') {
-        speech.pitch = 0.52;
-        speech.rate *= 1.04;
-      } else if (requestedVoice === 'character-deep') {
-        speech.pitch = 0.45;
-        speech.rate *= 0.76;
-      } else if (requestedVoice === 'character-cheerful') {
-        speech.pitch = 1.55;
-        speech.rate *= 1.22;
-      } else if (requestedVoice === 'character-robot') {
-        speech.pitch = 0.25;
-        speech.rate *= 0.68;
-      } else if (requestedVoice === 'character-narrator') {
-        speech.pitch = 0.78;
-        speech.rate *= 0.86;
+      const setting = personalityVoiceMap[requestedVoice];
+      if (setting) {
+        speech.pitch = setting.pitch;
+        speech.rate *= setting.rateMultiplier;
       }
       speakWithConfiguredVoice(speech, requestedVoice);
     }

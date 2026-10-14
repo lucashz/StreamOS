@@ -1130,3 +1130,86 @@ test('landing page institucional na raiz para visitante e dashboard para criador
   ).toBeAttached();
   await expectNoHorizontalOverflow(page);
 });
+
+test('vozes de personalidades no estilo livepix configuráveis em alertas, moderação e doação pública', async ({
+  page,
+}) => {
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const registration = await register(page, {
+    data: {
+      email: `voices-${suffix}@streamos.local`,
+      password: 'StreamOS-Voices-123!',
+      displayName: 'Canal Vozes E2E',
+      acceptTerms: true,
+    },
+  });
+  expect(registration.ok()).toBeTruthy();
+  const account = (await registration.json()) as {
+    memberships: Array<{
+      organization: {
+        creatorProfile: {
+          slug: string;
+        };
+      };
+    }>;
+  };
+  const slug =
+    account.memberships[0]?.organization?.creatorProfile?.slug ??
+    `vozes-${suffix}`;
+
+  await page.request.put(`${api}/dashboard/onboarding`, {
+    data: {
+      displayName: 'Canal Vozes E2E',
+      slug,
+      bio: 'Canal com vozes de personalidades',
+      minimumContributionInCents: 100,
+      isPublished: true,
+      legalName: 'Canal Vozes E2E',
+      taxId: '52998224725',
+      financialTermsAccepted: true,
+    },
+  });
+
+  // 1. Alertas: streamer pode selecionar vozes de personalidades
+  await page.goto('/alertas');
+  const ttsSection = page.locator('#alerta-voz');
+  await expect(ttsSection).toBeVisible({ timeout: 15_000 });
+  const ttsSelect = ttsSection.locator('select');
+  await expect(ttsSelect).toBeVisible();
+  await expect(
+    ttsSelect.getByRole('option', { name: /Silvio/ }),
+  ).toBeAttached();
+  await expect(
+    ttsSelect.getByRole('option', { name: /Galvão/ }),
+  ).toBeAttached();
+  await expect(
+    ttsSelect.getByRole('option', { name: /Faustão/ }),
+  ).toBeAttached();
+  await ttsSelect.selectOption('voice-silvio');
+  await expectNoHorizontalOverflow(page);
+
+  // 2. Moderação: streamer pode definir a voz padrão do canal
+  await page.goto('/moderacao');
+  const modVoiceSelect = page.locator('#tts select');
+  await expect(modVoiceSelect).toBeVisible({ timeout: 15_000 });
+  await expect(
+    modVoiceSelect.getByRole('option', { name: /Silvio/ }),
+  ).toBeAttached();
+  await modVoiceSelect.selectOption('voice-galvao');
+  await page.getByRole('button', { name: 'Salvar' }).click();
+  await expect(page.getByText('Configurações salvas.')).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+
+  // 3. Página pública de apoio: apoiador visualiza as personas de personalidades
+  await page.goto(`/${slug}`);
+  await expect(
+    page.getByText('Silvio (O Dono do Baú)'),
+  ).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText('Galvão (Voz do Hexa)')).toBeVisible();
+  await expect(page.getByText('Faustão (Ô Loco Meu)')).toBeVisible();
+  await page.getByText('Silvio (O Dono do Baú)').click();
+  await expect(
+    page.locator('input[name="ttsVoice"][value="voice-silvio"]'),
+  ).toBeChecked();
+  await expectNoHorizontalOverflow(page);
+});

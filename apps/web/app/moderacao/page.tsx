@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { PanelShell } from '../panel-shell';
 import { replaceZeroMoneyValue, selectZeroMoneyValue } from '../money-input';
 import { PageHeader } from '../ui';
+import { voiceProfiles, previewTtsVoice } from '../voice-profiles';
 const api = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 type Item = {
   id: string;
@@ -198,6 +199,60 @@ export default function ModerationPage() {
               }
             />{' '}
             TTS pausado
+          </label>
+          <label>
+            Voz padrão do canal
+            <div
+              style={{
+                display: 'flex',
+                gap: '8px',
+                alignItems: 'center',
+                minWidth: 0,
+                width: '100%',
+                flexWrap: 'wrap',
+              }}
+            >
+              <select
+                style={{ flex: '1 1 180px', minWidth: 0 }}
+                value={settings.voice}
+                onChange={(e) =>
+                  setSettings({ ...settings, voice: e.target.value })
+                }
+              >
+                <optgroup label="Personalidades & Paródias (Estilo Livepix)">
+                  {voiceProfiles
+                    .filter((v) => v.id.startsWith('voice-'))
+                    .map((profile) => (
+                      <option key={profile.id} value={profile.id}>
+                        {profile.avatar} {profile.name} — {profile.analogy}
+                      </option>
+                    ))}
+                </optgroup>
+                <optgroup label="Tradicionais & Sintéticas">
+                  {voiceProfiles
+                    .filter((v) => !v.id.startsWith('voice-'))
+                    .map((profile) => (
+                      <option key={profile.id} value={profile.id}>
+                        {profile.avatar} {profile.name}
+                      </option>
+                    ))}
+                </optgroup>
+              </select>
+              <button
+                type="button"
+                className="secondary-button"
+                style={{
+                  whiteSpace: 'nowrap',
+                  padding: '0 12px',
+                  minHeight: '38px',
+                  flexShrink: 0,
+                }}
+                onClick={() => previewTtsVoice(settings.voice)}
+                title="Ouvir demonstração desta voz"
+              >
+                🔊 Ouvir
+              </button>
+            </div>
           </label>
           <label>
             Valor mínimo TTS

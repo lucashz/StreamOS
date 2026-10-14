@@ -4,16 +4,21 @@ Atualizado em: 13/10/2026
 
 ## Ciclo atual
 
-Separação entre Saúde da Transmissão (`/saude`) para criadores e Infraestrutura do Sistema (`/plataforma#sistema`) para operadores validada em 13/10/2026 em 360 px e 1366 px sem overflow horizontal.
+Catálogo de vozes de personalidades no estilo Livepix implementado e validado em 13/10/2026 nas resoluções desktop (1366 px) e mobile (360 px), sem overflow horizontal. As personas contam com avatares, analogias, frases de demonstração e síntese por Web Speech API / TTS customizado no overlay.
 
 ## Decisões vigentes
 
+- Catálogo unificado de vozes em `apps/web/app/voice-profiles.ts`: reúne 16 vozes sintéticas/paródicas (Silvio, Galvão, Faustão, Mano Brown, Craque Neto, Lula, Bolsonaro, Bambam, Xuxa, Cortella, Jornalista, etc.) com botões de prévia (`🔊 Ouvir` e `▶ Ouvir`) no painel e na página pública.
+- A whitelist de vozes permitidas em `apps/api/src/payments/payments.service.ts` aceita todos os novos identificadores `voice-*`.
+- O cliente de overlay (`apps/overlay/app/overlay-client.tsx`) mapeia os IDs de personalidade para modulações de tom (pitch), velocidade (rate) e preferências de gênero/estilo de voz no navegador.
+- Os seletores de voz em Alertas (`/alertas`) e Moderação (`/moderacao`) utilizam agrupamento com `<optgroup>` e comportamento flexível (`minWidth: 0`, `flexWrap: 'wrap'`), garantindo responsividade total em 360 px sem corte de texto nem overflow.
+- A grade de personas na página pública do streamer (`/[slug]`) adapta-se para 2 colunas no mobile e preserva quebra de linha de títulos longos.
 - Trabalhar em um menu, página ou fluxo por ciclo.
 - Validar durante o ajuste em 1366 px e 360 px; usar 768 px e 1920 px somente no fechamento do lote.
 - Executar testes direcionados durante o ciclo e build/suíte ampla somente no fechamento.
 - A página `/saude` é focada 100% no streamer (Saúde da transmissão: conexão do OBS, latência do overlay, taxa de sucesso dos alertas, desempenho do Pix e conciliação da carteira).
 - Métricas globais de servidores (PostgreSQL, Redis, Worker, Realtime), backups, gate do beta e margem operacional da plataforma residem na seção administrativa `Infraestrutura` (`/plataforma#sistema`), restrita a `OWNER` e `ADMIN`.
-- Visitantes não autenticados na raiz (`/`) acessam a Landing Page institucional com apresentação dos recursos (Pix, OBS, SongPix, VideoPix, Vaquinhas, Moderação/TTS) e CTAs para `/cadastro` e `/entrar`.
+- Visitantes não autenticados na raiz (`/`) acessam a Landing Page institucional com apresentação dos recursos e CTAs para `/cadastro` e `/entrar`.
 - Usuários autenticados na raiz (`/`) acessam diretamente o Creator Dashboard com métricas, resumo financeiro e alertas.
 - Manter o Browser Source apenas em Configurações.
 - Abrir os detalhes de uma contribuição em modal na mesma página.
