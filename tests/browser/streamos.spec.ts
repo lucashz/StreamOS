@@ -83,7 +83,9 @@ test('cadastro no navegador valida regras de convite e redireciona para onboardi
   await page.locator('input[name="displayName"]').fill('Canal Teste');
   await page.locator('input[name="email"]').fill(validEmail);
   await page.locator('input[name="password"]').fill('StreamOS-Senha-123!');
-  await page.locator('input[name="confirmPassword"]').fill('StreamOS-Senha-123!');
+  await page
+    .locator('input[name="confirmPassword"]')
+    .fill('StreamOS-Senha-123!');
   await page.locator('input[name="inviteCode"]').fill(`invalido-${suffix}`);
   await page.locator('input[name="acceptTerms"]').check();
   await page.getByRole('button', { name: 'Criar conta' }).click();
@@ -104,9 +106,13 @@ test('cadastro no navegador valida regras de convite e redireciona para onboardi
   // 4. Reutilização do convite rejeitada
   await page.goto('/cadastro');
   await page.locator('input[name="displayName"]').fill('Canal Reutilizado');
-  await page.locator('input[name="email"]').fill(`outro-${suffix}@streamos.local`);
+  await page
+    .locator('input[name="email"]')
+    .fill(`outro-${suffix}@streamos.local`);
   await page.locator('input[name="password"]').fill('StreamOS-Senha-123!');
-  await page.locator('input[name="confirmPassword"]').fill('StreamOS-Senha-123!');
+  await page
+    .locator('input[name="confirmPassword"]')
+    .fill('StreamOS-Senha-123!');
   await page.locator('input[name="inviteCode"]').fill(validCode);
   await page.locator('input[name="acceptTerms"]').check();
   await page.getByRole('button', { name: 'Criar conta' }).click();
@@ -130,9 +136,13 @@ test('página inicial orienta ativação incompleta com CTA para onboarding', as
   expect(registration.ok()).toBeTruthy();
 
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: /Boa tarde|Bom dia|Boa noite/ })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: /Boa tarde|Bom dia|Boa noite/ }),
+  ).toBeVisible();
 
-  const notice = page.locator('section[aria-label="Próximo passo da ativação"]');
+  const notice = page.locator(
+    'section[aria-label="Próximo passo da ativação"]',
+  );
   await expect(notice).toBeVisible();
   await expect(notice.getByText('Conclua a ativação')).toBeVisible();
   const ctaLink = notice.getByRole('link', { name: 'Continuar configuração' });
@@ -186,7 +196,12 @@ test('onboarding reflete perfil, publicação e conexão real do OBS', async ({
         overlayBody: await overlayStatus.text(),
       };
     } catch (error) {
-      return { status: 0, body: String(error), overlayStatus: 0, overlayBody: '' };
+      return {
+        status: 0,
+        body: String(error),
+        overlayStatus: 0,
+        overlayBody: '',
+      };
     }
   }, api);
   expect(browserApiCheck.status, browserApiCheck.body).toBe(200);
@@ -231,10 +246,9 @@ test('onboarding reflete perfil, publicação e conexão real do OBS', async ({
   await expect(
     page.getByText('A URL já foi criada. Abra a Browser Source no OBS'),
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Conectar o OBS' })).toHaveAttribute(
-    'href',
-    '/conta#browser-source',
-  );
+  await expect(
+    page.getByRole('link', { name: 'Conectar o OBS' }),
+  ).toHaveAttribute('href', '/conta#browser-source');
 
   const prisma = new PrismaClient();
   await prisma.overlayChannel.updateMany({
@@ -259,7 +273,9 @@ test('páginas públicas explicam indisponibilidade e estados do Pix', async ({
   page,
 }) => {
   await page.goto(`/criador-inexistente-${Date.now()}`);
-  await expect(page.getByRole('heading', { name: 'Página indisponível' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Página indisponível' }),
+  ).toBeVisible();
 
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const registration = await register(page, {
@@ -275,7 +291,9 @@ test('páginas públicas explicam indisponibilidade e estados do Pix', async ({
   };
   const slug = account.memberships[0].organization.creatorProfile.slug;
   await page.goto(`/${slug}`);
-  await expect(page.getByRole('heading', { name: 'Página indisponível' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Página indisponível' }),
+  ).toBeVisible();
 
   const onboarding = await page.request.put(`${api}/dashboard/onboarding`, {
     data: {
@@ -292,9 +310,13 @@ test('páginas públicas explicam indisponibilidade e estados do Pix', async ({
   expect(onboarding.ok()).toBeTruthy();
 
   await page.goto(`/${slug}/songpix`);
-  await expect(page.getByText('O criador não está aceitando pedidos agora.')).toBeVisible();
+  await expect(
+    page.getByText('O criador não está aceitando pedidos agora.'),
+  ).toBeVisible();
   await page.goto(`/${slug}/videopix`);
-  await expect(page.getByText('O criador não está aceitando vídeos agora.')).toBeVisible();
+  await expect(
+    page.getByText('O criador não está aceitando vídeos agora.'),
+  ).toBeVisible();
 
   const campaign = await page.request.post(`${api}/dashboard/campaigns`, {
     data: {
@@ -306,31 +328,46 @@ test('páginas públicas explicam indisponibilidade e estados do Pix', async ({
   });
   expect(campaign.ok()).toBeTruthy();
   const campaignBody = (await campaign.json()) as { id: string; slug: string };
-  await page.request.post(`${api}/dashboard/campaigns/${campaignBody.id}/status`, {
-    data: { status: 'PUBLISHED' },
-  });
-  await page.request.post(`${api}/dashboard/campaigns/${campaignBody.id}/status`, {
-    data: { status: 'CLOSED' },
-  });
+  await page.request.post(
+    `${api}/dashboard/campaigns/${campaignBody.id}/status`,
+    {
+      data: { status: 'PUBLISHED' },
+    },
+  );
+  await page.request.post(
+    `${api}/dashboard/campaigns/${campaignBody.id}/status`,
+    {
+      data: { status: 'CLOSED' },
+    },
+  );
   await page.goto(`/${slug}/vaquinhas/${campaignBody.slug}`);
-  await expect(page.getByRole('heading', { name: 'Vaquinha indisponível' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Vaquinha indisponível' }),
+  ).toBeVisible();
 
   let expired = false;
-  await page.route(`**/public/creators/${slug}/payment-intents`, async (route) => {
-    await route.fulfill({
-      status: 201,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        id: `pix-${suffix}`,
-        pixCopyPaste: 'PIX-REAL-VALIDATION',
-        expiresAt: new Date(Date.now() + (expired ? -1_000 : 60_000)).toISOString(),
-      }),
-    });
-  });
+  await page.route(
+    `**/public/creators/${slug}/payment-intents`,
+    async (route) => {
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: `pix-${suffix}`,
+          pixCopyPaste: 'PIX-REAL-VALIDATION',
+          expiresAt: new Date(
+            Date.now() + (expired ? -1_000 : 60_000),
+          ).toISOString(),
+        }),
+      });
+    },
+  );
   await page.goto(`/${slug}`);
   await page.getByLabel('Seu nome de usuário').fill('Apoiador público');
   await page.getByRole('button', { name: /Continuar com/ }).click();
-  await expect(page.getByText('Pagamento Pix aguardando confirmação')).toBeVisible();
+  await expect(
+    page.getByText('Pagamento Pix aguardando confirmação'),
+  ).toBeVisible();
   expired = true;
   await page.goto(`/${slug}`);
   await page.getByLabel('Seu nome de usuário').fill('Apoiador público');
@@ -1030,5 +1067,55 @@ test('imagem de capa da vaquinha pode ser enviada e removida', async ({
   await expect(page.locator('.campaign-cover-upload')).not.toHaveClass(
     /has-image/,
   );
+  await expectNoHorizontalOverflow(page);
+});
+
+test('landing page institucional na raiz para visitante e dashboard para criador autenticado', async ({
+  page,
+}) => {
+  // 1. Visitante não autenticado acessa a raiz
+  await page.goto('/');
+  await expect(
+    page.getByRole('heading', { name: /Receba apoios em Pix/ }),
+  ).toBeVisible();
+  await expect(page.getByText('Beta Fechada')).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Criar conta', exact: true }).first(),
+  ).toHaveAttribute('href', '/cadastro');
+  await expect(
+    page.getByRole('link', { name: 'Entrar', exact: true }).first(),
+  ).toHaveAttribute('href', '/entrar');
+  await expect(
+    page.getByRole('heading', { name: 'Pix Instantâneo & Carteira' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Alertas & Browser Source OBS' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', {
+      name: 'Configure em 3 minutos e comece a transmitir',
+    }),
+  ).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+
+  // 2. Criador autenticado acessa a raiz e visualiza o dashboard
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const registration = await register(page, {
+    data: {
+      email: `creator-landing-${suffix}@streamos.local`,
+      password: 'StreamOS-Landing-123!',
+      displayName: 'Criador Landing Teste',
+      acceptTerms: true,
+    },
+  });
+  expect(registration.ok()).toBeTruthy();
+
+  await page.goto('/');
+  await expect(
+    page.getByRole('heading', { name: /Boa tarde|Bom dia|Boa noite/ }),
+  ).toBeVisible();
+  await expect(
+    page.locator('section[aria-label="Indicadores principais"]'),
+  ).toBeAttached();
   await expectNoHorizontalOverflow(page);
 });

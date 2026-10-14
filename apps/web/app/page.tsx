@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
+import { LandingPage } from './landing-page';
 import { PanelSidebar } from './panel-shell';
 import { PerformancePanel, type PerformancePoint } from './performance-panel';
 
@@ -258,12 +259,16 @@ function money(value: number) {
 }
 
 export default async function HomePage() {
-  const [viewer, summary, onboarding] = await Promise.all([
-    getViewer(),
+  const viewer = await getViewer();
+  if (!viewer) {
+    return <LandingPage />;
+  }
+
+  const [summary, onboarding] = await Promise.all([
     getSummary(),
     getOnboarding(),
   ]);
-  const organization = viewer?.memberships[0]?.organization;
+  const organization = viewer.memberships[0]?.organization;
   const creatorName = organization?.name ?? 'Luna Plays';
   const firstName = creatorName.split(' ')[0];
   const slug = organization?.creatorProfile?.slug ?? 'luna';

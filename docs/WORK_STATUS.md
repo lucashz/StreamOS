@@ -4,13 +4,15 @@ Atualizado em: 13/10/2026
 
 ## Ciclo atual
 
-Entrada e identidade (convites no cadastro) e orientação da página inicial (CTA de ativação) validados em 13/10/2026 em 360 px e 1366 px; fechamento da auditoria de prontidão da beta local concluído.
+Landing Page pública institucional na raiz (`/`) para visitantes não autenticados e preservação do Creator Dashboard para usuários autenticados validados em 13/10/2026 em 360 px e 1366 px sem overflow horizontal.
 
 ## Decisões vigentes
 
 - Trabalhar em um menu, página ou fluxo por ciclo.
 - Validar durante o ajuste em 1366 px e 360 px; usar 768 px e 1920 px somente no fechamento do lote.
 - Executar testes direcionados durante o ciclo e build/suíte ampla somente no fechamento.
+- Visitantes não autenticados na raiz (`/`) acessam a Landing Page institucional com apresentação dos recursos (Pix, OBS, SongPix, VideoPix, Vaquinhas, Moderação/TTS) e CTAs para `/cadastro` e `/entrar`.
+- Usuários autenticados na raiz (`/`) acessam diretamente o Creator Dashboard com métricas, resumo financeiro e alertas.
 - Manter o Browser Source apenas em Configurações.
 - Abrir os detalhes de uma contribuição em modal na mesma página.
 - Manter formulários compactos e padrões compartilhados para alinhamento, espaçamento, botões, campos e cards.
@@ -112,6 +114,7 @@ Entrada e identidade (convites no cadastro) e orientação da página inicial (C
 - Páginas públicas e Pix (13/10/2026): criador inexistente, perfil privado/não publicado, SongPix/VideoPix desativados, vaquinha encerrada, Pix aguardando confirmação e Pix expirado validados via Playwright em 360 px e 1366 px sem overflow.
 - Entrada e identidade (13/10/2026): cadastro no navegador valida código de convite inválido, e-mail divergente, reutilização bloqueada e redirecionamento para onboarding, em 360 px e 1366 px sem overflow.
 - Página inicial (13/10/2026): painel orienta ativações incompletas com aviso visual e CTA direto para `/onboarding`, validado em 360 px e 1366 px sem overflow.
+- Landing Page institucional (13/10/2026): página pública completa na raiz (`/`) para visitantes não autenticados (apresentação dos recursos, preview do alerta OBS, etapas e CTAs) e Creator Dashboard para criadores autenticados validados via Playwright em 360 px e 1366 px sem overflow horizontal.
 - Auditoria de prontidão (13/10/2026): todas as jornadas locais em `docs/BETA_READINESS_AUDIT.md` (Entrada, Início, Onboarding, Pública, Carteira, Alertas/OBS, Moderação e Plataforma) concluídas e em estado PRONTO; staging permanece como único bloqueador externo dependente de credenciais reais.
 - Fechamento visual: suíte Playwright aprovada com 72 cenários responsivos; o replay do histórico confirma o estado intermediário `QUEUED` e a nova reprodução no Browser Source.
 

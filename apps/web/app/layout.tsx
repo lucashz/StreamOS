@@ -5,11 +5,15 @@ import './styles.css';
 import './alert-layout.css';
 import './design-foundations.css';
 import './design-components.css';
+import './landing-page.css';
 
 export const metadata: Metadata = {
-  title: 'Painel | StreamOS',
+  title: {
+    default: 'StreamOS — A infraestrutura da monetização ao vivo',
+    template: '%s | StreamOS',
+  },
   description:
-    'Painel para contribuições, alertas, widgets e controle de transmissões.',
+    'Plataforma para contribuições Pix, alertas OBS, widgets, SongPix, VideoPix e monetização de transmissões.',
 };
 
 export default function RootLayout({
