@@ -1202,12 +1202,17 @@ test('vozes de personalidades no estilo livepix configuráveis em alertas, moder
 
   // 3. Página pública de apoio: apoiador visualiza as personas de personalidades
   await page.goto(`/${slug}`);
+  const silvioCard = page
+    .locator('.voice-profile')
+    .filter({ hasText: 'Silvio (O Dono do Baú)' });
+  await expect(silvioCard).toBeVisible({ timeout: 15_000 });
   await expect(
-    page.getByText('Silvio (O Dono do Baú)'),
-  ).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText('Galvão (Voz do Hexa)')).toBeVisible();
-  await expect(page.getByText('Faustão (Ô Loco Meu)')).toBeVisible();
-  await page.getByText('Silvio (O Dono do Baú)').click();
+    page.locator('.voice-profile').filter({ hasText: 'Galvão (Voz do Hexa)' }),
+  ).toBeVisible();
+  await expect(
+    page.locator('.voice-profile').filter({ hasText: 'Faustão (Ô Loco Meu)' }),
+  ).toBeVisible();
+  await silvioCard.click();
   await expect(
     page.locator('input[name="ttsVoice"][value="voice-silvio"]'),
   ).toBeChecked();

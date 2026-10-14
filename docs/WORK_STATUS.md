@@ -4,16 +4,20 @@ Atualizado em: 14/10/2026
 
 ## Ciclo atual
 
-Motor de TTS de alta fidelidade estilo Livepix implementado com arquitetura de 3 camadas:
-1. ElevenLabs AI Voice (opcional via variáveis de ambiente para clonagem de estúdio);
-2. Microsoft Edge Neural TTS integrado no backend (gratuito, sem cota rígida e com vozes brasileiras de estúdio `pt-BR-AntonioNeural`, `pt-BR-FranciscaNeural` e `pt-BR-ThalitaMultilingualNeural` moduladas por pitch e rate);
-3. Cache persistente em disco (`.runtime/tts-cache/`) gerando áudio em MP3 com resposta em ~200 ms e endpoint público `/public/tts` com streaming;
-4. Fallback no frontend e OBS Overlay para síntese local caso ocorra qualquer indisponibilidade de rede.
+Página e componentes de escolha de voz (estilo Livepix) atualizados e validados com:
+1. Navegação por abas de categorias: ⭐ Famosos (10 personas), 🎙️ Clássicas (3) e 👾 Games (3), reduzindo a sobrecarga visual;
+2. Campo de busca instantânea para filtrar personas pelo nome ou analogia;
+3. Reprodução interativa de prévia com suporte ao texto digitado pelo próprio doador (`Testar com minha mensagem`) e estados reativos (`▶ Ouvir`, `⏳ Gerando…`, `⏹ Parar`);
+4. Card selecionado com destaque visual imediato (glow, checkmark `✓` e resumo com botão de teste dedicado);
+5. Seletores nos painéis de Alertas e Moderação reorganizados com as mesmas categorias semânticas;
+6. Validação automatizada em desktop (1366 px) e mobile (360 px) com zero overflow horizontal aprovada no Playwright.
 
 ## Decisões vigentes
 
+- Página pública (`/[slug]`): a voz padrão inicial é `voice-silvio` (Silvio Santos). As categorias dividem as 16 personas em abas claras, permitindo busca e teste em tempo real com o texto customizado do doador.
+- Controle global de áudio de prévia em `apps/web/app/voice-profiles.ts`: garante que apenas um áudio toque por vez, interrompendo a reprodução anterior e suportando cancelamento explícito via `stopTtsVoice()`.
 - Endpoint `GET /public/tts?voice={id}&text={text}` implementado em `apps/api/src/tts/` com headers de cache imutável e entrega de `audio/mpeg`.
-- Catálogo unificado de vozes em `apps/web/app/voice-profiles.ts`: reúne 16 vozes de personalidades (Silvio, Galvão, Faustão, Mano Brown, Craque Neto, Lula, Bolsonaro, Bambam, Xuxa, Cortella, Jornalista, etc.) com prévia por áudio real e fallback gracioso.
+- Catálogo unificado de vozes em `apps/web/app/voice-profiles.ts`: reúne 16 vozes de personalidades com categorias tipadas (`celebrities`, `classic`, `gaming`).
 - O cliente de overlay (`apps/overlay/app/overlay-client.tsx`) executa o áudio MP3 direto do servidor de TTS respeitando o volume do alerta e do master volume, com fallback de síntese caso a reprodução falhe.
 - Whitelist de identificadores `voice-*` aceita no backend e testada nas resoluções desktop (1366 px) e mobile (360 px).
 - O cliente de overlay (`apps/overlay/app/overlay-client.tsx`) mapeia os IDs de personalidade para modulações de tom (pitch), velocidade (rate) e preferências de gênero/estilo de voz no navegador.

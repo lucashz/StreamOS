@@ -1,9 +1,12 @@
+export type VoiceCategory = 'celebrities' | 'classic' | 'gaming';
+
 export type VoiceProfile = {
   id: string;
   name: string;
   analogy: string;
   detail: string;
   avatar: string;
+  category: VoiceCategory;
   pitch: number;
   rate: number;
   gender: 'male' | 'female' | 'default';
@@ -17,6 +20,7 @@ export const voiceProfiles: readonly VoiceProfile[] = [
     analogy: 'Silvio Santos',
     detail: 'Quem quer dinheiro? Animada e clássica',
     avatar: '📺',
+    category: 'celebrities',
     pitch: 1.3,
     rate: 1.1,
     gender: 'male',
@@ -28,6 +32,7 @@ export const voiceProfiles: readonly VoiceProfile[] = [
     analogy: 'Galvão Bueno',
     detail: 'Haja coração! Locução épica e empolgada',
     avatar: '⚽',
+    category: 'celebrities',
     pitch: 0.95,
     rate: 1.08,
     gender: 'male',
@@ -39,6 +44,7 @@ export const voiceProfiles: readonly VoiceProfile[] = [
     analogy: 'Faustão',
     detail: 'Ô loco bicho! Potente, acelerada e sem freio',
     avatar: '⏱️',
+    category: 'celebrities',
     pitch: 0.85,
     rate: 1.2,
     gender: 'male',
@@ -50,6 +56,7 @@ export const voiceProfiles: readonly VoiceProfile[] = [
     analogy: 'Lula',
     detail: 'Grave, rouca, cadenciada e pausada',
     avatar: '🧔',
+    category: 'celebrities',
     pitch: 0.68,
     rate: 0.82,
     gender: 'male',
@@ -61,6 +68,7 @@ export const voiceProfiles: readonly VoiceProfile[] = [
     analogy: 'Bolsonaro',
     detail: 'Firme, impaciente, direta e enérgica',
     avatar: '🫡',
+    category: 'celebrities',
     pitch: 0.88,
     rate: 1.22,
     gender: 'male',
@@ -72,6 +80,7 @@ export const voiceProfiles: readonly VoiceProfile[] = [
     analogy: 'Craque Neto',
     detail: 'É uma barbaridade! Enfática e sem filtro',
     avatar: '😤',
+    category: 'celebrities',
     pitch: 1.12,
     rate: 1.18,
     gender: 'male',
@@ -84,6 +93,7 @@ export const voiceProfiles: readonly VoiceProfile[] = [
     analogy: 'Mano Brown',
     detail: 'Grave pesado, rítmico e direto',
     avatar: '🕶️',
+    category: 'celebrities',
     pitch: 0.58,
     rate: 0.88,
     gender: 'male',
@@ -96,6 +106,7 @@ export const voiceProfiles: readonly VoiceProfile[] = [
     analogy: 'Cortella',
     detail: 'Serena, profunda, reflexiva e solene',
     avatar: '🦉',
+    category: 'celebrities',
     pitch: 0.82,
     rate: 0.85,
     gender: 'male',
@@ -108,6 +119,7 @@ export const voiceProfiles: readonly VoiceProfile[] = [
     analogy: 'Xuxa',
     detail: 'Doce, fofa, alegre e bem aguda',
     avatar: '👑',
+    category: 'celebrities',
     pitch: 1.5,
     rate: 1.05,
     gender: 'female',
@@ -120,6 +132,7 @@ export const voiceProfiles: readonly VoiceProfile[] = [
     analogy: 'Bodybuilder / Bambam',
     detail: 'Bora que tá saindo da jaula! Explosiva',
     avatar: '🏋️',
+    category: 'celebrities',
     pitch: 0.42,
     rate: 1.15,
     gender: 'male',
@@ -131,6 +144,7 @@ export const voiceProfiles: readonly VoiceProfile[] = [
     analogy: 'Apresentadora TV',
     detail: 'Formal, séria, dicção de telejornal',
     avatar: '📰',
+    category: 'classic',
     pitch: 1.12,
     rate: 1.02,
     gender: 'female',
@@ -143,6 +157,7 @@ export const voiceProfiles: readonly VoiceProfile[] = [
     analogy: 'Voz Clássica',
     detail: 'A clássica voz neutra e direta da internet',
     avatar: '🤖',
+    category: 'classic',
     pitch: 1.0,
     rate: 1.0,
     gender: 'default',
@@ -155,6 +170,7 @@ export const voiceProfiles: readonly VoiceProfile[] = [
     analogy: 'Líder de Massas',
     detail: 'Voz madura, pausada e reflexiva',
     avatar: '🗣️',
+    category: 'classic',
     pitch: 0.72,
     rate: 0.78,
     gender: 'male',
@@ -166,6 +182,7 @@ export const voiceProfiles: readonly VoiceProfile[] = [
     analogy: 'Oficial',
     detail: 'Voz grave, marcial e decidida',
     avatar: '🎖️',
+    category: 'gaming',
     pitch: 0.52,
     rate: 1.04,
     gender: 'male',
@@ -177,6 +194,7 @@ export const voiceProfiles: readonly VoiceProfile[] = [
     analogy: 'Gritador de Estádio',
     detail: 'Empolgação coletiva em alta voltagem',
     avatar: '🎉',
+    category: 'gaming',
     pitch: 1.45,
     rate: 1.2,
     gender: 'male',
@@ -188,6 +206,7 @@ export const voiceProfiles: readonly VoiceProfile[] = [
     analogy: 'Ciborgue',
     detail: 'Digital, metálica e computadorizada',
     avatar: '👾',
+    category: 'gaming',
     pitch: 0.25,
     rate: 0.75,
     gender: 'male',
@@ -197,20 +216,35 @@ export const voiceProfiles: readonly VoiceProfile[] = [
 
 let currentTtsAudio: HTMLAudioElement | null = null;
 
-export function previewTtsVoice(voiceId: string, customText?: string) {
+export function stopTtsVoice() {
+  if (currentTtsAudio) {
+    currentTtsAudio.pause();
+    currentTtsAudio.currentTime = 0;
+    currentTtsAudio = null;
+  }
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+}
+
+export type PreviewTtsOptions = {
+  onStart?: () => void;
+  onEnd?: () => void;
+  onError?: () => void;
+};
+
+export function previewTtsVoice(
+  voiceId: string,
+  customText?: string,
+  options?: PreviewTtsOptions,
+) {
   if (typeof window === 'undefined') return;
   const profile =
     voiceProfiles.find((item) => item.id === voiceId) ?? voiceProfiles[0];
   if (!profile) return;
   const text = customText || profile.sample;
 
-  if (currentTtsAudio) {
-    currentTtsAudio.pause();
-    currentTtsAudio.currentTime = 0;
-  }
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-  }
+  stopTtsVoice();
 
   const apiOrigin =
     process.env.NEXT_PUBLIC_API_URL?.startsWith('http')
@@ -220,7 +254,8 @@ export function previewTtsVoice(voiceId: string, customText?: string) {
 
   const audio = new Audio(ttsUrl);
   currentTtsAudio = audio;
-  audio.play().catch(() => {
+
+  const fallbackToSpeechSynthesis = () => {
     if ('speechSynthesis' in window) {
       const speech = new SpeechSynthesisUtterance(text);
       speech.lang = 'pt-BR';
@@ -249,7 +284,36 @@ export function previewTtsVoice(voiceId: string, customText?: string) {
       }
       speech.pitch = profile.pitch;
       speech.rate = profile.rate;
+      speech.onstart = () => options?.onStart?.();
+      speech.onend = () => options?.onEnd?.();
+      speech.onerror = () => {
+        options?.onEnd?.();
+        options?.onError?.();
+      };
       window.speechSynthesis.speak(speech);
+    } else {
+      options?.onEnd?.();
+      options?.onError?.();
     }
+  };
+
+  audio.onplay = () => {
+    options?.onStart?.();
+  };
+  audio.onended = () => {
+    if (currentTtsAudio === audio) {
+      currentTtsAudio = null;
+    }
+    options?.onEnd?.();
+  };
+  audio.onerror = () => {
+    if (currentTtsAudio === audio) {
+      currentTtsAudio = null;
+    }
+    fallbackToSpeechSynthesis();
+  };
+
+  audio.play().catch(() => {
+    fallbackToSpeechSynthesis();
   });
 }

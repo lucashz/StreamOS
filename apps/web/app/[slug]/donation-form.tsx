@@ -3,7 +3,12 @@
 import Image from 'next/image';
 import { useEffect, useState, type FormEvent } from 'react';
 import { usePaymentSimulation } from '../use-payment-simulation';
-import { voiceProfiles, previewTtsVoice } from '../voice-profiles';
+import {
+  voiceProfiles,
+  previewTtsVoice,
+  stopTtsVoice,
+  type VoiceCategory,
+} from '../voice-profiles';
 
 const api = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -39,12 +44,43 @@ export function DonationForm({
   const [errorMessage, setErrorMessage] = useState(
     'Não foi possível continuar. Tente novamente.',
   );
-  const [voice, setVoice] = useState('pt-BR-default');
+  const [voice, setVoice] = useState('voice-silvio');
+  const [message, setMessage] = useState('Boa sorte na live!');
+  const [categoryFilter, setCategoryFilter] = useState<'all' | VoiceCategory>(
+    'celebrities',
+  );
+  const [searchQuery, setSearchQuery] = useState('');
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+  const [loadingVoiceId, setLoadingVoiceId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const simulationEnabled = usePaymentSimulation();
 
-  function previewVoice(selectedVoice = voice) {
-    previewTtsVoice(selectedVoice);
+  function togglePreview(targetVoiceId: string) {
+    if (playingVoiceId === targetVoiceId || loadingVoiceId === targetVoiceId) {
+      stopTtsVoice();
+      setPlayingVoiceId(null);
+      setLoadingVoiceId(null);
+      return;
+    }
+
+    setLoadingVoiceId(targetVoiceId);
+    const profile = voiceProfiles.find((v) => v.id === targetVoiceId);
+    const textToSpeak = message.trim() || profile?.sample || 'Alerta StreamOS!';
+
+    previewTtsVoice(targetVoiceId, textToSpeak, {
+      onStart: () => {
+        setPlayingVoiceId(targetVoiceId);
+        setLoadingVoiceId(null);
+      },
+      onEnd: () => {
+        setPlayingVoiceId(null);
+        setLoadingVoiceId(null);
+      },
+      onError: () => {
+        setPlayingVoiceId(null);
+        setLoadingVoiceId(null);
+      },
+    });
   }
 
   useEffect(() => {
@@ -106,9 +142,9 @@ export function DonationForm({
         body: JSON.stringify({
           amountInCents: amount,
           supporterName: supporterName ?? data.get('supporterName'),
-          message: data.get('message'),
+          message: message,
           anonymous: data.get('anonymous') === 'on',
-          ttsVoice: data.get('ttsVoice'),
+          ttsVoice: voice,
         }),
       },
     ).catch(() => null);
@@ -298,45 +334,175 @@ export function DonationForm({
         Mensagem
         <textarea
           name="message"
-          defaultValue="Boa sorte na live!"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
           maxLength={300}
+          placeholder="Digite a mensagem que a voz vai falar na live..."
         />
       </label>
       <fieldset className="voice-picker">
-        <legend>Voz do alerta</legend>
-        <p>Personas sintéticas originais. Não representam pessoas reais.</p>
+        <legend>Voz do alerta (IA & Personalidades)</legend>
+        <div className="voice-picker-header">
+          <p>Escolha a voz que falará sua mensagem ao vivo no OBS.</p>
+        </div>
+
+        {/* Abas de Categorias */}
+        <div
+          className="voice-category-tabs"
+          role="tablist"
+          aria-label="Categorias de voz"
+        >
+          <button
+            type="button"
+            className={`voice-tab${categoryFilter === 'celebrities' ? ' active' : ''}`}
+            onClick={() => setCategoryFilter('celebrities')}
+          >
+            ⭐ Famosos (
+            {voiceProfiles.filter((v) => v.category === 'celebrities').length})
+          </button>
+          <button
+            type="button"
+            className={`voice-tab${categoryFilter === 'classic' ? ' active' : ''}`}
+            onClick={() => setCategoryFilter('classic')}
+          >
+            🎙️ Clássicas (
+            {voiceProfiles.filter((v) => v.category === 'classic').length})
+          </button>
+          <button
+            type="button"
+            className={`voice-tab${categoryFilter === 'gaming' ? ' active' : ''}`}
+            onClick={() => setCategoryFilter('gaming')}
+          >
+            👾 Games (
+            {voiceProfiles.filter((v) => v.category === 'gaming').length})
+          </button>
+          <button
+            type="button"
+            className={`voice-tab${categoryFilter === 'all' ? ' active' : ''}`}
+            onClick={() => setCategoryFilter('all')}
+          >
+            Todas ({voiceProfiles.length})
+          </button>
+        </div>
+
+        {/* Campo de Busca Rápida */}
+        <div className="voice-search-box">
+          <input
+            type="text"
+            className="voice-search-input"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar por nome ou personalidade (ex: Silvio, Galvão, Faustão)..."
+            aria-label="Buscar vozes"
+          />
+        </div>
+
+        {/* Grade de Vozes Filtradas */}
         <div className="voice-profile-grid">
-          {voiceProfiles.map((profile) => (
-            <label
-              className={`voice-profile${voice === profile.id ? ' selected' : ''}`}
-              key={profile.id}
-            >
-              <input
-                type="radio"
-                name="ttsVoice"
-                value={profile.id}
-                checked={voice === profile.id}
-                onChange={() => setVoice(profile.id)}
-              />
-              <span className="voice-avatar" role="img" aria-label="">
-                {profile.avatar}
-              </span>
-              <strong>{profile.name}</strong>
-              <small>{profile.detail}</small>
+          {voiceProfiles
+            .filter((p) => {
+              const matchesCat =
+                categoryFilter === 'all' || p.category === categoryFilter;
+              const q = searchQuery.trim().toLowerCase();
+              const matchesSearch =
+                !q ||
+                p.name.toLowerCase().includes(q) ||
+                p.analogy.toLowerCase().includes(q) ||
+                p.detail.toLowerCase().includes(q);
+              return matchesCat && matchesSearch;
+            })
+            .map((profile) => {
+              const isSelected = voice === profile.id;
+              const isPlaying = playingVoiceId === profile.id;
+              const isLoading = loadingVoiceId === profile.id;
+
+              return (
+                <label
+                  className={`voice-profile${isSelected ? ' selected' : ''}`}
+                  key={profile.id}
+                >
+                  <input
+                    type="radio"
+                    name="ttsVoice"
+                    value={profile.id}
+                    checked={isSelected}
+                    onChange={() => setVoice(profile.id)}
+                  />
+                  {isSelected ? (
+                    <span
+                      className="voice-profile-check"
+                      title="Voz selecionada"
+                    >
+                      ✓
+                    </span>
+                  ) : null}
+                  <span className="voice-avatar" role="img" aria-label="">
+                    {profile.avatar}
+                  </span>
+                  <strong>{profile.name}</strong>
+                  <span className="voice-analogy-badge">{profile.analogy}</span>
+                  <small>{profile.detail}</small>
+                  <button
+                    type="button"
+                    className={isPlaying ? 'playing' : ''}
+                    aria-label={`Ouvir voz ${profile.name}`}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      setVoice(profile.id);
+                      togglePreview(profile.id);
+                    }}
+                  >
+                    {isLoading
+                      ? '⏳ Gerando…'
+                      : isPlaying
+                        ? '⏹ Parar'
+                        : '▶ Ouvir'}
+                  </button>
+                </label>
+              );
+            })}
+        </div>
+
+        {/* Resumo da Voz Selecionada e Teste com a Mensagem do Usuário */}
+        {(() => {
+          const selectedProfile = voiceProfiles.find((v) => v.id === voice);
+          if (!selectedProfile) return null;
+          const isPlayingSelected = playingVoiceId === selectedProfile.id;
+          const isLoadingSelected = loadingVoiceId === selectedProfile.id;
+
+          return (
+            <div className="voice-selection-preview">
+              <div className="voice-selection-info">
+                <span
+                  className="voice-avatar"
+                  style={{ width: 32, height: 32, fontSize: 16 }}
+                >
+                  {selectedProfile.avatar}
+                </span>
+                <div>
+                  <strong>Voz ativa: {selectedProfile.name}</strong>
+                  <small style={{ display: 'block', color: 'var(--muted)' }}>
+                    {selectedProfile.analogy} · Alta fidelidade neural
+                  </small>
+                </div>
+              </div>
               <button
                 type="button"
-                aria-label={`Ouvir voz ${profile.name}`}
-                onClick={(event) => {
-                  event.preventDefault();
-                  setVoice(profile.id);
-                  previewVoice(profile.id);
+                className={`secondary-button voice-test-my-msg-button${isPlayingSelected ? ' playing' : ''}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  togglePreview(selectedProfile.id);
                 }}
               >
-                ▶ Ouvir
+                {isLoadingSelected
+                  ? '⏳ Sintetizando…'
+                  : isPlayingSelected
+                    ? '⏹ Parar prévia'
+                    : '🔊 Testar com minha mensagem'}
               </button>
-            </label>
-          ))}
-        </div>
+            </div>
+          );
+        })()}
       </fieldset>
       <label className="consent-field">
         <input name="anonymous" type="checkbox" />

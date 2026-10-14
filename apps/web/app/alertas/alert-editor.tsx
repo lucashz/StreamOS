@@ -798,18 +798,27 @@ export function AlertEditor() {
                 value={selected.ttsVoice}
                 onChange={(event) => update('ttsVoice', event.target.value)}
               >
-                <optgroup label="Personalidades & Paródias (Estilo Livepix)">
+                <optgroup label="⭐ Personalidades & Famosos (Estilo Livepix)">
                   {voiceProfiles
-                    .filter((v) => v.id.startsWith('voice-'))
+                    .filter((v) => v.category === 'celebrities')
                     .map((profile) => (
                       <option key={profile.id} value={profile.id}>
                         {profile.avatar} {profile.name} — {profile.analogy}
                       </option>
                     ))}
                 </optgroup>
-                <optgroup label="Tradicionais & Sintéticas">
+                <optgroup label="🎙️ Clássicas & Tradicionais">
                   {voiceProfiles
-                    .filter((v) => !v.id.startsWith('voice-'))
+                    .filter((v) => v.category === 'classic')
+                    .map((profile) => (
+                      <option key={profile.id} value={profile.id}>
+                        {profile.avatar} {profile.name}
+                      </option>
+                    ))}
+                </optgroup>
+                <optgroup label="👾 Games & Criativas">
+                  {voiceProfiles
+                    .filter((v) => v.category === 'gaming')
                     .map((profile) => (
                       <option key={profile.id} value={profile.id}>
                         {profile.avatar} {profile.name}
@@ -1239,18 +1248,27 @@ export function AlertEditor() {
                 value={selected.ttsVoice}
                 onChange={(event) => update('ttsVoice', event.target.value)}
               >
-                <optgroup label="Personalidades & Paródias (Estilo Livepix)">
+                <optgroup label="⭐ Personalidades & Famosos (Estilo Livepix)">
                   {voiceProfiles
-                    .filter((v) => v.id.startsWith('voice-'))
+                    .filter((v) => v.category === 'celebrities')
                     .map((profile) => (
                       <option key={profile.id} value={profile.id}>
                         {profile.avatar} {profile.name} — {profile.analogy}
                       </option>
                     ))}
                 </optgroup>
-                <optgroup label="Tradicionais & Sintéticas">
+                <optgroup label="🎙️ Clássicas & Tradicionais">
                   {voiceProfiles
-                    .filter((v) => !v.id.startsWith('voice-'))
+                    .filter((v) => v.category === 'classic')
+                    .map((profile) => (
+                      <option key={profile.id} value={profile.id}>
+                        {profile.avatar} {profile.name}
+                      </option>
+                    ))}
+                </optgroup>
+                <optgroup label="👾 Games & Criativas">
+                  {voiceProfiles
+                    .filter((v) => v.category === 'gaming')
                     .map((profile) => (
                       <option key={profile.id} value={profile.id}>
                         {profile.avatar} {profile.name}
