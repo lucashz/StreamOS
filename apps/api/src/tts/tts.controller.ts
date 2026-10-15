@@ -23,7 +23,14 @@ export class TtsController {
       text || 'Alerta StreamOS',
     );
 
-    res.setHeader('Content-Type', 'audio/mpeg');
+    const isWav =
+      audioBuffer.length >= 4 &&
+      audioBuffer[0] === 0x52 && // 'R'
+      audioBuffer[1] === 0x49 && // 'I'
+      audioBuffer[2] === 0x46 && // 'F'
+      audioBuffer[3] === 0x46; // 'F'
+
+    res.setHeader('Content-Type', isWav ? 'audio/wav' : 'audio/mpeg');
     res.setHeader('Cache-Control', 'public, max-age=86400, immutable');
     res.setHeader('Content-Length', audioBuffer.length);
     res.status(200).end(audioBuffer);

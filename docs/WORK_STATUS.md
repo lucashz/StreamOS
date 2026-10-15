@@ -4,13 +4,12 @@ Atualizado em: 14/10/2026
 
 ## Ciclo atual
 
-Página e componentes de escolha de voz (estilo Livepix) atualizados e validados com:
-1. Navegação por abas de categorias: ⭐ Famosos (10 personas), 🎙️ Clássicas (3) e 👾 Games (3), reduzindo a sobrecarga visual;
-2. Campo de busca instantânea para filtrar personas pelo nome ou analogia;
-3. Reprodução interativa de prévia com suporte ao texto digitado pelo próprio doador (`Testar com minha mensagem`) e estados reativos (`▶ Ouvir`, `⏳ Gerando…`, `⏹ Parar`);
-4. Card selecionado com destaque visual imediato (glow, checkmark `✓` e resumo com botão de teste dedicado);
-5. Seletores nos painéis de Alertas e Moderação reorganizados com as mesmas categorias semânticas;
-6. Validação automatizada em desktop (1366 px) e mobile (360 px) com zero overflow horizontal aprovada no Playwright.
+Pipeline de clonagem de voz Zero-Shot (XTTS-v2) com personalidades brasileiras integrado e estruturado:
+1. Pasta oficial de referências criada em `apps/api/voices/speakers/` com 10 personas brasileiras prontas em WAV 22050 Hz mono (Silvio Santos, Galvão Bueno, Faustão, Lula, Bolsonaro, Craque Neto, Mano Brown, Cortella, Xuxa e Monstro);
+2. Backend (`apps/api/src/tts/tts.service.ts`) integrado com chamada prioritária ao XTTS-v2 (`POST /tts_to_audio/`) com timbre real da celebridade;
+3. Resiliência e fallback: se o container XTTS estiver offline ou em processamento, fallback automático e instantâneo para Edge Neural TTS e cache de disco em `.runtime/tts-cache/`;
+4. Controlador `apps/api/src/tts/tts.controller.ts` adaptado para identificar o cabeçalho `Content-Type` dinâmico (`audio/wav` ou `audio/mpeg`);
+5. Serviço `xtts` mapeado no `compose.yaml` em modo CPU (`--device cpu`) para não onerar a placa de vídeo durante lives e jogos.
 
 ## Decisões vigentes
 

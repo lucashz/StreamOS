@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 
 interface VoiceMapping {
+  speakerWav?: string;
   edgeVoice: string;
   pitch?: string;
   rate?: string;
@@ -13,60 +14,70 @@ interface VoiceMapping {
 
 const VOICE_PROFILES: Record<string, VoiceMapping> = {
   'voice-silvio': {
+    speakerWav: 'silvio.wav',
     edgeVoice: 'pt-BR-AntonioNeural',
     pitch: '+14%',
     rate: '+8%',
     elevenVoiceId: process.env.ELEVENLABS_VOICE_SILVIO,
   },
   'voice-galvao': {
+    speakerWav: 'galvao.wav',
     edgeVoice: 'pt-BR-AntonioNeural',
     pitch: '+2%',
     rate: '+16%',
     elevenVoiceId: process.env.ELEVENLABS_VOICE_GALVAO,
   },
   'voice-faustao': {
+    speakerWav: 'faustao.wav',
     edgeVoice: 'pt-BR-AntonioNeural',
     pitch: '-12%',
     rate: '+6%',
     elevenVoiceId: process.env.ELEVENLABS_VOICE_FAUSTAO,
   },
   'voice-mano': {
+    speakerWav: 'mano.wav',
     edgeVoice: 'pt-BR-AntonioNeural',
     pitch: '-18%',
     rate: '-6%',
     elevenVoiceId: process.env.ELEVENLABS_VOICE_MANO,
   },
   'voice-craque': {
+    speakerWav: 'craque.wav',
     edgeVoice: 'pt-BR-AntonioNeural',
     pitch: '+8%',
     rate: '+14%',
     elevenVoiceId: process.env.ELEVENLABS_VOICE_CRAQUE,
   },
   'voice-barba': {
+    speakerWav: 'lula.wav',
     edgeVoice: 'pt-BR-AntonioNeural',
     pitch: '-14%',
     rate: '-10%',
     elevenVoiceId: process.env.ELEVENLABS_VOICE_BARBA,
   },
   'voice-capitao': {
+    speakerWav: 'bolsonaro.wav',
     edgeVoice: 'pt-BR-AntonioNeural',
     pitch: '+4%',
     rate: '+8%',
     elevenVoiceId: process.env.ELEVENLABS_VOICE_CAPITAO,
   },
   'voice-monstro': {
+    speakerWav: 'monstro.wav',
     edgeVoice: 'pt-BR-AntonioNeural',
     pitch: '-20%',
     rate: '+12%',
     elevenVoiceId: process.env.ELEVENLABS_VOICE_MONSTRO,
   },
   'voice-xuxa': {
+    speakerWav: 'xuxa.wav',
     edgeVoice: 'pt-BR-FranciscaNeural',
     pitch: '+16%',
     rate: '+6%',
     elevenVoiceId: process.env.ELEVENLABS_VOICE_XUXA,
   },
   'voice-filosofo': {
+    speakerWav: 'cortella.wav',
     edgeVoice: 'pt-BR-AntonioNeural',
     pitch: '-8%',
     rate: '-12%',
@@ -129,7 +140,7 @@ export class TtsService {
     const hash = createHash('sha256')
       .update(`${voiceId}:${text}`)
       .digest('hex');
-    const cachePath = join(this.cacheDir, `${hash}.mp3`);
+    const cachePath = join(this.cacheDir, `${hash}.audio`);
 
     try {
       if (existsSync(cachePath)) {
@@ -139,7 +150,22 @@ export class TtsService {
       // Ignora erro de leitura do cache e prossegue com a síntese
     }
 
-    // 2. Tentar síntese primária com ElevenLabs se configurado
+    // 2. Tentar síntese local de alta fidelidade: XTTS-v2 (Zero-Shot com timbre real)
+    if (profile.speakerWav) {
+      try {
+        const xttsBuffer = await this.synthesizeXtts(profile.speakerWav, text);
+        if (xttsBuffer && xttsBuffer.length > 500) {
+          void fs.writeFile(cachePath, xttsBuffer).catch(() => null);
+          return xttsBuffer;
+        }
+      } catch (error) {
+        this.logger.warn(
+          `XTTS-v2 falhou ou offline para ${voiceId} (${profile.speakerWav}), acionando fallback neural: ${String(error)}`,
+        );
+      }
+    }
+
+    // 3. Tentar síntese secundária com ElevenLabs se configurado
     const elevenKey = process.env.ELEVENLABS_API_KEY;
     const elevenVoiceId = profile.elevenVoiceId;
 
@@ -161,7 +187,7 @@ export class TtsService {
       }
     }
 
-    // 3. Fallback inteligente: Microsoft Edge Neural TTS
+    // 4. Fallback inteligente: Microsoft Edge Neural TTS
     try {
       const fallbackBuffer = await this.synthesizeEdgeNeural(profile, text);
       if (fallbackBuffer && fallbackBuffer.length > 0) {
@@ -174,12 +200,47 @@ export class TtsService {
       );
     }
 
-    // 4. Fallback de emergência (frame silencioso de áudio MP3 válido)
+    // 5. Fallback de emergência (frame silencioso de áudio MP3 válido)
     return Buffer.from([
       0xff, 0xfb, 0x90, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00,
     ]);
   }
+
+  private async synthesizeXtts(
+    speakerWav: string,
+    text: string,
+  ): Promise<Buffer> {
+    const xttsUrl = process.env.XTTS_URL || 'http://localhost:8020';
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 18000);
+
+    try {
+      const response = await fetch(`${xttsUrl}/tts_to_audio/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text,
+          speaker_wav: speakerWav,
+          language: 'pt',
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
 
   private async synthesizeElevenLabs(
     apiKey: string,
@@ -187,7 +248,7 @@ export class TtsService {
     text: string,
   ): Promise<Buffer> {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4000);
+    const timeout = setTimeout(() => controller.abort(), 10000);
 
     try {
       const response = await fetch(
