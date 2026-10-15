@@ -4,15 +4,15 @@ Atualizado em: 15/10/2026
 
 ## Ciclo atual
 
-Aperfeiçoamento sonoro e consolidação exclusiva do Top 5 de Personalidades Brasileiras para os alertas de live:
-1. Catálogo restrito ao Top 5 de ícones nacionais: Silvio Santos (`voice-silvio`), Faustão (`voice-faustao`), Galvão Bueno (`voice-galvao`), Craque Neto (`voice-craque`) e Mano Brown (`voice-mano`). Todas as vozes genéricas, repetitivas ou secundárias foram removidas do código e do armazenamento de speakers;
-2. Masterização e normalização sonora: áudios isolados dos 5 bordões autênticos foram equalizados e normalizados rigorosamente para -14 LUFS com -1 dB true peak (24kHz 48kbps mono MP3), matching exato do stream do Edge TTS;
-3. Remoção de silêncios residuais: Silvio Santos podado em 3.70s (eliminando 3.9s de silêncio morto posterior) e Mano Brown sintetizado com corte limpo em 3.30s no emblemático "Vamo acordar, vamo acordar!";
-4. Modulação neural personalizada: parâmetros de tom (pitch) e cadência (rate) afinados no backend (`apps/api/src/tts/tts.service.ts`) e no overlay (`apps/overlay/app/overlay-client.tsx`) para emenda suave e orgânica entre bordão e mensagem;
-5. Interface unificada: página de doação (`/[slug]`), editor de alertas (`/alertas`) e moderação (`/moderacao`) apresentam com elegância os 5 cards com prévia sonora, busca e responsividade;
-6. Validação aprovada: Playwright validado nas resoluções desktop (1366 px) e mobile (360 px) sem overflow horizontal, síntese de ponta a ponta gerada para os 5 perfis e reprodução física no áudio do sistema auditada com sucesso.
+Redesenho e despoluição da tela de doações (`/[slug]`):
+1. Grade reorganizada: substituída a antiga grade de 5 colunas espremidas por um grid equilibrado de 2 colunas com o 5º card (Mano Brown) destacado na base;
+2. Remoção de abas e busca redundantes: eliminadas as categorias e a barra de pesquisa que poluíam a experiência visual, apresentando diretamente as 5 personalidades em cards confortáveis e elegantes;
+3. Tipografia e badges 100% legíveis: nomes, apelidos e bordões exibidos sem quebras de palavras ou elipses (`...`), com botões de prévia de clique direto;
+4. Validação visual e responsiva: aprovada no Playwright nas resoluções desktop (1366 px) e mobile (360 px) com zero overflow horizontal; screenshots auditados e aprovados.
 
 ## Decisões vigentes
+
+- Página pública (`/[slug]`): exibe diretamente o Top 5 de personalidades em grid de 2 colunas + destaque horizontal para a 5ª persona, sem abas ou caixas de busca que sobrecarregavam o formulário.
 
 - Catálogo de vozes oficial: exatamente 5 personalidades (`voice-silvio`, `voice-faustao`, `voice-galvao`, `voice-craque`, `voice-mano`). A voz padrão inicial é `voice-silvio`.
 - Normalização de áudio: padrão broadcast de -14 LUFS integrado em 24kHz 48kbps mono MP3, possibilitando concatenação direta em bytes sem reprocessamento pesado ou dependência de GPU.

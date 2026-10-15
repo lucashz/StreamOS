@@ -7,7 +7,6 @@ import {
   voiceProfiles,
   previewTtsVoice,
   stopTtsVoice,
-  type VoiceCategory,
 } from '../voice-profiles';
 
 const api = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -46,10 +45,6 @@ export function DonationForm({
   );
   const [voice, setVoice] = useState('voice-silvio');
   const [message, setMessage] = useState('Boa sorte na live!');
-  const [categoryFilter, setCategoryFilter] = useState<'all' | VoiceCategory>(
-    'all',
-  );
-  const [searchQuery, setSearchQuery] = useState('');
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [loadingVoiceId, setLoadingVoiceId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -341,118 +336,65 @@ export function DonationForm({
         />
       </label>
       <fieldset className="voice-picker">
-        <legend>Voz do alerta (IA & Personalidades)</legend>
+        <legend>Voz do alerta (Personalidades)</legend>
         <div className="voice-picker-header">
-          <p>Escolha a voz que falará sua mensagem ao vivo no OBS.</p>
+          <p>Escolha quem falará sua mensagem ao vivo no OBS.</p>
         </div>
 
-        {/* Abas de Categorias */}
-        <div
-          className="voice-category-tabs"
-          role="tablist"
-          aria-label="Categorias de voz"
-        >
-          <button
-            type="button"
-            className={`voice-tab${categoryFilter === 'all' ? ' active' : ''}`}
-            onClick={() => setCategoryFilter('all')}
-          >
-            ⭐ Todas ({voiceProfiles.length})
-          </button>
-          <button
-            type="button"
-            className={`voice-tab${categoryFilter === 'tv' ? ' active' : ''}`}
-            onClick={() => setCategoryFilter('tv')}
-          >
-            📺 Televisão (
-            {voiceProfiles.filter((v) => v.category === 'tv').length})
-          </button>
-          <button
-            type="button"
-            className={`voice-tab${categoryFilter === 'personalities' ? ' active' : ''}`}
-            onClick={() => setCategoryFilter('personalities')}
-          >
-            🎙️ Ícones & Esporte (
-            {voiceProfiles.filter((v) => v.category === 'personalities').length})
-          </button>
-        </div>
-
-        {/* Campo de Busca Rápida */}
-        <div className="voice-search-box">
-          <input
-            type="text"
-            className="voice-search-input"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar por nome ou personalidade (ex: Silvio, Galvão, Faustão)..."
-            aria-label="Buscar vozes"
-          />
-        </div>
-
-        {/* Grade de Vozes Filtradas */}
+        {/* Grade do Top 5 de Personalidades */}
         <div className="voice-profile-grid">
-          {voiceProfiles
-            .filter((p) => {
-              const matchesCat =
-                categoryFilter === 'all' || p.category === categoryFilter;
-              const q = searchQuery.trim().toLowerCase();
-              const matchesSearch =
-                !q ||
-                p.name.toLowerCase().includes(q) ||
-                p.analogy.toLowerCase().includes(q) ||
-                p.detail.toLowerCase().includes(q);
-              return matchesCat && matchesSearch;
-            })
-            .map((profile) => {
-              const isSelected = voice === profile.id;
-              const isPlaying = playingVoiceId === profile.id;
-              const isLoading = loadingVoiceId === profile.id;
+          {voiceProfiles.map((profile) => {
+            const isSelected = voice === profile.id;
+            const isPlaying = playingVoiceId === profile.id;
+            const isLoading = loadingVoiceId === profile.id;
 
-              return (
-                <label
-                  className={`voice-profile${isSelected ? ' selected' : ''}`}
-                  key={profile.id}
-                >
-                  <input
-                    type="radio"
-                    name="ttsVoice"
-                    value={profile.id}
-                    checked={isSelected}
-                    onChange={() => setVoice(profile.id)}
-                  />
-                  {isSelected ? (
-                    <span
-                      className="voice-profile-check"
-                      title="Voz selecionada"
-                    >
-                      ✓
-                    </span>
-                  ) : null}
-                  <span className="voice-avatar" role="img" aria-label="">
-                    {profile.avatar}
-                  </span>
-                  <strong>{profile.name}</strong>
-                  <span className="voice-analogy-badge">{profile.analogy}</span>
-                  <small>{profile.detail}</small>
-                  <button
-                    type="button"
-                    className={isPlaying ? 'playing' : ''}
-                    aria-label={`Ouvir voz ${profile.name}`}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      setVoice(profile.id);
-                      togglePreview(profile.id);
-                    }}
+            return (
+              <label
+                className={`voice-profile${isSelected ? ' selected' : ''}`}
+                key={profile.id}
+              >
+                <input
+                  type="radio"
+                  name="ttsVoice"
+                  value={profile.id}
+                  checked={isSelected}
+                  onChange={() => setVoice(profile.id)}
+                />
+                {isSelected ? (
+                  <span
+                    className="voice-profile-check"
+                    title="Voz selecionada"
                   >
-                    {isLoading
-                      ? '⏳ Gerando…'
-                      : isPlaying
-                        ? '⏹ Parar'
-                        : '▶ Ouvir'}
-                  </button>
-                </label>
-              );
-            })}
+                    ✓
+                  </span>
+                ) : null}
+                <span className="voice-avatar" role="img" aria-label="">
+                  {profile.avatar}
+                </span>
+                <div className="voice-profile-body">
+                  <strong className="voice-name">{profile.name}</strong>
+                  <span className="voice-analogy-badge">{profile.analogy}</span>
+                </div>
+                <small className="voice-detail">{profile.detail}</small>
+                <button
+                  type="button"
+                  className={`voice-play-button${isPlaying ? ' playing' : ''}`}
+                  aria-label={`Ouvir bordão de ${profile.name}`}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setVoice(profile.id);
+                    togglePreview(profile.id);
+                  }}
+                >
+                  {isLoading
+                    ? '⏳ Gerando…'
+                    : isPlaying
+                      ? '⏹ Parar'
+                      : '▶ Ouvir bordão'}
+                </button>
+              </label>
+            );
+          })}
         </div>
 
         {/* Resumo da Voz Selecionada e Teste com a Mensagem do Usuário */}
