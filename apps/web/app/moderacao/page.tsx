@@ -219,21 +219,21 @@ export default function ModerationPage() {
                   setSettings({ ...settings, voice: e.target.value })
                 }
               >
-                <optgroup label="Personalidades & Paródias (Estilo Livepix)">
+                <optgroup label="📺 Apresentadores & TV">
                   {voiceProfiles
-                    .filter((v) => v.id.startsWith('voice-'))
+                    .filter((v) => v.category === 'tv')
                     .map((profile) => (
                       <option key={profile.id} value={profile.id}>
                         {profile.avatar} {profile.name} — {profile.analogy}
                       </option>
                     ))}
                 </optgroup>
-                <optgroup label="Tradicionais & Sintéticas">
+                <optgroup label="🎙️ Ícones & Esporte">
                   {voiceProfiles
-                    .filter((v) => !v.id.startsWith('voice-'))
+                    .filter((v) => v.category === 'personalities')
                     .map((profile) => (
                       <option key={profile.id} value={profile.id}>
-                        {profile.avatar} {profile.name}
+                        {profile.avatar} {profile.name} — {profile.analogy}
                       </option>
                     ))}
                 </optgroup>

@@ -798,30 +798,21 @@ export function AlertEditor() {
                 value={selected.ttsVoice}
                 onChange={(event) => update('ttsVoice', event.target.value)}
               >
-                <optgroup label="⭐ Personalidades & Famosos (Estilo Livepix)">
+                <optgroup label="📺 Apresentadores & TV">
                   {voiceProfiles
-                    .filter((v) => v.category === 'celebrities')
+                    .filter((v) => v.category === 'tv')
                     .map((profile) => (
                       <option key={profile.id} value={profile.id}>
                         {profile.avatar} {profile.name} — {profile.analogy}
                       </option>
                     ))}
                 </optgroup>
-                <optgroup label="🎙️ Clássicas & Tradicionais">
+                <optgroup label="🎙️ Ícones & Esporte">
                   {voiceProfiles
-                    .filter((v) => v.category === 'classic')
+                    .filter((v) => v.category === 'personalities')
                     .map((profile) => (
                       <option key={profile.id} value={profile.id}>
-                        {profile.avatar} {profile.name}
-                      </option>
-                    ))}
-                </optgroup>
-                <optgroup label="👾 Games & Criativas">
-                  {voiceProfiles
-                    .filter((v) => v.category === 'gaming')
-                    .map((profile) => (
-                      <option key={profile.id} value={profile.id}>
-                        {profile.avatar} {profile.name}
+                        {profile.avatar} {profile.name} — {profile.analogy}
                       </option>
                     ))}
                 </optgroup>
@@ -1248,30 +1239,21 @@ export function AlertEditor() {
                 value={selected.ttsVoice}
                 onChange={(event) => update('ttsVoice', event.target.value)}
               >
-                <optgroup label="⭐ Personalidades & Famosos (Estilo Livepix)">
+                <optgroup label="📺 Apresentadores & TV">
                   {voiceProfiles
-                    .filter((v) => v.category === 'celebrities')
+                    .filter((v) => v.category === 'tv')
                     .map((profile) => (
                       <option key={profile.id} value={profile.id}>
                         {profile.avatar} {profile.name} — {profile.analogy}
                       </option>
                     ))}
                 </optgroup>
-                <optgroup label="🎙️ Clássicas & Tradicionais">
+                <optgroup label="🎙️ Ícones & Esporte">
                   {voiceProfiles
-                    .filter((v) => v.category === 'classic')
+                    .filter((v) => v.category === 'personalities')
                     .map((profile) => (
                       <option key={profile.id} value={profile.id}>
-                        {profile.avatar} {profile.name}
-                      </option>
-                    ))}
-                </optgroup>
-                <optgroup label="👾 Games & Criativas">
-                  {voiceProfiles
-                    .filter((v) => v.category === 'gaming')
-                    .map((profile) => (
-                      <option key={profile.id} value={profile.id}>
-                        {profile.avatar} {profile.name}
+                        {profile.avatar} {profile.name} — {profile.analogy}
                       </option>
                     ))}
                 </optgroup>

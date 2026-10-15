@@ -47,7 +47,7 @@ export function DonationForm({
   const [voice, setVoice] = useState('voice-silvio');
   const [message, setMessage] = useState('Boa sorte na live!');
   const [categoryFilter, setCategoryFilter] = useState<'all' | VoiceCategory>(
-    'celebrities',
+    'all',
   );
   const [searchQuery, setSearchQuery] = useState('');
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
@@ -354,34 +354,26 @@ export function DonationForm({
         >
           <button
             type="button"
-            className={`voice-tab${categoryFilter === 'celebrities' ? ' active' : ''}`}
-            onClick={() => setCategoryFilter('celebrities')}
-          >
-            ⭐ Famosos (
-            {voiceProfiles.filter((v) => v.category === 'celebrities').length})
-          </button>
-          <button
-            type="button"
-            className={`voice-tab${categoryFilter === 'classic' ? ' active' : ''}`}
-            onClick={() => setCategoryFilter('classic')}
-          >
-            🎙️ Clássicas (
-            {voiceProfiles.filter((v) => v.category === 'classic').length})
-          </button>
-          <button
-            type="button"
-            className={`voice-tab${categoryFilter === 'gaming' ? ' active' : ''}`}
-            onClick={() => setCategoryFilter('gaming')}
-          >
-            👾 Games (
-            {voiceProfiles.filter((v) => v.category === 'gaming').length})
-          </button>
-          <button
-            type="button"
             className={`voice-tab${categoryFilter === 'all' ? ' active' : ''}`}
             onClick={() => setCategoryFilter('all')}
           >
-            Todas ({voiceProfiles.length})
+            ⭐ Todas ({voiceProfiles.length})
+          </button>
+          <button
+            type="button"
+            className={`voice-tab${categoryFilter === 'tv' ? ' active' : ''}`}
+            onClick={() => setCategoryFilter('tv')}
+          >
+            📺 Televisão (
+            {voiceProfiles.filter((v) => v.category === 'tv').length})
+          </button>
+          <button
+            type="button"
+            className={`voice-tab${categoryFilter === 'personalities' ? ' active' : ''}`}
+            onClick={() => setCategoryFilter('personalities')}
+          >
+            🎙️ Ícones & Esporte (
+            {voiceProfiles.filter((v) => v.category === 'personalities').length})
           </button>
         </div>
 
