@@ -43,7 +43,7 @@ export default function ModerationPage() {
   const [settings, setSettings] = useState({
     moderationEnabled: true,
     ttsEnabled: true,
-    voice: 'pt-BR-default',
+    voice: 'voice-silvio',
     minimumInCents: 500,
     maximumCharacters: 200,
     paused: false,

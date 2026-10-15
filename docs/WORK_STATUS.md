@@ -1,20 +1,21 @@
 # Estado de trabalho do StreamOS
 
-Atualizado em: 14/10/2026
+Atualizado em: 15/10/2026
 
 ## Ciclo atual
 
-Catálogo e motor de alertas refatorados exclusivamente para as 10 personalidades brasileiras autênticas com bordão original + TTS da mensagem:
-1. Catálogo restrito às 10 personas oficiais: Silvio Santos, Faustão, Galvão Bueno, Xuxa, Cortella, Craque Neto, Mano Brown, Lula, Bolsonaro e Leo Stronda; vozes sintéticas e genéricas removidas;
-2. Arquitetura de áudio híbrida: cada personalidade possui seu bordão clássico autêntico gravado em estúdio (`.mp3` e `.wav`) em `apps/api/voices/speakers/`;
-3. Na doação, o alerta toca o bordão original inconfundível abrindo a notificação e emenda com a leitura da mensagem do apoiador no tom da persona, entregando um áudio contínuo e autêntico sem depender de modelos pesados;
-4. Abas na página pública simplificadas para ⭐ Todas, 📺 Televisão e 🎙️ Ícones & Esporte, com busca rápida em tempo real;
-5. Seletores em Alertas e Moderação alinhados com o mesmo agrupamento;
-6. Build e validação sonora aprovados (testes de reprodução síncrona com Silvio Santos e Faustão concluídos com sucesso).
+Aperfeiçoamento sonoro e consolidação exclusiva do Top 5 de Personalidades Brasileiras para os alertas de live:
+1. Catálogo restrito ao Top 5 de ícones nacionais: Silvio Santos (`voice-silvio`), Faustão (`voice-faustao`), Galvão Bueno (`voice-galvao`), Craque Neto (`voice-craque`) e Mano Brown (`voice-mano`). Todas as vozes genéricas, repetitivas ou secundárias foram removidas do código e do armazenamento de speakers;
+2. Masterização e normalização sonora: áudios isolados dos 5 bordões autênticos foram equalizados e normalizados rigorosamente para -14 LUFS com -1 dB true peak (24kHz 48kbps mono MP3), matching exato do stream do Edge TTS;
+3. Remoção de silêncios residuais: Silvio Santos podado em 3.70s (eliminando 3.9s de silêncio morto posterior) e Mano Brown sintetizado com corte limpo em 3.30s no emblemático "Vamo acordar, vamo acordar!";
+4. Modulação neural personalizada: parâmetros de tom (pitch) e cadência (rate) afinados no backend (`apps/api/src/tts/tts.service.ts`) e no overlay (`apps/overlay/app/overlay-client.tsx`) para emenda suave e orgânica entre bordão e mensagem;
+5. Interface unificada: página de doação (`/[slug]`), editor de alertas (`/alertas`) e moderação (`/moderacao`) apresentam com elegância os 5 cards com prévia sonora, busca e responsividade;
+6. Validação aprovada: Playwright validado nas resoluções desktop (1366 px) e mobile (360 px) sem overflow horizontal, síntese de ponta a ponta gerada para os 5 perfis e reprodução física no áudio do sistema auditada com sucesso.
 
 ## Decisões vigentes
 
-- Página pública (`/[slug]`): a voz padrão inicial é `voice-silvio` (Silvio Santos). As categorias dividem as 16 personas em abas claras, permitindo busca e teste em tempo real com o texto customizado do doador.
+- Catálogo de vozes oficial: exatamente 5 personalidades (`voice-silvio`, `voice-faustao`, `voice-galvao`, `voice-craque`, `voice-mano`). A voz padrão inicial é `voice-silvio`.
+- Normalização de áudio: padrão broadcast de -14 LUFS integrado em 24kHz 48kbps mono MP3, possibilitando concatenação direta em bytes sem reprocessamento pesado ou dependência de GPU.
 - Controle global de áudio de prévia em `apps/web/app/voice-profiles.ts`: garante que apenas um áudio toque por vez, interrompendo a reprodução anterior e suportando cancelamento explícito via `stopTtsVoice()`.
 - Endpoint `GET /public/tts?voice={id}&text={text}` implementado em `apps/api/src/tts/` com headers de cache imutável e entrega de `audio/mpeg`.
 - Catálogo unificado de vozes em `apps/web/app/voice-profiles.ts`: reúne 16 vozes de personalidades com categorias tipadas (`celebrities`, `classic`, `gaming`).

@@ -161,24 +161,12 @@ const personalityVoiceMap: Record<
   string,
   { pitch: number; rateMultiplier: number; gender?: 'male' | 'female' }
 > = {
-  'voice-silvio': { pitch: 1.3, rateMultiplier: 1.1, gender: 'male' },
-  'voice-galvao': { pitch: 0.95, rateMultiplier: 1.08, gender: 'male' },
-  'voice-faustao': { pitch: 0.85, rateMultiplier: 1.2, gender: 'male' },
-  'voice-barba': { pitch: 0.68, rateMultiplier: 0.82, gender: 'male' },
-  'voice-capitao': { pitch: 0.88, rateMultiplier: 1.22, gender: 'male' },
-  'voice-craque': { pitch: 1.12, rateMultiplier: 1.18, gender: 'male' },
-  'voice-mano': { pitch: 0.58, rateMultiplier: 0.88, gender: 'male' },
-  'voice-filosofo': { pitch: 0.82, rateMultiplier: 0.85, gender: 'male' },
-  'voice-xuxa': { pitch: 1.5, rateMultiplier: 1.05, gender: 'female' },
-  'voice-monstro': { pitch: 0.42, rateMultiplier: 1.15, gender: 'male' },
-  'voice-jornalista': { pitch: 1.12, rateMultiplier: 1.02, gender: 'female' },
+  'voice-silvio': { pitch: 1.25, rateMultiplier: 1.08, gender: 'male' },
+  'voice-faustao': { pitch: 0.85, rateMultiplier: 1.15, gender: 'male' },
+  'voice-galvao': { pitch: 1.02, rateMultiplier: 1.14, gender: 'male' },
+  'voice-craque': { pitch: 1.1, rateMultiplier: 1.15, gender: 'male' },
+  'voice-mano': { pitch: 0.65, rateMultiplier: 0.92, gender: 'male' },
   'pt-BR-default': { pitch: 1.0, rateMultiplier: 1.0 },
-  'ai-popular-orator': { pitch: 0.72, rateMultiplier: 0.78, gender: 'male' },
-  'ai-commander': { pitch: 0.52, rateMultiplier: 1.04, gender: 'male' },
-  'character-narrator': { pitch: 0.78, rateMultiplier: 0.86, gender: 'male' },
-  'character-deep': { pitch: 0.45, rateMultiplier: 0.76, gender: 'male' },
-  'character-cheerful': { pitch: 1.55, rateMultiplier: 1.22, gender: 'male' },
-  'character-robot': { pitch: 0.25, rateMultiplier: 0.68, gender: 'male' },
 };
 
 function configuredVoice(preference: string) {

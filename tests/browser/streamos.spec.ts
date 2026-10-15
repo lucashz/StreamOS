@@ -1204,13 +1204,19 @@ test('vozes de personalidades no estilo livepix configuráveis em alertas, moder
   await page.goto(`/${slug}`);
   const silvioCard = page
     .locator('.voice-profile')
-    .filter({ hasText: 'Silvio (O Dono do Baú)' });
+    .filter({ hasText: 'Silvio Santos' });
   await expect(silvioCard).toBeVisible({ timeout: 15_000 });
   await expect(
-    page.locator('.voice-profile').filter({ hasText: 'Galvão (Voz do Hexa)' }),
+    page.locator('.voice-profile').filter({ hasText: 'Galvão Bueno' }),
   ).toBeVisible();
   await expect(
-    page.locator('.voice-profile').filter({ hasText: 'Faustão (Ô Loco Meu)' }),
+    page.locator('.voice-profile').filter({ hasText: 'Faustão' }),
+  ).toBeVisible();
+  await expect(
+    page.locator('.voice-profile').filter({ hasText: 'Craque Neto' }),
+  ).toBeVisible();
+  await expect(
+    page.locator('.voice-profile').filter({ hasText: 'Mano Brown' }),
   ).toBeVisible();
   await silvioCard.click();
   await expect(

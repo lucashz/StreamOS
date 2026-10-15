@@ -15,62 +15,32 @@ const VOICE_PROFILES: Record<string, VoiceMapping> = {
   'voice-silvio': {
     speakerFile: 'silvio.mp3',
     edgeVoice: 'pt-BR-AntonioNeural',
-    pitch: '+14%',
-    rate: '+8%',
+    pitch: '+12%',
+    rate: '+6%',
   },
   'voice-faustao': {
     speakerFile: 'faustao.mp3',
     edgeVoice: 'pt-BR-AntonioNeural',
     pitch: '-12%',
-    rate: '+6%',
+    rate: '+8%',
   },
   'voice-galvao': {
     speakerFile: 'galvao.mp3',
     edgeVoice: 'pt-BR-AntonioNeural',
     pitch: '+2%',
-    rate: '+16%',
-  },
-  'voice-xuxa': {
-    speakerFile: 'xuxa.mp3',
-    edgeVoice: 'pt-BR-FranciscaNeural',
-    pitch: '+16%',
-    rate: '+6%',
-  },
-  'voice-filosofo': {
-    speakerFile: 'cortella.mp3',
-    edgeVoice: 'pt-BR-AntonioNeural',
-    pitch: '-8%',
-    rate: '-12%',
+    rate: '+14%',
   },
   'voice-craque': {
     speakerFile: 'craque.mp3',
     edgeVoice: 'pt-BR-AntonioNeural',
-    pitch: '+8%',
-    rate: '+14%',
+    pitch: '+6%',
+    rate: '+12%',
   },
   'voice-mano': {
     speakerFile: 'mano.mp3',
     edgeVoice: 'pt-BR-AntonioNeural',
     pitch: '-18%',
     rate: '-6%',
-  },
-  'voice-barba': {
-    speakerFile: 'lula.mp3',
-    edgeVoice: 'pt-BR-AntonioNeural',
-    pitch: '-14%',
-    rate: '-10%',
-  },
-  'voice-capitao': {
-    speakerFile: 'bolsonaro.mp3',
-    edgeVoice: 'pt-BR-AntonioNeural',
-    pitch: '+4%',
-    rate: '+8%',
-  },
-  'voice-monstro': {
-    speakerFile: 'monstro.mp3',
-    edgeVoice: 'pt-BR-AntonioNeural',
-    pitch: '-20%',
-    rate: '+12%',
   },
 };
 
