@@ -4,12 +4,13 @@ Atualizado em: 14/10/2026
 
 ## Ciclo atual
 
-Pipeline de clonagem de voz Zero-Shot (XTTS-v2) com personalidades brasileiras integrado e estruturado:
-1. Pasta oficial de referências criada em `apps/api/voices/speakers/` com 10 personas brasileiras prontas em WAV 22050 Hz mono (Silvio Santos, Galvão Bueno, Faustão, Lula, Bolsonaro, Craque Neto, Mano Brown, Cortella, Xuxa e Monstro);
+Pipeline de clonagem de voz Zero-Shot (XTTS-v2) com personalidades brasileiras integrado e validado com sucesso:
+1. Pasta oficial de referências criada em `apps/api/voices/speakers/` com 10 personas brasileiras em WAV 22050 Hz mono (Silvio Santos, Galvão Bueno, Faustão, Lula, Bolsonaro, Craque Neto, Mano Brown, Cortella, Xuxa e Monstro);
 2. Backend (`apps/api/src/tts/tts.service.ts`) integrado com chamada prioritária ao XTTS-v2 (`POST /tts_to_audio/`) com timbre real da celebridade;
 3. Resiliência e fallback: se o container XTTS estiver offline ou em processamento, fallback automático e instantâneo para Edge Neural TTS e cache de disco em `.runtime/tts-cache/`;
 4. Controlador `apps/api/src/tts/tts.controller.ts` adaptado para identificar o cabeçalho `Content-Type` dinâmico (`audio/wav` ou `audio/mpeg`);
-5. Serviço `xtts` mapeado no `compose.yaml` em modo CPU (`--device cpu`) para não onerar a placa de vídeo durante lives e jogos.
+5. Serviço `xtts` mapeado no `compose.yaml` em modo CPU (`--device cpu`) para não onerar a placa de vídeo durante lives e jogos;
+6. Validação prática: modelo v2.0.2 validado por SHA256 (`6817f33c...`), latents dos 10 famosos criados, síntese de áudio do Silvio Santos e Faustão testada com sucesso e reproduzida no sistema de áudio local.
 
 ## Decisões vigentes
 
