@@ -4,11 +4,13 @@ Atualizado em: 15/10/2026
 
 ## Ciclo atual
 
-Redesenho e despoluição da tela de doações (`/[slug]`):
-1. Grade reorganizada: substituída a antiga grade de 5 colunas espremidas por um grid equilibrado de 2 colunas com o 5º card (Mano Brown) destacado na base;
-2. Remoção de abas e busca redundantes: eliminadas as categorias e a barra de pesquisa que poluíam a experiência visual, apresentando diretamente as 5 personalidades em cards confortáveis e elegantes;
-3. Tipografia e badges 100% legíveis: nomes, apelidos e bordões exibidos sem quebras de palavras ou elipses (`...`), com botões de prévia de clique direto;
-4. Validação visual e responsiva: aprovada no Playwright nas resoluções desktop (1366 px) e mobile (360 px) com zero overflow horizontal; screenshots auditados e aprovados.
+Autenticidade das vozes de Faustão, Craque Neto e Mano Brown:
+1. Faustão (`faustao.mp3`/`.wav`): substituída imitação pelo áudio original da transmissão de TV com o bordão histórico "Ô loco meu!";
+2. Craque Neto (`craque.mp3`/`.wav`): substituída gravação cômica de imitador pelo áudio autêntico de José Ferreira Neto no programa Os Donos da Bola ("Cês tão de brincadeira!");
+3. Mano Brown (`mano.mp3`/`.wav`): substituído meme humorístico ("acorda cabeça de gelo") pela gravação oficial de estúdio de Mano Brown ("Aqui estou mais um dia...", Racionais MC's);
+4. Prévia inteligente na tela de doações: o botão "▶ Ouvir bordão" reproduz diretamente o áudio 100% puro e original da celebridade quando não há mensagem digitada, e concatena harmoniosamente o bordão com o TTS Neural quando há mensagem do apoiador;
+5. Normalização de áudio broadcast: todos os arquivos em 24kHz mono MP3 calibrados em -14 LUFS integrado / -1 dB true peak;
+6. Validação: reprodução em alto-falantes do sistema, typecheck de `apps/web` e `apps/api` aprovados, e suíte Playwright direcionada aprovada em desktop (1366 px) e mobile (360 px).
 
 ## Decisões vigentes
 

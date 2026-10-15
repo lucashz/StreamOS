@@ -59,8 +59,7 @@ export function DonationForm({
     }
 
     setLoadingVoiceId(targetVoiceId);
-    const profile = voiceProfiles.find((v) => v.id === targetVoiceId);
-    const textToSpeak = message.trim() || profile?.sample || 'Alerta StreamOS!';
+    const textToSpeak = message.trim();
 
     previewTtsVoice(targetVoiceId, textToSpeak, {
       onStart: () => {

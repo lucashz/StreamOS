@@ -29,14 +29,14 @@ export const voiceProfiles: readonly VoiceProfile[] = [
   {
     id: 'voice-faustao',
     name: 'Faustão',
-    analogy: 'Ô Loco Bicho',
-    detail: 'Ô loco bicho! Essa fera aí!',
+    analogy: 'Ô Loco Meu',
+    detail: 'Ô loco meu! Essa fera aí!',
     avatar: '⏱️',
     category: 'tv',
     pitch: 0.85,
     rate: 1.15,
     gender: 'male',
-    sample: 'Ô loco bicho! Olha essa fera doando ao vivo na live meu!',
+    sample: 'Ô loco meu! Olha essa fera doando ao vivo na live!',
   },
   {
     id: 'voice-galvao',
@@ -53,27 +53,27 @@ export const voiceProfiles: readonly VoiceProfile[] = [
   {
     id: 'voice-craque',
     name: 'Craque Neto',
-    analogy: 'Pão com Requeijão',
-    detail: 'É uma barbaridade! Não vai dar, Cascão!',
+    analogy: 'Os Donos da Bola',
+    detail: 'Cês tão de brincadeira! Não vai dar, Cascão!',
     avatar: '😤',
     category: 'personalities',
     pitch: 1.1,
     rate: 1.15,
     gender: 'male',
     sample:
-      'É uma barbaridade, garotinho! Um Pix desse tamanho tem que aplaudir de pé!',
+      'Cês tão de brincadeira garotinho! Um Pix desse tamanho tem que aplaudir de pé!',
   },
   {
     id: 'voice-mano',
     name: 'Mano Brown',
     analogy: 'Voz da Quebrada',
-    detail: 'Vamo acordar, vamo acordar!',
+    detail: 'Aqui estou mais um dia...',
     avatar: '🕶️',
     category: 'personalities',
     pitch: 0.65,
     rate: 0.92,
     gender: 'male',
-    sample: 'Vamo acordar! Se liga no Pix de respeito que chegou na moral.',
+    sample: 'Aqui estou mais um dia... Se liga no Pix de respeito que chegou na moral.',
   },
 ];
 
@@ -120,7 +120,7 @@ export function previewTtsVoice(
 
   const fallbackToSpeechSynthesis = () => {
     if ('speechSynthesis' in window) {
-      const speech = new SpeechSynthesisUtterance(text);
+      const speech = new SpeechSynthesisUtterance(text || profile.sample);
       speech.lang = 'pt-BR';
       const available = window.speechSynthesis.getVoices();
       const portuguese = available.filter((item) =>
