@@ -43,32 +43,30 @@ services:
 
   xtts:
     image: daswer123/xtts-api-server:latest
-    container_name: streamos-xtts
     ports:
       - '8020:8020'
     volumes:
       - ./apps/api/voices/speakers:/app/speakers
       - ./apps/api/.runtime/xtts-output:/app/output
-      - xtts_models:/app/models
+      - ./apps/api/.runtime/xtts-models:/app/xtts_models
     environment:
       - COQUI_TOS_AGREED=1
     command:
       - python3
       - -m
       - xtts_api_server
-      - --host
+      - -hs
       - 0.0.0.0
-      - --port
+      - -p
       - '8020'
-      - --device
+      - -d
       - cpu
-      - --speaker_folder
+      - -sf
       - /app/speakers
-      - --output
+      - -o
       - /app/output
     restart: unless-stopped
 
 volumes:
   postgres_data:
   redis_data:
-  xtts_models:
