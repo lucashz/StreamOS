@@ -50,7 +50,7 @@ export function DonationForm({
   const [copied, setCopied] = useState(false);
   const simulationEnabled = usePaymentSimulation();
 
-  function togglePreview(targetVoiceId: string) {
+  function togglePreview(targetVoiceId: string, testWithMessage = false) {
     if (playingVoiceId === targetVoiceId || loadingVoiceId === targetVoiceId) {
       stopTtsVoice();
       setPlayingVoiceId(null);
@@ -59,7 +59,7 @@ export function DonationForm({
     }
 
     setLoadingVoiceId(targetVoiceId);
-    const textToSpeak = message.trim();
+    const textToSpeak = testWithMessage ? (message.trim() || undefined) : '';
 
     previewTtsVoice(targetVoiceId, textToSpeak, {
       onStart: () => {
@@ -382,7 +382,7 @@ export function DonationForm({
                   onClick={(event) => {
                     event.preventDefault();
                     setVoice(profile.id);
-                    togglePreview(profile.id);
+                    togglePreview(profile.id, false);
                   }}
                 >
                   {isLoading
@@ -424,7 +424,7 @@ export function DonationForm({
                 className={`secondary-button voice-test-my-msg-button${isPlayingSelected ? ' playing' : ''}`}
                 onClick={(e) => {
                   e.preventDefault();
-                  togglePreview(selectedProfile.id);
+                  togglePreview(selectedProfile.id, true);
                 }}
               >
                 {isLoadingSelected

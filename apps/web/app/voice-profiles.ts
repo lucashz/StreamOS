@@ -105,7 +105,7 @@ export function previewTtsVoice(
   const profile =
     voiceProfiles.find((item) => item.id === voiceId) ?? voiceProfiles[0];
   if (!profile) return;
-  const text = customText || profile.sample;
+  const text = (customText ?? '').trim();
 
   stopTtsVoice();
 
@@ -113,7 +113,8 @@ export function previewTtsVoice(
     process.env.NEXT_PUBLIC_API_URL?.startsWith('http')
       ? process.env.NEXT_PUBLIC_API_URL
       : 'http://localhost:3001';
-  const ttsUrl = `${apiOrigin}/public/tts?voice=${encodeURIComponent(voiceId)}&text=${encodeURIComponent(text)}`;
+  const queryParam = text ? `&text=${encodeURIComponent(text)}` : '';
+  const ttsUrl = `${apiOrigin}/public/tts?voice=${encodeURIComponent(voiceId)}${queryParam}`;
 
   const audio = new Audio(ttsUrl);
   currentTtsAudio = audio;

@@ -1,16 +1,15 @@
 # Estado de trabalho do StreamOS
 
-Atualizado em: 15/10/2026
+Atualizado em: 17/10/2026
 
 ## Ciclo atual
 
-Autenticidade das vozes de Faustão, Craque Neto e Mano Brown:
-1. Faustão (`faustao.mp3`/`.wav`): substituída imitação pelo áudio original da transmissão de TV com o bordão histórico "Ô loco meu!";
-2. Craque Neto (`craque.mp3`/`.wav`): substituída gravação cômica de imitador pelo áudio autêntico de José Ferreira Neto no programa Os Donos da Bola ("Cês tão de brincadeira!");
-3. Mano Brown (`mano.mp3`/`.wav`): substituído meme humorístico ("acorda cabeça de gelo") pela gravação oficial de estúdio de Mano Brown ("Aqui estou mais um dia...", Racionais MC's);
-4. Prévia inteligente na tela de doações: o botão "▶ Ouvir bordão" reproduz diretamente o áudio 100% puro e original da celebridade quando não há mensagem digitada, e concatena harmoniosamente o bordão com o TTS Neural quando há mensagem do apoiador;
-5. Normalização de áudio broadcast: todos os arquivos em 24kHz mono MP3 calibrados em -14 LUFS integrado / -1 dB true peak;
-6. Validação: reprodução em alto-falantes do sistema, typecheck de `apps/web` e `apps/api` aprovados, e suíte Playwright direcionada aprovada em desktop (1366 px) e mobile (360 px).
+Refinamento do motor híbrido de vozes (Bordões autênticos + Edge TTS da mensagem):
+1. Prévia pura de bordões: corrigido bug onde o utilitário `previewTtsVoice` injetava o texto de exemplo (`profile.sample`) quando nenhum texto era fornecido, disparando desnecessariamente a síntese com a voz sintética por cima do bordão. Agora o botão "▶ Ouvir bordão" na doação (`/[slug]`) e os botões "🔊 Ouvir" em Alertas (`/alertas`) e Moderação (`/moderacao`) tocam instantaneamente o áudio 100% puro e autêntico da celebridade;
+2. Botão "🔊 Testar com minha mensagem": aciona a concatenação harmoniosa `[Bordão autêntico]` + `[Leitura neural da mensagem]`, preservando a clareza para o apoiador;
+3. Reprodução no OBS Overlay (`overlay-client.tsx`): alertas de doações onde o apoiador não digitou mensagem agora tocam o bordão icônico da personalidade selecionada (Faustão, Silvio, Galvão, Craque Neto, Mano Brown) em vez de ficarem mudos;
+4. Backend `tts.controller.ts`: parâmetro de texto sem fallback forçado para `'Alerta StreamOS'`, retornando diretamente os bytes do bordão original gravado;
+5. Validação técnica: Typecheck completo do monorepo aprovado em todos os 11 workspaces (`corepack pnpm typecheck`), reprodução de áudio dos 5 bordões e combinações validada no sistema.
 
 ## Decisões vigentes
 

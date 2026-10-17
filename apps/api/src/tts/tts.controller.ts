@@ -20,7 +20,7 @@ export class TtsController {
   ) {
     const audioBuffer = await this.tts.synthesize(
       voice || 'voice-silvio',
-      text || 'Alerta StreamOS',
+      text ?? '',
     );
 
     const isWav =

@@ -525,7 +525,8 @@ export function OverlayClient() {
           process.env.NEXT_PUBLIC_API_URL?.startsWith('http')
             ? process.env.NEXT_PUBLIC_API_URL
             : 'http://localhost:3001';
-        const ttsUrl = `${apiOrigin}/public/tts?voice=${encodeURIComponent(voice)}&text=${encodeURIComponent(text)}`;
+        const textParam = text ? `&text=${encodeURIComponent(text)}` : '';
+        const ttsUrl = `${apiOrigin}/public/tts?voice=${encodeURIComponent(voice)}${textParam}`;
         const ttsAudio = new Audio(ttsUrl);
         ttsAudio.volume = Math.max(0, Math.min(1, masterVolume / 100));
         ttsAudio.play().catch(() => {
@@ -896,24 +897,25 @@ export function OverlayClient() {
     }
     if (
       variation?.ttsEnabled &&
-      current.payload.message &&
+      (current.payload.message || current.payload.ttsVoice) &&
       current.payload.alertType !== 'AUDIO'
     ) {
-      const messageText = String(current.payload.message);
+      const messageText = String(current.payload.message ?? '').trim();
       const requestedVoice = String(
-        current.payload.ttsVoice ?? variation.ttsVoice,
+        current.payload.ttsVoice ?? variation.ttsVoice ?? 'voice-silvio',
       );
       const effectiveVolume = (masterVolume / 100) * (variation.ttsVolume / 100);
       const apiOrigin =
         process.env.NEXT_PUBLIC_API_URL?.startsWith('http')
           ? process.env.NEXT_PUBLIC_API_URL
           : 'http://localhost:3001';
-      const ttsUrl = `${apiOrigin}/public/tts?voice=${encodeURIComponent(requestedVoice)}&text=${encodeURIComponent(messageText)}`;
+      const textParam = messageText ? `&text=${encodeURIComponent(messageText)}` : '';
+      const ttsUrl = `${apiOrigin}/public/tts?voice=${encodeURIComponent(requestedVoice)}${textParam}`;
 
       const ttsAudio = new Audio(ttsUrl);
       ttsAudio.volume = Math.max(0, Math.min(1, effectiveVolume));
       ttsAudio.play().catch(() => {
-        if ('speechSynthesis' in window) {
+        if ('speechSynthesis' in window && messageText) {
           const speech = new SpeechSynthesisUtterance(messageText);
           speech.rate = variation.ttsRate;
           speech.volume = effectiveVolume;
