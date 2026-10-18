@@ -38,6 +38,17 @@ Polimento de UI e acessibilidade em Configurações de Conta (`/conta`) e Saúde
 
 ## Lote visual fechado
 
+- Polimento Geral e Acessibilidade de UI (18/10/2026 - Concluído):
+  - Skill `frontend-ui-engineering` instalada e integrada nas configurações globais e do workspace.
+  - Página Pública (`/[slug]`): alinhamento do seletor de moeda (60px), chips de valores rápidos, contador de caracteres em tempo real e estados dinâmicos no botão de Pix.
+  - Central da Live (`/central-da-live`): tipografia do card de reprodução normalizada, grid responsivo de métricas adaptado para mobile/tablet e botões de ação touch-friendly.
+  - Alertas (`/alertas`): controle e feedback interativo de prévia TTS com opção de interromper reprodução em ambos os seletores de voz.
+  - Moderação (`/moderacao`): prévia de voz com loading e parada, políticas com listagem em cards e formatação visual em sinalizados e histórico.
+  - Carteira (`/carteira`): input de valor envolvido por `.money-input` com `R$`, atalho "Usar saldo disponível", estados de carregamento em saque/chave Pix e limpeza de filtros no extrato.
+  - Widgets (`/widgets` e `/widgets/create`): feedback visual imediato de "✓ Copiado!", padronização de botões com `primary-button` e semântica acessível.
+  - Conta (`/conta`) e Saúde (`/saude`): semântica de botões com `type="button"`, feedback de atualização de diagnóstico e link padronizado para infraestrutura.
+  - Fechamento técnico: `next build` de produção aprovado gerando 28/28 rotas estáticas sem erros; ESLint, Typecheck e testes direcionados 100% aprovados.
+
 - Consolidação de tokens e componentes visuais em `apps/web/app/design-foundations.css` e `apps/web/app/design-components.css`.
 - Ajustes nas páginas Widgets, Carteira, Configurações, início e onboarding.
 - Browser Source movido da página inicial para Configurações.
