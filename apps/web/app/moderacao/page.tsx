@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { PanelShell } from '../panel-shell';
 import { replaceZeroMoneyValue, selectZeroMoneyValue } from '../money-input';
 import { PageHeader } from '../ui';
-import { voiceProfiles, previewTtsVoice } from '../voice-profiles';
+import { voiceProfiles, previewTtsVoice, stopTtsVoice } from '../voice-profiles';
 const api = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 type Item = {
   id: string;
@@ -40,6 +40,33 @@ export default function ModerationPage() {
   const [data, setData] = useState<Overview>();
   const [status, setStatus] = useState('Carregando…');
   const [busy, setBusy] = useState(false);
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+  const [loadingVoiceId, setLoadingVoiceId] = useState<string | null>(null);
+
+  function handleTogglePreview(targetVoiceId: string) {
+    if (playingVoiceId === targetVoiceId || loadingVoiceId === targetVoiceId) {
+      stopTtsVoice();
+      setPlayingVoiceId(null);
+      setLoadingVoiceId(null);
+      return;
+    }
+
+    setLoadingVoiceId(targetVoiceId);
+    previewTtsVoice(targetVoiceId, '', {
+      onStart: () => {
+        setPlayingVoiceId(targetVoiceId);
+        setLoadingVoiceId(null);
+      },
+      onEnd: () => {
+        setPlayingVoiceId(null);
+        setLoadingVoiceId(null);
+      },
+      onError: () => {
+        setPlayingVoiceId(null);
+        setLoadingVoiceId(null);
+      },
+    });
+  }
   const [settings, setSettings] = useState({
     moderationEnabled: true,
     ttsEnabled: true,
@@ -228,7 +255,7 @@ export default function ModerationPage() {
                       </option>
                     ))}
                 </optgroup>
-                <optgroup label="🎙️ Ícones & Esporte">
+                <optgroup label="🎙️ Ícones & Personalidades">
                   {voiceProfiles
                     .filter((v) => v.category === 'personalities')
                     .map((profile) => (
@@ -240,17 +267,22 @@ export default function ModerationPage() {
               </select>
               <button
                 type="button"
-                className="secondary-button"
+                className={`secondary-button${playingVoiceId === settings.voice ? ' playing' : ''}`}
                 style={{
                   whiteSpace: 'nowrap',
                   padding: '0 12px',
                   minHeight: '38px',
                   flexShrink: 0,
                 }}
-                onClick={() => previewTtsVoice(settings.voice)}
+                disabled={!settings.ttsEnabled}
+                onClick={() => handleTogglePreview(settings.voice)}
                 title="Ouvir demonstração desta voz"
               >
-                🔊 Ouvir
+                {loadingVoiceId === settings.voice
+                  ? '⏳ Gerando…'
+                  : playingVoiceId === settings.voice
+                    ? '⏹ Parar'
+                    : '🔊 Ouvir'}
               </button>
             </div>
           </label>
@@ -310,16 +342,49 @@ export default function ModerationPage() {
           <h2>Políticas</h2>
           <label>
             Palavras bloqueadas
-            <input value={words} onChange={(e) => setWords(e.target.value)} />
+            <input
+              value={words}
+              onChange={(e) => setWords(e.target.value)}
+              placeholder="Ex: spam, golpe, ofensas (separadas por vírgula)"
+            />
           </label>
-          <button disabled={busy} onClick={() => void policy()}>
+          <button
+            type="button"
+            className="secondary-button"
+            disabled={busy}
+            onClick={() => void policy()}
+          >
             Adicionar política
           </button>
-          {data?.policies.map((p) => (
-            <p key={p.id}>
-              <strong>{p.name}:</strong> {p.blockedWords.join(', ')}
+          {data?.policies && data.policies.length > 0 ? (
+            <div style={{ display: 'grid', gap: '8px', marginTop: '8px' }}>
+              {data.policies.map((p) => (
+                <div
+                  key={p.id}
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    background: 'var(--surface-raised, rgba(255, 255, 255, 0.03))',
+                    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.08))',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <strong>{p.name}</strong>
+                  <span style={{ color: 'var(--text-secondary, #aab2c4)' }}>
+                    {p.blockedWords.join(', ')}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ color: 'var(--text-secondary, #aab2c4)', margin: '4px 0 0' }}>
+              Nenhuma política personalizada cadastrada.
             </p>
-          ))}
+          )}
         </section>
         <section className="panel" style={{ padding: 24, marginTop: 20 }}>
           <h2>Sinalizados durante a live</h2>
@@ -327,7 +392,11 @@ export default function ModerationPage() {
             Estes itens já seguiram a fila automática e ficam aqui somente para
             revisão posterior.
           </p>
-          {!data?.flaggedItems.length ? <p>Nenhum item sinalizado.</p> : null}
+          {!data?.flaggedItems.length ? (
+            <p style={{ color: 'var(--text-secondary, #aab2c4)' }}>
+              Nenhum item sinalizado.
+            </p>
+          ) : null}
           <div className="moderation-review-list">
             {data?.flaggedItems.map((item) => (
               <article className="moderation-review-row" key={item.id}>
@@ -346,7 +415,11 @@ export default function ModerationPage() {
                       currency: 'BRL',
                     })}
                   </strong>
-                  <button onClick={() => void clearFlag(item.id)}>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => void clearFlag(item.id)}
+                  >
                     Marcar como revisado
                   </button>
                 </div>
@@ -357,33 +430,38 @@ export default function ModerationPage() {
         <section className="panel" style={{ padding: 24, marginTop: 20 }}>
           <h2>Histórico automático</h2>
           {!data?.items.length ? (
-            <p>Nenhuma decisão de moderação registrada.</p>
+            <p style={{ color: 'var(--text-secondary, #aab2c4)' }}>
+              Nenhuma decisão de moderação registrada.
+            </p>
           ) : null}
-          {data?.items.map((item) => (
-            <div
-              key={item.id}
-              style={{
-                borderTop: '1px solid #333',
-                padding: '14px 0',
-                display: 'flex',
-                justifyContent: 'space-between',
-                gap: 16,
-              }}
-            >
-              <span>
-                <strong>{item.supporterName ?? 'Anônimo'}</strong> ·{' '}
-                {item.sourceType} · {item.status}
-                <br />
-                {item.content}
-                {item.decisionReason ? (
-                  <>
-                    <br />
-                    <small>{item.decisionReason}</small>
-                  </>
+          <div className="moderation-review-list">
+            {data?.items.map((item) => (
+              <article className="moderation-review-row" key={item.id}>
+                <div>
+                  <small>
+                    {item.sourceType} · {item.status}
+                  </small>
+                  <strong>{item.supporterName ?? 'Anônimo'}</strong>
+                  <span>{item.content}</span>
+                  {item.decisionReason ? (
+                    <small style={{ color: 'var(--text-secondary, #aab2c4)' }}>
+                      Motivo: {item.decisionReason}
+                    </small>
+                  ) : null}
+                </div>
+                {item.amountInCents != null ? (
+                  <div>
+                    <strong>
+                      {(item.amountInCents / 100).toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      })}
+                    </strong>
+                  </div>
                 ) : null}
-              </span>
-            </div>
-          ))}
+              </article>
+            ))}
+          </div>
         </section>
       </main>
     </PanelShell>

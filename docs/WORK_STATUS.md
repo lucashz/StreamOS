@@ -4,11 +4,11 @@ Atualizado em: 18/10/2026
 
 ## Ciclo atual
 
-Polimento de UI e controle interativo de áudio no Editor de Alertas (`/alertas`):
-1. Feedback dinâmico de reprodução no botão de teste de voz TTS: indicação clara de carregamento ("⏳ Gerando…") e reprodução ativa ("⏹ Parar" com classe `.playing`), permitindo interromper o áudio a qualquer momento via `stopTtsVoice()`;
-2. Unificação do comportamento em ambos os seletores de voz (alerta geral e variação específica), com proteção de estado desabilitado caso o TTS esteja inativo;
-3. Prevenção de quebra de layout: botões de ação mantêm `white-space: nowrap`, `min-height: 38px`, `flex-shrink: 0` e seletores com `<optgroup>` preservando legibilidade e largura flexível;
-4. Validação técnica: Typecheck de `apps/web` aprovado com zero erros, e teste unitário direcionado de variação de alertas aprovado (`apps/api/src/alerts/alert-variation.policy.spec.ts`, 5/5 testes).
+Polimento de UI e interatividade do Painel de Moderação (`/moderacao`):
+1. Botão de demonstração de voz TTS com feedback de reprodução: agora exibe carregamento ("⏳ Gerando…") e reprodução ativa ("⏹ Parar"), permitindo interromper o áudio via `stopTtsVoice()`; seletor com `<optgroup>` padronizado para "🎙️ Ícones & Personalidades";
+2. Formulário de Políticas de Conteúdo: campo com placeholder intuitivo, botão com estilo `secondary-button` e listagem de políticas em cards visuais com destaque para palavras bloqueadas e estado vazio amigável;
+3. Listas de Moderação e Histórico: sinalizados durante a live e histórico automático padronizados com cards `.moderation-review-row`, botões de ação com classe `secondary-button` e mensagens explicativas em estados vazios;
+4. Validação técnica: Typecheck e ESLint de `apps/web` aprovados com zero erros; teste unitário direcionado de pré-cobrança e moderação aprovado (`apps/api/src/payments/precharge-moderation.policy.spec.ts`, 4/4 testes).
 
 ## Decisões vigentes
 
