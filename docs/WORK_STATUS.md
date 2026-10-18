@@ -4,11 +4,13 @@ Atualizado em: 18/10/2026
 
 ## Ciclo atual
 
-Polimento de UI e interatividade do Painel de Moderação (`/moderacao`):
-1. Botão de demonstração de voz TTS com feedback de reprodução: agora exibe carregamento ("⏳ Gerando…") e reprodução ativa ("⏹ Parar"), permitindo interromper o áudio via `stopTtsVoice()`; seletor com `<optgroup>` padronizado para "🎙️ Ícones & Personalidades";
-2. Formulário de Políticas de Conteúdo: campo com placeholder intuitivo, botão com estilo `secondary-button` e listagem de políticas em cards visuais com destaque para palavras bloqueadas e estado vazio amigável;
-3. Listas de Moderação e Histórico: sinalizados durante a live e histórico automático padronizados com cards `.moderation-review-row`, botões de ação com classe `secondary-button` e mensagens explicativas em estados vazios;
-4. Validação técnica: Typecheck e ESLint de `apps/web` aprovados com zero erros; teste unitário direcionado de pré-cobrança e moderação aprovado (`apps/api/src/payments/precharge-moderation.policy.spec.ts`, 4/4 testes).
+Polimento de UI e usabilidade financeira da Carteira Operacional (`/carteira`):
+1. Input monetário padronizado: campo de saque envolvido por `.money-input` com prefixo visual `R$`, borda de foco e formatação decimal consistente com o design system;
+2. Atalho de saldo disponível: botão interativo "Usar saldo disponível" preenchendo o valor total para saque com um clique;
+3. Proteção contra duplo clique e estados de carregamento: validação de chave Pix ("Validando…") e solicitação de saque ("Solicitando saque…") protegidas por estados assíncronos e botões com estilo `primary-button`;
+4. Extrato com limpeza de filtros: botão contextual "Limpar filtros" para redefinir rapidamente tipo e intervalo de datas;
+5. Correção de encoding: reparado mojibake no atributo `aria-busy` do estado de carregamento da carteira;
+6. Validação técnica: Typecheck de `apps/web` aprovado com zero erros; suíte unitária de regras contábeis aprovada (`packages/ledger`, 10/10 testes).
 
 ## Decisões vigentes
 

@@ -110,6 +110,8 @@ export default function WalletPage() {
   const [to, setTo] = useState('');
   const [status, setStatus] = useState('Carregando carteira…');
   const [statusTone, setStatusTone] = useState<'success' | 'danger'>('success');
+  const [savingPixKey, setSavingPixKey] = useState(false);
+  const [submittingPayout, setSubmittingPayout] = useState(false);
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -156,45 +158,57 @@ export default function WalletPage() {
   }, [query]);
 
   async function savePixKey() {
-    const response = await fetch(`${api}/dashboard/wallet/pix-key`, {
-      method: 'PUT',
-      credentials: 'include',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ type: pixType, value: pixValue }),
-    });
-    const body = (await response.json()) as Settings & { message?: string };
-    setStatusTone(response.ok ? 'success' : 'danger');
-    setStatus(
-      response.ok
-        ? 'Chave Pix validada e carteira de recebimentos configurada.'
-        : (body.message ?? 'Não foi possível cadastrar a chave.'),
-    );
-    if (response.ok) {
-      setSettings(body);
-      setPixValue('');
+    if (savingPixKey) return;
+    setSavingPixKey(true);
+    try {
+      const response = await fetch(`${api}/dashboard/wallet/pix-key`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ type: pixType, value: pixValue }),
+      });
+      const body = (await response.json()) as Settings & { message?: string };
+      setStatusTone(response.ok ? 'success' : 'danger');
+      setStatus(
+        response.ok
+          ? 'Chave Pix validada e carteira de recebimentos configurada.'
+          : (body.message ?? 'Não foi possível cadastrar a chave.'),
+      );
+      if (response.ok) {
+        setSettings(body);
+        setPixValue('');
+      }
+    } finally {
+      setSavingPixKey(false);
     }
   }
 
   async function requestPayout() {
-    const amountInCents = Math.round(Number(amount.replace(',', '.')) * 100);
-    const response = await fetch(`${api}/dashboard/payouts`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'content-type': 'application/json',
-        'idempotency-key': crypto.randomUUID(),
-      },
-      body: JSON.stringify({ amountInCents }),
-    });
-    const body = (await response.json()) as { message?: string };
-    if (response.ok) {
-      setAmount('');
-      await Promise.all([load(), loadStatement()]);
-      setStatusTone('success');
-      setStatus('Saque solicitado e registrado no extrato.');
-    } else {
-      setStatusTone('danger');
-      setStatus(body.message ?? 'Não foi possível solicitar o saque.');
+    if (submittingPayout) return;
+    setSubmittingPayout(true);
+    try {
+      const amountInCents = Math.round(Number(amount.replace(',', '.')) * 100);
+      const response = await fetch(`${api}/dashboard/payouts`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'content-type': 'application/json',
+          'idempotency-key': crypto.randomUUID(),
+        },
+        body: JSON.stringify({ amountInCents }),
+      });
+      const body = (await response.json()) as { message?: string };
+      if (response.ok) {
+        setAmount('');
+        await Promise.all([load(), loadStatement()]);
+        setStatusTone('success');
+        setStatus('Saque solicitado e registrado no extrato.');
+      } else {
+        setStatusTone('danger');
+        setStatus(body.message ?? 'Não foi possível solicitar o saque.');
+      }
+    } finally {
+      setSubmittingPayout(false);
     }
   }
 
@@ -222,7 +236,7 @@ export default function WalletPage() {
           <section
             className="feature-card wallet-loading-state"
             role="status"
-            aria-busy={status === 'Carregando carteiraâ€¦'}
+            aria-busy={status === 'Carregando carteira…'}
           >
             <span aria-hidden="true" />
             <p>{status}</p>
@@ -313,10 +327,12 @@ export default function WalletPage() {
                   />
                 </label>
                 <button
-                  disabled={!pixValue || !settings?.legalProfileCompleted}
+                  type="button"
+                  className="primary-button"
+                  disabled={!pixValue || !settings?.legalProfileCompleted || savingPixKey}
                   onClick={() => void savePixKey()}
                 >
-                  Validar e criar carteira
+                  {savingPixKey ? 'Validando…' : 'Validar e criar carteira'}
                 </button>
               </section>
 
@@ -344,13 +360,39 @@ export default function WalletPage() {
                 </div>
                 <label>
                   Valor em reais
-                  <input
-                    value={amount}
-                    onChange={(event) => setAmount(event.target.value)}
-                    placeholder="0,00"
-                    inputMode="decimal"
-                  />
+                  <span className="money-input">
+                    <b>R$</b>
+                    <input
+                      value={amount}
+                      onChange={(event) => setAmount(event.target.value)}
+                      placeholder="0,00"
+                      inputMode="decimal"
+                    />
+                  </span>
                 </label>
+                {wallet.balances.availableInCents > 0 ? (
+                  <div style={{ marginTop: '-4px', marginBottom: '4px' }}>
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      style={{
+                        fontSize: '12px',
+                        padding: '4px 10px',
+                        height: 'auto',
+                        minHeight: '28px',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => {
+                        const val = (wallet.balances.availableInCents / 100)
+                          .toFixed(2)
+                          .replace('.', ',');
+                        setAmount(val);
+                      }}
+                    >
+                      Usar saldo disponível ({money(wallet.balances.availableInCents)})
+                    </button>
+                  </div>
+                ) : null}
                 {requestedInCents > 0 ? (
                   <div className="payout-summary" aria-live="polite">
                     <span>
@@ -380,10 +422,12 @@ export default function WalletPage() {
                   </div>
                 )}
                 <button
-                  disabled={!amount || !settings?.pixKeyMasked}
+                  type="button"
+                  className="primary-button"
+                  disabled={!amount || !settings?.pixKeyMasked || submittingPayout}
                   onClick={() => void requestPayout()}
                 >
-                  Sacar
+                  {submittingPayout ? 'Solicitando saque…' : 'Sacar'}
                 </button>
               </section>
             </div>
@@ -585,6 +629,26 @@ export default function WalletPage() {
                     value={to}
                     onChange={(event) => setTo(event.target.value)}
                   />
+                  {entryType || from || to ? (
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      style={{
+                        fontSize: '13px',
+                        padding: '8px 12px',
+                        whiteSpace: 'nowrap',
+                        height: 'auto',
+                        minHeight: '40px',
+                      }}
+                      onClick={() => {
+                        setEntryType('');
+                        setFrom('');
+                        setTo('');
+                      }}
+                    >
+                      Limpar filtros
+                    </button>
+                  ) : null}
                 </div>
                 <div className="data-list wallet-statement-list">
                   {entries.length ? (
