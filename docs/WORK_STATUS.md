@@ -1,15 +1,15 @@
 # Estado de trabalho do StreamOS
 
-Atualizado em: 17/10/2026
+Atualizado em: 18/10/2026
 
 ## Ciclo atual
 
-Refinamento do motor híbrido de vozes (Bordões autênticos + Edge TTS da mensagem):
-1. Prévia pura de bordões: corrigido bug onde o utilitário `previewTtsVoice` injetava o texto de exemplo (`profile.sample`) quando nenhum texto era fornecido, disparando desnecessariamente a síntese com a voz sintética por cima do bordão. Agora o botão "▶ Ouvir bordão" na doação (`/[slug]`) e os botões "🔊 Ouvir" em Alertas (`/alertas`) e Moderação (`/moderacao`) tocam instantaneamente o áudio 100% puro e autêntico da celebridade;
-2. Botão "🔊 Testar com minha mensagem": aciona a concatenação harmoniosa `[Bordão autêntico]` + `[Leitura neural da mensagem]`, preservando a clareza para o apoiador;
-3. Reprodução no OBS Overlay (`overlay-client.tsx`): alertas de doações onde o apoiador não digitou mensagem agora tocam o bordão icônico da personalidade selecionada (Faustão, Silvio, Galvão, Craque Neto, Mano Brown) em vez de ficarem mudos;
-4. Backend `tts.controller.ts`: parâmetro de texto sem fallback forçado para `'Alerta StreamOS'`, retornando diretamente os bytes do bordão original gravado;
-5. Validação técnica: Typecheck completo do monorepo aprovado em todos os 11 workspaces (`corepack pnpm typecheck`), reprodução de áudio dos 5 bordões e combinações validada no sistema.
+Polimento de UI e usabilidade da tela pública de doações (`/[slug]`):
+1. Alinhamento de caixas e modelo de caixa: corrigido o descompasso vertical de 8px entre a badge de moeda (`.currency-selector`, 52px) e o campo numérico (`.value-field`, 60px), alinhando ambos perfeitamente em 60px com `align-self: stretch`;
+2. Botões de atalho de valor (`.amount-options`): introduzidos botões de valores rápidos sugeridos (R$ 5, R$ 10, R$ 20, R$ 50) respeitando o valor mínimo da organização, com transições suaves e foco acessível;
+3. Contador de caracteres na mensagem: inserido indicador em tempo real (`X/300`) com alerta cromático de proximidade do limite;
+4. Feedback aprimorado do botão de submissão: texto contextual quando desabilitado por valor abaixo do mínimo estipulado pelo criador (`Valor mínimo: R$ X,XX`) e estado de carregamento explícito (`⏳ Gerando Pix…`);
+5. Validação técnica: Typecheck de `apps/web` aprovado com zero erros (`npm --prefix apps/web run typecheck`).
 
 ## Decisões vigentes
 

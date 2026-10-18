@@ -7070,8 +7070,8 @@ a {
 }
 .creator-card .currency-selector {
   display: flex;
-  height: 52px;
-  align-self: end;
+  height: 60px;
+  align-self: stretch;
   align-items: center;
   justify-content: space-between;
   padding: 0 13px;
@@ -7181,16 +7181,28 @@ a {
 .amount-options {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 7px;
-  margin-bottom: 20px;
+  gap: 8px;
+  margin-top: 10px;
+  margin-bottom: 16px;
 }
 .amount-options button {
   border: 1px solid #2b2f39;
   border-radius: 8px;
   background: #11141a;
   color: #a4a9b3;
-  padding: 10px 4px;
+  padding: 9px 4px;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+}
+.amount-options button:hover {
+  border-color: #555d71;
+  color: #ffffff;
+}
+.amount-options button:focus-visible {
+  outline: 2px solid #8c66e5;
+  outline-offset: 1px;
 }
 .amount-options button.selected {
   border-color: #8c66e5;

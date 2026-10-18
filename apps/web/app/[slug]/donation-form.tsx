@@ -313,6 +313,22 @@ export function DonationForm({
           </div>
         </fieldset>
       </div>
+      <div className="amount-options" role="group" aria-label="Valores sugeridos">
+        {[500, 1000, 2000, 5000].map((preset) => {
+          if (preset < minimumInCents) return null;
+          const isSelected = amount === preset;
+          return (
+            <button
+              type="button"
+              key={preset}
+              className={isSelected ? 'selected' : ''}
+              onClick={() => setAmount(preset)}
+            >
+              R$ {(preset / 100).toFixed(0)}
+            </button>
+          );
+        })}
+      </div>
       {!hideSupporterName ? (
         <label>
           Seu apelido
@@ -325,7 +341,12 @@ export function DonationForm({
         </label>
       ) : null}
       <label>
-        Mensagem
+        <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>Mensagem</span>
+          <small style={{ color: message.length >= 280 ? '#f59e0b' : '#818895', fontSize: '10px' }}>
+            {message.length}/300
+          </small>
+        </span>
         <textarea
           name="message"
           value={message}
@@ -452,8 +473,10 @@ export function DonationForm({
         type="submit"
       >
         {stage === 'creating'
-          ? 'Gerando Pix…'
-          : `Continuar com R$ ${(amount / 100).toFixed(2).replace('.', ',')}`}
+          ? '⏳ Gerando Pix…'
+          : amount < minimumInCents
+            ? `Valor mínimo: R$ ${(minimumInCents / 100).toFixed(2).replace('.', ',')}`
+            : `Continuar com R$ ${(amount / 100).toFixed(2).replace('.', ',')}`}
       </button>
       <small>
         Ao continuar, você concorda com os Termos de Uso e a Política de
