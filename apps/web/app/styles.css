@@ -242,6 +242,14 @@
   margin: 20px 0 8px;
   font-size: 28px;
 }
+.live-now-card h3 {
+  margin: 14px 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #f3f4f6;
+  overflow-wrap: break-word;
+}
 .live-now-card p {
   color: var(--muted);
 }
@@ -2375,6 +2383,20 @@
   .live-next-preview {
     grid-template-columns: 1fr;
     gap: 7px;
+  }
+  .live-summary-grid article:last-child {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 560px) {
+  .live-summary-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .live-actions button {
+    flex: 1 1 calc(50% - 8px);
+    text-align: center;
+    justify-content: center;
   }
 }
 * {

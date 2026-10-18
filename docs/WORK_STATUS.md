@@ -4,12 +4,11 @@ Atualizado em: 18/10/2026
 
 ## Ciclo atual
 
-Polimento de UI e usabilidade da tela pública de doações (`/[slug]`):
-1. Alinhamento de caixas e modelo de caixa: corrigido o descompasso vertical de 8px entre a badge de moeda (`.currency-selector`, 52px) e o campo numérico (`.value-field`, 60px), alinhando ambos perfeitamente em 60px com `align-self: stretch`;
-2. Botões de atalho de valor (`.amount-options`): introduzidos botões de valores rápidos sugeridos (R$ 5, R$ 10, R$ 20, R$ 50) respeitando o valor mínimo da organização, com transições suaves e foco acessível;
-3. Contador de caracteres na mensagem: inserido indicador em tempo real (`X/300`) com alerta cromático de proximidade do limite;
-4. Feedback aprimorado do botão de submissão: texto contextual quando desabilitado por valor abaixo do mínimo estipulado pelo criador (`Valor mínimo: R$ X,XX`) e estado de carregamento explícito (`⏳ Gerando Pix…`);
-5. Validação técnica: Typecheck de `apps/web` aprovado com zero erros (`npm --prefix apps/web run typecheck`).
+Polimento de UI e responsividade da Central da Live (`/central-da-live`):
+1. Tipografia e alinhamento do card de reprodução ativa (`.live-now-card h3`): margens normalizadas, peso visual coerente (22px bold) e `overflow-wrap: break-word` para títulos e mensagens longas;
+2. Grid de métricas responsivo (`.live-summary-grid`): em tablets (<=800px), o 5º card ocupa largura total equilibrada (`grid-column: 1 / -1`); em mobile (<=560px), transição para coluna única confortável (`grid-template-columns: 1fr`) eliminando quebra de valores monetários em cards apertados;
+3. Botões de ação da live em mobile (`.live-actions button`): alinhamento flexível em pares equilibrados (`flex: 1 1 calc(50% - 8px)`) facilitando o toque em telas pequenas;
+4. Validação técnica: Vitest direcionado aprovado (`app/central-da-live/backlog-policy.spec.ts`, 3/3 testes) e Typecheck de `apps/web` aprovado com zero erros.
 
 ## Decisões vigentes
 
