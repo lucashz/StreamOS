@@ -4,10 +4,11 @@ Atualizado em: 18/10/2026
 
 ## Ciclo atual
 
-Polimento de UI e ações no Hub de Widgets (`/widgets`):
-1. Feedback tátil e visual ao copiar URLs: o botão "Copiar URL" nos cards de widgets agora altera imediatamente seu texto para "✓ Copiado!" por 2 segundos, confirmando o sucesso da operação;
-2. Estilização consistente de botões de ação: classes `primary-button` e atributos semânticos `type="button"` aplicados aos botões "Testar no OBS" e "Salvar alterações" na gaveta de configuração, no estado vazio de reteste e no botão "Salvar widget" do assistente de criação (`/widgets/create`);
-3. Validação técnica: Typecheck de `apps/web` aprovado com zero erros e teste unitário direcionado de políticas de alertas/overlay aprovado (`apps/api/src/alerts/alert-variation.policy.spec.ts`, 5/5 testes).
+Polimento de UI e acessibilidade em Configurações de Conta (`/conta`) e Saúde da Transmissão (`/saude`):
+1. Semântica e acessibilidade de botões: atributos `type="button"` adicionados a todos os botões de ação e formulários (salvar perfil, alterar senha, revogar sessão, encerrar todas as sessões e desativação);
+2. Indicador dinâmico de carregamento em Saúde: botão de atualização de diagnóstico agora exibe estado desabilitado com feedback visual ("Atualizando…"), e card de carregamento inicial estruturado com atributos `role="status"` e `aria-busy="true"`;
+3. Padronização de botões-link: link para área de infraestrutura administrativa formatado com classe `.button-link` prevenindo quebra de layout inline;
+4. Validação técnica: Typecheck de `apps/web` aprovado com zero erros; testes unitários direcionados de autorização e observabilidade aprovados (`apps/api/src/authorization/permissions.spec.ts` e `apps/api/src/observability/metrics.controller.spec.ts`, 7/7 testes).
 
 ## Decisões vigentes
 

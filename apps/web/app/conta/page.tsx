@@ -246,6 +246,7 @@ export default function AccountPage() {
             />
           </label>
           <button
+            type="button"
             className="primary-button"
             disabled={busy || !displayName.trim() || !email.includes('@')}
             onClick={() => void saveProfile()}
@@ -281,6 +282,7 @@ export default function AccountPage() {
             />
           </label>
           <button
+            type="button"
             className="primary-button"
             disabled={
               busy || currentPassword.length < 1 || newPassword.length < 10
@@ -312,6 +314,7 @@ export default function AccountPage() {
                   </small>
                 </div>
                 <button
+                  type="button"
                   className="secondary-button"
                   disabled={busy}
                   onClick={() => void revoke(session.id)}
@@ -322,6 +325,7 @@ export default function AccountPage() {
             ))}
           </div>
           <button
+            type="button"
             className="danger-button"
             disabled={busy}
             onClick={() => void logoutAll()}
@@ -368,6 +372,7 @@ export default function AccountPage() {
                 />
               </label>
               <button
+                type="button"
                 className="danger-button"
                 disabled={busy || deactivationConfirmation !== organizationName}
                 onClick={() => void deactivateOrganization()}

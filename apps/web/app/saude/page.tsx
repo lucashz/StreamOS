@@ -88,14 +88,21 @@ export default function HealthPage() {
           title="Saúde da transmissão"
           description="Monitore a conexão do OBS, estabilidade dos alertas e desempenho do Pix no seu canal nas últimas 24 horas."
           actions={
-            <button className="secondary-button" onClick={() => void load()}>
-              Atualizar
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={loading}
+              onClick={() => void load()}
+            >
+              {loading ? 'Atualizando…' : 'Atualizar'}
             </button>
           }
         />
 
         {loading && !data ? (
-          <div className="feature-card">Carregando dados da transmissão...</div>
+          <div className="feature-card" role="status" aria-busy="true">
+            Carregando dados da transmissão…
+          </div>
         ) : null}
         {error ? (
           <div className="feature-card operations-error">{error}</div>
@@ -266,7 +273,10 @@ export default function HealthPage() {
                 disponíveis na área administrativa de Infraestrutura.
               </p>
               <div style={{ marginTop: '12px' }}>
-                <Link className="secondary-button" href="/plataforma#sistema">
+                <Link
+                  className="secondary-button button-link"
+                  href="/plataforma#sistema"
+                >
                   Acessar infraestrutura do sistema →
                 </Link>
               </div>
