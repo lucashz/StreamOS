@@ -4,13 +4,10 @@ Atualizado em: 18/10/2026
 
 ## Ciclo atual
 
-Polimento de UI e usabilidade financeira da Carteira Operacional (`/carteira`):
-1. Input monetário padronizado: campo de saque envolvido por `.money-input` com prefixo visual `R$`, borda de foco e formatação decimal consistente com o design system;
-2. Atalho de saldo disponível: botão interativo "Usar saldo disponível" preenchendo o valor total para saque com um clique;
-3. Proteção contra duplo clique e estados de carregamento: validação de chave Pix ("Validando…") e solicitação de saque ("Solicitando saque…") protegidas por estados assíncronos e botões com estilo `primary-button`;
-4. Extrato com limpeza de filtros: botão contextual "Limpar filtros" para redefinir rapidamente tipo e intervalo de datas;
-5. Correção de encoding: reparado mojibake no atributo `aria-busy` do estado de carregamento da carteira;
-6. Validação técnica: Typecheck de `apps/web` aprovado com zero erros; suíte unitária de regras contábeis aprovada (`packages/ledger`, 10/10 testes).
+Polimento de UI e ações no Hub de Widgets (`/widgets`):
+1. Feedback tátil e visual ao copiar URLs: o botão "Copiar URL" nos cards de widgets agora altera imediatamente seu texto para "✓ Copiado!" por 2 segundos, confirmando o sucesso da operação;
+2. Estilização consistente de botões de ação: classes `primary-button` e atributos semânticos `type="button"` aplicados aos botões "Testar no OBS" e "Salvar alterações" na gaveta de configuração, no estado vazio de reteste e no botão "Salvar widget" do assistente de criação (`/widgets/create`);
+3. Validação técnica: Typecheck de `apps/web` aprovado com zero erros e teste unitário direcionado de políticas de alertas/overlay aprovado (`apps/api/src/alerts/alert-variation.policy.spec.ts`, 5/5 testes).
 
 ## Decisões vigentes
 

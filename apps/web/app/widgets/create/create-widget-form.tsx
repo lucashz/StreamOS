@@ -338,6 +338,7 @@ export function CreateWidgetForm({ type }: { type: string }) {
           </button>
           <button
             type="button"
+            className="primary-button"
             disabled={saving || name.trim().length < 2}
             onClick={() => void create()}
           >

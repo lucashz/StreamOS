@@ -243,6 +243,7 @@ export default function WidgetsPage() {
   const [loadingWidgets, setLoadingWidgets] = useState(true);
   const [togglingWidgetId, setTogglingWidgetId] = useState<string>();
   const [savingWidget, setSavingWidget] = useState(false);
+  const [copiedWidgetId, setCopiedWidgetId] = useState<string | null>(null);
   async function load() {
     try {
       const response = await fetch(`${api}/dashboard/widgets`, {
@@ -592,16 +593,19 @@ export default function WidgetsPage() {
                   {!unifiedAlertTypes.has(widget.type) &&
                   widget.browserSourceUrl ? (
                     <button
+                      type="button"
                       className="secondary-button"
                       onClick={(event) => {
                         event.stopPropagation();
                         void navigator.clipboard.writeText(
                           widget.browserSourceUrl ?? '',
                         );
+                        setCopiedWidgetId(widget.id);
+                        setTimeout(() => setCopiedWidgetId(null), 2000);
                         setStatus('URL do widget copiada para o OBS.');
                       }}
                     >
-                      Copiar URL
+                      {copiedWidgetId === widget.id ? '✓ Copiado!' : 'Copiar URL'}
                     </button>
                   ) : null}
                 </div>
@@ -614,6 +618,8 @@ export default function WidgetsPage() {
             description={status}
             action={
               <button
+                type="button"
+                className="primary-button"
                 onClick={() => {
                   setLoadingWidgets(true);
                   void load();
@@ -1185,10 +1191,15 @@ export default function WidgetsPage() {
                     <WidgetArtwork widget={selected} />
                   </div>
                   <div className="compact-actions widget-preview-actions">
-                    <button onClick={() => void action('test')}>
+                    <button
+                      type="button"
+                      className="primary-button"
+                      onClick={() => void action('test')}
+                    >
                       Testar no OBS
                     </button>
                     <button
+                      type="button"
                       className="secondary-button"
                       onClick={() => void action('duplicate')}
                     >
@@ -1232,10 +1243,19 @@ export default function WidgetsPage() {
                 <span>
                   {status || `Configuração ${selected.configVersion}`}
                 </span>
-                <button className="danger-button" onClick={() => void remove()}>
+                <button
+                  type="button"
+                  className="danger-button"
+                  onClick={() => void remove()}
+                >
                   {confirmDelete ? 'Confirmar exclusão' : 'Excluir'}
                 </button>
-                <button disabled={savingWidget} onClick={() => void save()}>
+                <button
+                  type="button"
+                  className="primary-button"
+                  disabled={savingWidget}
+                  onClick={() => void save()}
+                >
                   {savingWidget ? 'Salvando…' : 'Salvar alterações'}
                 </button>
               </footer>
