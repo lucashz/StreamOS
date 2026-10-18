@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import NextImage from 'next/image';
 import Link from 'next/link';
-import { voiceProfiles, previewTtsVoice } from '../voice-profiles';
+import { voiceProfiles, previewTtsVoice, stopTtsVoice } from '../voice-profiles';
 type Asset = {
   id: string;
   name: string;
@@ -94,6 +94,33 @@ export function AlertEditor() {
   const [previewAnonymous, setPreviewAnonymous] = useState(false);
   const [previewLongText, setPreviewLongText] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+  const [loadingVoiceId, setLoadingVoiceId] = useState<string | null>(null);
+
+  function handleTogglePreview(targetVoiceId: string) {
+    if (playingVoiceId === targetVoiceId || loadingVoiceId === targetVoiceId) {
+      stopTtsVoice();
+      setPlayingVoiceId(null);
+      setLoadingVoiceId(null);
+      return;
+    }
+
+    setLoadingVoiceId(targetVoiceId);
+    previewTtsVoice(targetVoiceId, '', {
+      onStart: () => {
+        setPlayingVoiceId(targetVoiceId);
+        setLoadingVoiceId(null);
+      },
+      onEnd: () => {
+        setPlayingVoiceId(null);
+        setLoadingVoiceId(null);
+      },
+      onError: () => {
+        setPlayingVoiceId(null);
+        setLoadingVoiceId(null);
+      },
+    });
+  }
   const visualAssets = useMemo(
     () => editor.assets.filter((asset) => asset.kind !== 'AUDIO'),
     [editor.assets],
@@ -819,7 +846,7 @@ export function AlertEditor() {
               </select>
               <button
                 type="button"
-                className="secondary-button"
+                className={`secondary-button${playingVoiceId === selected.ttsVoice ? ' playing' : ''}`}
                 style={{
                   whiteSpace: 'nowrap',
                   padding: '0 12px',
@@ -827,10 +854,14 @@ export function AlertEditor() {
                   flexShrink: 0,
                 }}
                 disabled={!selected.ttsEnabled}
-                onClick={() => previewTtsVoice(selected.ttsVoice)}
+                onClick={() => handleTogglePreview(selected.ttsVoice)}
                 title="Ouvir demonstração desta voz"
               >
-                🔊 Ouvir
+                {loadingVoiceId === selected.ttsVoice
+                  ? '⏳ Gerando…'
+                  : playingVoiceId === selected.ttsVoice
+                    ? '⏹ Parar'
+                    : '🔊 Ouvir'}
               </button>
             </div>
           </label>
@@ -1260,17 +1291,22 @@ export function AlertEditor() {
               </select>
               <button
                 type="button"
-                className="secondary-button"
+                className={`secondary-button${playingVoiceId === selected.ttsVoice ? ' playing' : ''}`}
                 style={{
                   whiteSpace: 'nowrap',
                   padding: '0 12px',
                   minHeight: '38px',
                   flexShrink: 0,
                 }}
-                onClick={() => previewTtsVoice(selected.ttsVoice)}
+                disabled={!selected.ttsEnabled}
+                onClick={() => handleTogglePreview(selected.ttsVoice)}
                 title="Ouvir demonstração desta voz"
               >
-                🔊 Ouvir
+                {loadingVoiceId === selected.ttsVoice
+                  ? '⏳ Gerando…'
+                  : playingVoiceId === selected.ttsVoice
+                    ? '⏹ Parar'
+                    : '🔊 Ouvir'}
               </button>
             </div>
           </label>

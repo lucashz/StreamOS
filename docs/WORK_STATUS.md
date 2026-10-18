@@ -4,11 +4,11 @@ Atualizado em: 18/10/2026
 
 ## Ciclo atual
 
-Polimento de UI e responsividade da Central da Live (`/central-da-live`):
-1. Tipografia e alinhamento do card de reprodução ativa (`.live-now-card h3`): margens normalizadas, peso visual coerente (22px bold) e `overflow-wrap: break-word` para títulos e mensagens longas;
-2. Grid de métricas responsivo (`.live-summary-grid`): em tablets (<=800px), o 5º card ocupa largura total equilibrada (`grid-column: 1 / -1`); em mobile (<=560px), transição para coluna única confortável (`grid-template-columns: 1fr`) eliminando quebra de valores monetários em cards apertados;
-3. Botões de ação da live em mobile (`.live-actions button`): alinhamento flexível em pares equilibrados (`flex: 1 1 calc(50% - 8px)`) facilitando o toque em telas pequenas;
-4. Validação técnica: Vitest direcionado aprovado (`app/central-da-live/backlog-policy.spec.ts`, 3/3 testes) e Typecheck de `apps/web` aprovado com zero erros.
+Polimento de UI e controle interativo de áudio no Editor de Alertas (`/alertas`):
+1. Feedback dinâmico de reprodução no botão de teste de voz TTS: indicação clara de carregamento ("⏳ Gerando…") e reprodução ativa ("⏹ Parar" com classe `.playing`), permitindo interromper o áudio a qualquer momento via `stopTtsVoice()`;
+2. Unificação do comportamento em ambos os seletores de voz (alerta geral e variação específica), com proteção de estado desabilitado caso o TTS esteja inativo;
+3. Prevenção de quebra de layout: botões de ação mantêm `white-space: nowrap`, `min-height: 38px`, `flex-shrink: 0` e seletores com `<optgroup>` preservando legibilidade e largura flexível;
+4. Validação técnica: Typecheck de `apps/web` aprovado com zero erros, e teste unitário direcionado de variação de alertas aprovado (`apps/api/src/alerts/alert-variation.policy.spec.ts`, 5/5 testes).
 
 ## Decisões vigentes
 
